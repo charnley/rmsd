@@ -9,22 +9,21 @@ Based on [RMSD](http://en.wikipedia.org/wiki/Root-mean-square_deviation) and [Ka
 
     python calculate_rmsd.py molecule1.xyz molecule2.xyz
 
-## Example
+## Examples
 
-Same molecule translated in space
+Same molecule, but translated in space
 
-    python calculate_rmsd.py ethane.xyz ethane_translate.xyz
+    python calculate_rmsd.py examples/ethane.xyz examples/ethane_trans.xyz
 
-Same molecule two minimization
+Same molecule, two forcefield minimizations
 
-    python calculate_rmsd.py ethane.xyz ethane_move.xyz
+    python calculate_rmsd.py examples/ethane.xyz examples/ethane_mini.xyz
 
-Same structure, different bondlength
+Same structure, different bondlengths
 
-    python calculate_rmsd.py ethane.xyz ethane_far.xyz
+    python calculate_rmsd.py examples/ethane.xyz examples/ethane_bond.xyz
 
 ## Credit and Copyright
 
 Jimmy Charnley Kromann and Lars Bratholm
-
 

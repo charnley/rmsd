@@ -1,4 +1,4 @@
-#!/bin/python
+#!/usr/bin/python
 
 """ Calculate RMSD between two XYZ files
 
@@ -39,8 +39,8 @@ import re
 
 def fit(P, Q):
   """
-    Varies the distance between P and Q, and optimizes rotation for each step until
-    a minimum is found
+    Varies the distance between P and Q, and optimizes rotation for each step
+    until a minimum is found.
   """
   step_size = P.max(0)
   threshold = step_size*1e-9
@@ -110,13 +110,6 @@ def kabsch(P, Q):
   # Rotate P
   P = numpy.dot(P, U)
 
-  """
-  Alternative method, using S
-  E0 = sum(sum(P**2)) + sum(sum(Q**2))
-  RMSD = E0 - 2.0*sum(S)
-  RMSD = numpy.sqrt(RMSD/float(N))
-  """
-
   return rmsd(P,Q)
 
 
@@ -130,8 +123,7 @@ def centroid(X):
 
 def rmsd(V, W):
   """
-    Calculate Root-mean-square deviation from two sets of vectors V
-    and W.
+    Calculate Root-mean-square deviation from two sets of vectors V and W.
   """
   D = len(V[0])
   N = len(V)
@@ -144,11 +136,11 @@ def rmsd(V, W):
 
 def get_coordinates(filename):
   """
-    Get coordinates from a filename.xyz and return a vectorset with
-    all the coordinates.
+    Get coordinates from a filename.xyz and return a vectorset with all the
+    coordinates.
 
-    This function has been written to parse XYZ files, but can easily
-    be written to parse others.
+    This function has been written to parse XYZ files, but can easily be
+    written to parse others.
   """
   f = open(filename, 'r')
   V = []
@@ -171,19 +163,18 @@ if __name__ == "__main__":
 
   args = sys.argv[1:]
 
-  usage = """Calculate Root-mean-square deviation between two molecules
-
+  usage = """
 Usage:
 python calculate_rmsd.py <mol1.xyz> <mol2.xyz>
 
-Where the two sets of xyz atoms are in the same order.
+Calculate Root-mean-square deviation (RMSD) between two molecules, where the
+two sets of xyz atoms are in the same order.
 
-The script will return three rmsd values.
+The script will return three RMSD values;
 
-straight: The RMSD the straight-forward way
-rotation: The RMSD after the two coordinate sets are rotated onto eachother
-optimized: The RMSD after a fitting function has optimized the two molecule
-centers.
+1) Normal: The RMSD calculated the straight-forward way.
+2) Kabsch: The RMSD after the two coordinate sets are translated and rotated onto eachother.
+3) Fitted: The RMSD after a fitting function has optimized the centers of the two coordinat sets.
 """
 
   if len(args) < 2:
@@ -196,8 +187,7 @@ centers.
   P = get_coordinates(mol1)
   Q = get_coordinates(mol2)
 
-  print "RMSD:"
-  print "straight: ", rmsd(P, Q)
+  print "Normal RMSD:", rmsd(P, Q)
 
   # Create the centroid of P and Q which is the geometric center of a
   # N-dimensional region and translate P and Q onto that center.
@@ -207,6 +197,6 @@ centers.
   P -= Pc
   Q -= Qc
 
-  print "rotation: ", kabsch(P, Q)
-  print "optimized:", fit(P, Q)
+  print "Kabsch RMSD:", kabsch(P, Q)
+  print "Fitted RMSD:", fit(P, Q)
 
