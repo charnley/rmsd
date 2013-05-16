@@ -129,8 +129,7 @@ def rmsd(V, W):
   N = len(V)
   rmsd = 0.0
   for v, w in zip(V, W):
-    rmsd += numpy.sqrt(sum([(v[i]-w[i])**2.0 for i in range(D)]))
-  rmsd /= N
+    rmsd += numpy.sqrt(sum([(v[i]-w[i])**2.0 for i in range(D)])/N)
   return rmsd
 
 
