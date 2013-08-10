@@ -2,7 +2,7 @@
 
 """ Calculate RMSD between two XYZ files
 
-by: Jimmy Charnley Kromann and Lars Bratholm
+by: Jimmy Charnley Kromann <jimmy@charnley.dk> and Lars Bratholm
 project: https://github.com/charnley/rmsd
 license: https://github.com/charnley/rmsd/blob/master/LICENSE
 
