@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
 """ Calculate RMSD between two XYZ files
-
-by: Jimmy Charnley Kromann <jimmy@charnley.dk> and Lars Bratholm
+By: Jimmy Charnley Kromann <jimmy@charnley.dk> and Lars Bratholm and 
+    Anders "Freerider" Christensen
 project: https://github.com/charnley/rmsd
 license: https://github.com/charnley/rmsd/blob/master/LICENSE
 
@@ -19,7 +19,7 @@ def fit(P, Q):
   step_size = P.max(0)
   threshold = step_size*1e-9
   rmsd_best = kabsch(P, Q)
-  while True:
+  while not (step_size<threshold).all():
     for i in range(3):
       temp = numpy.zeros(3)
       temp[i] = step_size[i]
@@ -34,8 +34,6 @@ def fit(P, Q):
           P[:,i] -= step_size[i]
         else:
           step_size[i] /= 2
-    if (step_size<threshold).all():
-      break
   return rmsd_best
 
 
