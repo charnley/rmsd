@@ -1,9 +1,8 @@
 #!/usr/bin/python
 
 """ Calculate RMSD between two XYZ files
-
-Autor of this fork: Anders S. Christensen
-Originally by: Jimmy Charnley Kromann <jimmy@charnley.dk> and Lars Bratholm
+By: Jimmy Charnley Kromann <jimmy@charnley.dk> and Lars Bratholm and 
+    Anders "Freerider" Christensen
 project: https://github.com/charnley/rmsd
 license: https://github.com/charnley/rmsd/blob/master/LICENSE
 
@@ -35,7 +34,6 @@ def fit(P, Q):
           P[:,i] -= step_size[i]
         else:
           step_size[i] /= 2
-    
   return rmsd_best
 
 
