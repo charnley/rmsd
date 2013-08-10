@@ -2,11 +2,9 @@
 
 """ Calculate RMSD between two XYZ files
 
-Calculation of RMSD between two cartesian coordinate based (XYZ) molecules
-based on Kabsch algorithm from 1976.
-
-http://en.wikipedia.org/wiki/Root_mean_square_deviation_(bioinformatics)
-http://en.wikipedia.org/wiki/Kabsch_algorithm
+by: Jimmy Charnley Kromann and Lars Bratholm
+project: https://github.com/charnley/rmsd
+license: https://github.com/charnley/rmsd/blob/master/LICENSE
 
 """
 
@@ -47,7 +45,7 @@ def kabsch(P, Q):
   http://en.wikipedia.org/wiki/Kabsch_algorithm
 
   The algorithm starts with two sets of paired points P and Q.
-  P and Q should already be centered on top of eachother.
+  P and Q should already be centered on top of each other.
 
   Each vector set is represented as an NxD matrix, where D is the
   the dimension of the space.

@@ -1,9 +1,12 @@
 Root-mean-square deviation of two XYZ files based on Kabsch algorithm.
 ====
 
-The root-mean-square deviation (RMSD) is calculated, using Kabsch algorithm for rotation, between two XYZ files.
+The root-mean-square deviation (RMSD) is calculated, using Kabsch algorithm (1976) for
+rotation, between two cartesian coordinates (.xyz) files.
 
-Based on [RMSD](http://en.wikipedia.org/wiki/Root-mean-square_deviation) and [Kabsch algoritm](http://en.wikipedia.org/wiki/Kabsch_algorithm).
+Based on
+[RMSD](http://en.wikipedia.org/wiki/Root-mean-square_deviation) and
+[Kabsch algoritm](http://en.wikipedia.org/wiki/Kabsch_algorithm).
 
 ## Usage
 
