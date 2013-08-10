@@ -8,29 +8,6 @@ based on Kabsch algorithm from 1976.
 http://en.wikipedia.org/wiki/Root_mean_square_deviation_(bioinformatics)
 http://en.wikipedia.org/wiki/Kabsch_algorithm
 
-Copyright (c) 2013, Jimmy Charnley Kromann <jimmy@charnley.dk> & Lars Bratholm
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 """
 
 import numpy
@@ -38,9 +15,8 @@ import sys
 import re
 
 def fit(P, Q):
-  """
-    Varies the distance between P and Q, and optimizes rotation for each step
-    until a minimum is found.
+  """ Varies the distance between P and Q, and optimizes rotation for each step
+  until a minimum is found.
   """
   step_size = P.max(0)
   threshold = step_size*1e-9
@@ -68,22 +44,22 @@ def fit(P, Q):
 def kabsch(P, Q):
   """ The Kabsch algorithm
 
-    http://en.wikipedia.org/wiki/Kabsch_algorithm
+  http://en.wikipedia.org/wiki/Kabsch_algorithm
 
-    The algorithm starts with two sets of paired points P and Q.
-    P and Q should already be centered on top of eachother.
+  The algorithm starts with two sets of paired points P and Q.
+  P and Q should already be centered on top of eachother.
 
-    Each vector set is represented as an NxD matrix, where D is the
-    the dimension of the space.
+  Each vector set is represented as an NxD matrix, where D is the
+  the dimension of the space.
 
-    The algorithm works in three steps:
-    - a translation of P and Q
-    - the computation of a covariance matrix C
-    - computation of the optimal rotation matrix U
+  The algorithm works in three steps:
+  - a translation of P and Q
+  - the computation of a covariance matrix C
+  - computation of the optimal rotation matrix U
 
-    The optimal rotation matrix U is then used to
-    rotate P unto Q so the RMSD can be caculated
-    from a straight forward fashion.
+  The optimal rotation matrix U is then used to
+  rotate P unto Q so the RMSD can be caculated
+  from a straight forward fashion.
 
   """
 
@@ -114,16 +90,13 @@ def kabsch(P, Q):
 
 
 def centroid(X):
-  """
-    Calculate the centroid from a vectorset X.
-  """
+  """ Calculate the centroid from a vectorset X """
   C = sum(X)/len(X)
   return C
 
 
 def rmsd(V, W):
-  """
-    Calculate Root-mean-square deviation from two sets of vectors V and W.
+  """ Calculate Root-mean-square deviation from two sets of vectors V and W.
   """
   D = len(V[0])
   N = len(V)
@@ -134,12 +107,14 @@ def rmsd(V, W):
 
 
 def get_coordinates(filename):
-  """
-    Get coordinates from a filename.xyz and return a vectorset with all the
-    coordinates.
+  """ Get coordinates from filename.
 
-    This function has been written to parse XYZ files, but can easily be
-    written to parse others.
+  Get coordinates from a filename.xyz and return a vectorset with all the
+  coordinates.
+
+  This function has been written to parse XYZ files, but can easily be
+  written to parse others.
+
   """
   f = open(filename, 'r')
   V = []
