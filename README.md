@@ -1,4 +1,4 @@
-Root-mean-square deviation of two XYZ files based on Kabsch algorithm.
+Root-mean-square deviation (RMSD) of two XYZ structures.
 ====
 
 The root-mean-square deviation (RMSD) is calculated, using Kabsch algorithm (1976) for
