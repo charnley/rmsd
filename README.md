@@ -1,6 +1,8 @@
 Root-mean-square deviation (RMSD) of two XYZ structures.
 ====
 
+[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/de4affc944cd23d22da90d39df19af82 "githalytics.com")](http://githalytics.com/charnley/rmsd)
+
 The root-mean-square deviation (RMSD) is calculated, using Kabsch algorithm (1976) for
 rotation, between two cartesian coordinates (.xyz) files.
 
