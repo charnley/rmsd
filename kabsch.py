@@ -29,7 +29,7 @@ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
 ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
 LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ON ANY THEORY OF Liability, WHETHER IN CONTRACT, STRICT Liability, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
@@ -82,7 +82,7 @@ def kabsch_align_other(Pin, Qin, Pother):
   Qin -= Qc
   rotMatrix = kabsch_centered_find_rot(Pin, Qin)
   Prot = numpy.dot(Pother, rotMatrix)
-  Prot += Pc   #retranslate back to orig coordinates
+  Prot += Qc   #retranslate back to coordinates on top of original Qin
   return Prot
 
 def kabsch_align(P, Q):
@@ -94,7 +94,7 @@ def kabsch_align(P, Q):
   Q -= Qc
   rotMatrix = kabsch_centered_find_rot(P, Q)
   Prot = numpy.dot(P, rotMatrix)
-  Prot += Pc #retranslate back to orig coordinates
+  Prot += Qc #retranslate back to orig coordinates on top of original Q
   return Prot, rmsd(Prot, Q) #return as tuple
 
 def kabsch(P, Q):
@@ -135,7 +135,7 @@ def kabsch_centered_find_rot(P, Q):
     # Computation of the covariance matrix
     C = numpy.dot(numpy.transpose(P), Q)
     # Computation of the optimal rotation matrix
-    # This can be done using singular value decomposition (SVD)
+    # This can be done using singular value Decomposition (SVD)
     # Getting the sign of the det(V)*(W) to decide
     # whether we need to correct our rotation matrix to ensure a
     # right-handed coordinate system.
