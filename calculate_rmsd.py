@@ -124,7 +124,8 @@ def get_coordinates(filename):
     for line in f:
         numbers = re.findall(r'[-]?\d+\.\d+', line)
         numbers = [float(number) for number in numbers]
-        V.append(numpy.array(numbers))
+        if len(numbers) > 0:
+            V.append(numpy.array(numbers))
 
     f.close()
     V = numpy.array(V)
