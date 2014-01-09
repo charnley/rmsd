@@ -116,16 +116,32 @@ def get_coordinates(filename):
     """
     f = open(filename, 'r')
     V = []
+    n_atoms = 0
+    lines_read = 0
 
-    # Skip the first two lines
-    for _ in xrange(2):
-        f.next()
+    # Read the first line to obtain the number of atoms to read
+    try:
+        n_atoms = int(f.next())
+    except ValueError:
+        exit("Could not obtain the number of atoms in the .xyz file.")
 
+    # Skip the title line
+    f.next()
+
+    # Use the number of atoms to not read beyond the end of a file
     for line in f:
+        lines_read += 1
+        if lines_read == n_atoms:
+            break
+
         numbers = re.findall(r'[-]?\d+\.\d+', line)
         numbers = [float(number) for number in numbers]
-        if len(numbers) > 0:
+
+        # The numbers are not valid unless we obtain exacly three
+        if len(numbers) == 3:
             V.append(numpy.array(numbers))
+        else:
+            exit("Reading the .xyz file failed in line {0}. Please check the format.".format(lines_read +2))
 
     f.close()
     V = numpy.array(V)
