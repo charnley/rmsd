@@ -130,7 +130,6 @@ def get_coordinates(filename):
 
     # Use the number of atoms to not read beyond the end of a file
     for line in f:
-        lines_read += 1
         if lines_read == n_atoms:
             break
 
@@ -142,6 +141,8 @@ def get_coordinates(filename):
             V.append(numpy.array(numbers))
         else:
             exit("Reading the .xyz file failed in line {0}. Please check the format.".format(lines_read +2))
+
+        lines_read += 1
 
     f.close()
     V = numpy.array(V)
