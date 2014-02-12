@@ -29,7 +29,7 @@ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
 ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
 LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF Liability, WHETHER IN CONTRACT, STRICT Liability, OR TORT
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
@@ -81,21 +81,21 @@ def kabsch_align_other(Pin, Qin, Pother):
   Pin -= Pc
   Qin -= Qc
   rotMatrix = kabsch_centered_find_rot(Pin, Qin)
+  Pother -= Pc
   Prot = numpy.dot(Pother, rotMatrix)
-  Prot += Qc   #retranslate back to coordinates on top of original Qin
+  Prot += Qc   #retranslate back to orig coordinates on top of Q
   return Prot
 
 def kabsch_align(P, Q):
-  '''calls kabsch. returns aligned version of P that is mapped onto Q.
-  also returns RMSD'''
+  '''calls kabsch. returns aligned version of P that is mapped onto Q.'''
   Pc = centroid(P)
   Qc = centroid(Q)
   P -= Pc
   Q -= Qc
   rotMatrix = kabsch_centered_find_rot(P, Q)
   Prot = numpy.dot(P, rotMatrix)
-  Prot += Qc #retranslate back to orig coordinates on top of original Q
-  return Prot, rmsd(Prot, Q) #return as tuple
+  Prot += Qc #retranslate back to orig coordinates on top of Q
+  return Prot
 
 def kabsch(P, Q):
   '''calls kabsch_centered after moving both to the same centroid'''
@@ -135,7 +135,7 @@ def kabsch_centered_find_rot(P, Q):
     # Computation of the covariance matrix
     C = numpy.dot(numpy.transpose(P), Q)
     # Computation of the optimal rotation matrix
-    # This can be done using singular value Decomposition (SVD)
+    # This can be done using singular value decomposition (SVD)
     # Getting the sign of the det(V)*(W) to decide
     # whether we need to correct our rotation matrix to ensure a
     # right-handed coordinate system.
@@ -188,8 +188,8 @@ def get_coordinates(filename):
     return V
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
-    usage = """
+  args = sys.argv[1:]
+  usage = """
 Usage:
 python calculate_rmsd.py <mol1.xyz> <mol2.xyz>
 
@@ -202,9 +202,32 @@ The script will return three RMSD values;
 2) Kabsch: The RMSD after the two coordinate sets are translated and rotated onto eachother.
 3) Fitted: The RMSD after a fitting function has optimized the centers of the two coordinat sets.
 """
-    if len(args) < 2:
-        print usage
-        sys.exit(0)
+  if len(args) < 2 and (len(args) > 1 and args[0] != 'test'):
+    print usage
+    sys.exit(0)
+  elif args[0] == 'test':
+    #run this simple test, including a bunch of output files using pdb
+    import pdb
+    data1 = [(59.085, 5.081, -16.853), (59.044, 4.51, -18.197),\
+               (58.189, 3.235, -18.307), (58.162, 2.379, -17.426)]      
+    data2 = [(59.21356, 4.898, -16.90747), (59.18413, 4.5536, -18.31091), 
+               (57.86664, 3.85246, -18.59904), (56.86584, 4.09684, -17.92705)] 
+    data3 = [(59.085, 5.081, -16.853), (59.044, 4.51, -18.197), \
+               (58.189, 3.235, -18.307), (58.162, 2.379, -17.426), \
+               (60.468, 4.19, -18.613), (61.31, 5.458, -18.547), \
+               (61.052, 3.137, -17.665), (59.932, 5.289, -16.404), \
+               (58.655, 5.252, -18.873), (60.462, 3.818, -19.614), \
+               (60.895, 6.191, -19.211), (62.326, 5.236, -18.842), \
+               (61.297, 5.839, -17.541), (61.216, 2.217, -18.206), \
+               (60.363, 2.958, -16.854), (61.986, 3.494, -17.264)]
+    outdata = kabsch_align_other_notnumpy(data1, data2, data3)
+    pdb.debugCoords(data1, 'test.1.pdb')
+    pdb.debugCoords(data2, 'test.2.pdb')
+    pdb.debugCoords(data3, 'test.3.pdb')
+    pdb.debugCoords(outdata, 'test.4.pdb')
+    print outdata
+    sys.exit(1)
+  else:
     mol1 = args[0]
     mol2 = args[1]
     P = get_coordinates(mol1)
