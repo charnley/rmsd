@@ -6,6 +6,8 @@ Root-mean-square deviation (RMSD) of two XYZ structures.
 The root-mean-square deviation (RMSD) is calculated, using Kabsch algorithm (1976) for
 rotation, between two cartesian coordinates (.xyz) files.
 
+Added ability to align the two proteins/molecules and get them back in kabsch.py
+
 Based on
 [RMSD](http://en.wikipedia.org/wiki/Root-mean-square_deviation) and
 [Kabsch algoritm](http://en.wikipedia.org/wiki/Kabsch_algorithm).
@@ -31,4 +33,4 @@ Same structure, different bondlengths
 ## Credit and Copyright
 
 Jimmy Charnley Kromann and Lars Bratholm
-
+Ryan G. Coleman (updates 2014)
