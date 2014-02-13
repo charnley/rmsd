@@ -71,7 +71,7 @@ def kabsch_align_other_notnumpy(Pin, Qin, Pother):
   QinNumpy = numpy.array(Qin)
   PotherNumpy = numpy.array(Pother)
   PotherRotNumpy = kabsch_align_other(PinNumpy, QinNumpy, PotherNumpy)
-  return PotherRotNumpy.tolist()
+  return PotherRotNumpy.tolist() #convert back, calling function needs no numpy
 
 def kabsch_align_other(Pin, Qin, Pother):
   '''calls kabsch. returns aligned version of Pother  that is mapped for best 
@@ -81,8 +81,8 @@ def kabsch_align_other(Pin, Qin, Pother):
   Pin -= Pc
   Qin -= Qc
   rotMatrix = kabsch_centered_find_rot(Pin, Qin)
-  Pother -= Pc
-  Prot = numpy.dot(Pother, rotMatrix)
+  Pother -= Pc #first move to centroid around 0
+  Prot = numpy.dot(Pother, rotMatrix) #then rotate
   Prot += Qc   #retranslate back to orig coordinates on top of Q
   return Prot
 
