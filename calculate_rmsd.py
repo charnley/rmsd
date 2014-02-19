@@ -219,7 +219,7 @@ The script will return three RMSD values;
     if output:
         V, r = kabsch(P, Q, output)
         print "Kabsch RMSD:", r
-
+        V += Qc
         write_coordinates(atomsP, V, output_mol)
     else:
         print "Kabsch RMSD:", kabsch(P, Q)
