@@ -39,7 +39,7 @@ def fit(P, Q):
     return rmsd_best
 
 
-def kabsch(P, Q):
+def kabsch(P, Q, output=False):
     """ The Kabsch algorithm
 
     http://en.wikipedia.org/wiki/Kabsch_algorithm
@@ -74,7 +74,7 @@ def kabsch(P, Q):
     V, S, W = numpy.linalg.svd(C)
     d = (numpy.linalg.det(V) * numpy.linalg.det(W)) < 0.0
 
-    if(d):
+    if d:
         S[-1] = -S[-1]
         V[:,-1] = -V[:,-1]
 
@@ -84,7 +84,10 @@ def kabsch(P, Q):
     # Rotate P
     P = numpy.dot(P, U)
 
-    return rmsd(P,Q)
+    if output:
+        return P, rmsd(P, Q)
+
+    return rmsd(P, Q)
 
 
 def centroid(X):
@@ -104,6 +107,23 @@ def rmsd(V, W):
     return numpy.sqrt(rmsd/N)
 
 
+def write_coordinates(atoms, V, filename):
+    """ Write coordinates V to filename """
+
+    f = open(filename, 'w')
+
+    N, D = V.shape
+
+    f.write(str(N))
+    f.write('\n')
+
+    for i in xrange(N):
+        line = "\n{0:2s} {1:10.5f} {2:10.5f} {3:10.5f}".format(atoms[i], V[i,0], V[i,1], V[i,2])
+        f.write(line)
+
+    f.close()
+
+
 def get_coordinates(filename):
     """ Get coordinates from filename.
 
@@ -116,6 +136,7 @@ def get_coordinates(filename):
     """
     f = open(filename, 'r')
     V = []
+    atoms = []
     n_atoms = 0
     lines_read = 0
 
@@ -133,12 +154,14 @@ def get_coordinates(filename):
         if lines_read == n_atoms:
             break
 
+        atom = re.findall(r'[a-zA-Z]+', line)[0]
         numbers = re.findall(r'[-]?\d+\.\d+', line)
         numbers = [float(number) for number in numbers]
 
         # The numbers are not valid unless we obtain exacly three
         if len(numbers) == 3:
             V.append(numpy.array(numbers))
+            atoms.append(atom)
         else:
             exit("Reading the .xyz file failed in line {0}. Please check the format.".format(lines_read +2))
 
@@ -146,7 +169,7 @@ def get_coordinates(filename):
 
     f.close()
     V = numpy.array(V)
-    return V
+    return atoms, V
 
 
 if __name__ == "__main__":
@@ -171,11 +194,17 @@ The script will return three RMSD values;
         print usage
         sys.exit(0)
 
+    output = False
+
+    if len(args) == 3:
+        output = True
+        output_mol = args[2]
+
     mol1 = args[0]
     mol2 = args[1]
 
-    P = get_coordinates(mol1)
-    Q = get_coordinates(mol2)
+    atomsP, P = get_coordinates(mol1)
+    atomsQ, Q = get_coordinates(mol2)
 
     print "Normal RMSD:", rmsd(P, Q)
 
@@ -187,6 +216,15 @@ The script will return three RMSD values;
     P -= Pc
     Q -= Qc
 
-    print "Kabsch RMSD:", kabsch(P, Q)
+    if output:
+        V, r = kabsch(P, Q, output)
+        print "Kabsch RMSD:", r
+
+        write_coordinates(atomsP, V, output_mol)
+    else:
+        print "Kabsch RMSD:", kabsch(P, Q)
+
     print "Fitted RMSD:", fit(P, Q)
+
+
 
