@@ -107,21 +107,17 @@ def rmsd(V, W):
     return numpy.sqrt(rmsd/N)
 
 
-def write_coordinates(atoms, V, filename):
-    """ Write coordinates V to filename """
-
-    f = open(filename, 'w')
+def write_coordinates(atoms, V):
+    """ Write coordinates V """
 
     N, D = V.shape
 
-    f.write(str(N))
-    f.write('\n')
+    print str(N)
+    print
 
     for i in xrange(N):
-        line = "\n{0:2s} {1:10.5f} {2:10.5f} {3:10.5f}".format(atoms[i], V[i,0], V[i,1], V[i,2])
-        f.write(line)
-
-    f.close()
+        line = "{0:2s} {1:10.5f} {2:10.5f} {3:10.5f}".format(atoms[i], V[i,0], V[i,1], V[i,2])
+        print line
 
 
 def get_coordinates(filename):
@@ -181,7 +177,7 @@ usage:
 calculate_rmsd [--output] <structure_a.xyz> <structure_b.xyz>
 
 Options:
-    --output  Print out the structure a, centered and transformed to structure
+    --output  Print out the structure a, centered and rotated unto structure
               b's coordinates.
 
 Calculate Root-mean-square deviation (RMSD) between two molecules.
@@ -199,19 +195,25 @@ The script will return three RMSD values;
         print usage
         sys.exit(0)
 
+    if args[0] == '--help' or args[0] == '-help':
+        print usage
+        sys.exit(0)
+
     output = False
+    i = 0
 
-    if len(args) == 3:
+    if args[0] == '--output':
         output = True
-        output_mol = args[2]
+        i += 1
 
-    mol1 = args[0]
-    mol2 = args[1]
+    mol1 = args[i]
+    mol2 = args[i+1]
 
     atomsP, P = get_coordinates(mol1)
     atomsQ, Q = get_coordinates(mol2)
 
-    print "Normal RMSD:", rmsd(P, Q)
+    # Calculate 'dumb' RMSD
+    normal_rmsd = rmsd(P, Q)
 
     # Create the centroid of P and Q which is the geometric center of a
     # N-dimensional region and translate P and Q onto that center.
@@ -222,14 +224,15 @@ The script will return three RMSD values;
     Q -= Qc
 
     if output:
-        V, r = kabsch(P, Q, output)
-        print "Kabsch RMSD:", r
+
+        V, r = kabsch(P, Q, output=True)
         V += Qc
-        write_coordinates(atomsP, V, output_mol)
+        write_coordinates(atomsP, V)
+
     else:
+
+        print "Normal RMSD:", normal_rmsd
         print "Kabsch RMSD:", kabsch(P, Q)
-
-    print "Fitted RMSD:", fit(P, Q)
-
+        print "Fitted RMSD:", fit(P, Q)
 
 
