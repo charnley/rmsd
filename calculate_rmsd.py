@@ -177,17 +177,22 @@ if __name__ == "__main__":
     args = sys.argv[1:]
 
     usage = """
-Usage:
-python calculate_rmsd.py <mol1.xyz> <mol2.xyz>
+usage:
+calculate_rmsd [--output] <structure_a.xyz> <structure_b.xyz>
 
-Calculate Root-mean-square deviation (RMSD) between two molecules, where the
-two sets of xyz atoms are in the same order.
+Options:
+    --output  Print out the structure a, centered and transformed to structure
+              b's coordinates.
+
+Calculate Root-mean-square deviation (RMSD) between two molecules.
+The two sets of atoms must be in the same order.
 
 The script will return three RMSD values;
 
 1) Normal: The RMSD calculated the straight-forward way.
 2) Kabsch: The RMSD after the two coordinate sets are translated and rotated onto eachother.
 3) Fitted: The RMSD after a fitting function has optimized the centers of the two coordinat sets.
+
 """
 
     if len(args) < 2:
