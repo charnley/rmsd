@@ -1,8 +1,6 @@
 Root-mean-square deviation (RMSD) of two XYZ structures.
 ====
 
-[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/de4affc944cd23d22da90d39df19af82 "githalytics.com")](http://githalytics.com/charnley/rmsd)
-
 The root-mean-square deviation (RMSD) is calculated, using Kabsch algorithm (1976) for
 rotation, between two cartesian coordinates (.xyz) files.
 
@@ -12,21 +10,36 @@ Based on
 
 ## Usage
 
-    python calculate_rmsd.py molecule1.xyz molecule2.xyz
+The code should be executable, so run it like in a terminal:
+
+    ./calculate_rmsd molecule1.xyz molecule2.xyz
+
+If it isn't then run it with Python 2.7
+
+    python calculate_rmsd molecule1.xyz molecule2.xyz
 
 ## Examples
 
-Same molecule, but translated in space
+Same structure, but translated in space
 
-    python calculate_rmsd.py examples/ethane.xyz examples/ethane_trans.xyz
+    ./calculate_rmsd examples/ethane.xyz examples/ethane_trans.xyz
 
-Same molecule, two forcefield minimizations
+Same structure, two forcefield minimizations
 
-    python calculate_rmsd.py examples/ethane.xyz examples/ethane_mini.xyz
+    ./calculate_rmsd examples/ethane.xyz examples/ethane_mini.xyz
 
 Same structure, different bondlengths
 
-    python calculate_rmsd.py examples/ethane.xyz examples/ethane_bond.xyz
+    ./calculate_rmsd examples/ethane.xyz examples/ethane_bond.xyz
+
+You can also output (stdout) `molecule1`'s coordinates centered and rotated to
+`molecule2`. Useful to visualize the difference.
+
+    ./calculate_rmsd --output examples/ethane.xyz examples/ethane_trans.xyz
+
+## Help
+
+Type `./calculate_rmsd --help` or look in the source file.
 
 ## Credit and Copyright
 
