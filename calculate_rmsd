@@ -34,7 +34,7 @@ def fit(P, Q):
                     P[:,i] -= step_size[i]
                 else:
                     step_size[i] /= 2
-        if (step_size<threshold).all():
+        if (step_size<=threshold).all():
             break
     return rmsd_best
 
