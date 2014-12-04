@@ -151,7 +151,7 @@ def get_coordinates(filename):
             break
 
         atom = re.findall(r'[a-zA-Z]+', line)[0]
-        numbers = re.findall(r'[-]?\d+\.\d+', line)
+        numbers = re.findall(r'[-]?\d+\.\d*', line)
         numbers = [float(number) for number in numbers]
 
         # The numbers are not valid unless we obtain exacly three
