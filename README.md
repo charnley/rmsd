@@ -2,21 +2,28 @@ Root-mean-square deviation (RMSD) of two XYZ structures.
 ====
 
 The root-mean-square deviation (RMSD) is calculated, using Kabsch algorithm (1976) for
-rotation, between two cartesian coordinates (.xyz) files.
+rotation, between two Cartesian coordinates (.xyz) files.
 
-Based on
+For more information please read
 [RMSD](http://en.wikipedia.org/wiki/Root-mean-square_deviation) and
 [Kabsch algoritm](http://en.wikipedia.org/wiki/Kabsch_algorithm).
 
 ## Usage
 
-The code should be executable, so run it like in a terminal:
+The code should be executable, so run it via terminal:
 
     ./calculate_rmsd molecule1.xyz molecule2.xyz
 
 If it isn't then run it with Python 2.7
 
     python calculate_rmsd molecule1.xyz molecule2.xyz
+
+## Citation
+
+[1] Kabsch W., 1976, A solution for the best rotation to relate two sets of vectors, Acta Crystallographica, A32:922-923, doi:10.1107/S0567739476001873
+[2] GitHub: Calculate RMSD for two XYZ structures, http://github.com/charnley/rmsd
+
+Note: some journals requires commit id
 
 ## Examples
 
