@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-""" Calculate RMSD between two XYZ files
+"""
+Calculate RMSD between two XYZ files
 
 by: Jimmy Charnley Kromann <jimmy@charnley.dk> and Lars Bratholm
 project: https://github.com/charnley/rmsd
@@ -20,17 +21,17 @@ def fit(P, Q):
     """
     step_size = P.max(0)
     threshold = step_size*1e-9
-    rmsd_best = kabsch(P, Q)
+    rmsd_best = kabsch_rmsd(P, Q)
     while True:
         for i in range(3):
             temp = np.zeros(3)
             temp[i] = step_size[i]
-            rmsd_new = kabsch(P+temp, Q)
+            rmsd_new = kabsch_rmsd(P+temp, Q)
             if rmsd_new < rmsd_best:
                 rmsd_best = rmsd_new
                 P[:, i] += step_size[i]
             else:
-                rmsd_new = kabsch(P-temp, Q)
+                rmsd_new = kabsch_rmsd(P-temp, Q)
                 if rmsd_new < rmsd_best:
                     rmsd_best = rmsd_new
                     P[:, i] -= step_size[i]
@@ -41,7 +42,26 @@ def fit(P, Q):
     return rmsd_best
 
 
-def kabsch(P, Q, output=False):
+def kabsch_rmsd(P, Q):
+    """
+    Rotate matrix P unto Q and calculate the RMSD
+    """
+    P = rotate(P, Q)
+    return rmsd(P, Q)
+
+
+def rotate(P, Q):
+    """
+    Rotate matrix P unto matrix Q using Kabsch algorithm
+    """
+    U = kabsch(P, Q)
+
+    # Rotate P
+    P = np.dot(P, U)
+    return P
+
+
+def kabsch(P, Q):
     """
     The optimal rotation matrix U is calculated and then used to rotate matrix
     P unto matrix Q so the minimum root-mean-square deviation (RMSD) can be
@@ -58,6 +78,13 @@ def kabsch(P, Q, output=False):
     - computation of the optimal rotation matrix U
 
     http://en.wikipedia.org/wiki/Kabsch_algorithm
+
+    Parameters:
+    P -- (N, number of points)x(D, dimension) matrix
+    Q -- (N, number of points)x(D, dimension) matrix
+
+    Returns:
+    U -- Rotation matrix
 
     """
 
@@ -81,23 +108,20 @@ def kabsch(P, Q, output=False):
     # Create Rotation matrix U
     U = np.dot(V, W)
 
-    # Rotate P
-    P = np.dot(P, U)
-
-    if output:
-        return P, rmsd(P, Q)
-
-    return rmsd(P, Q)
+    return U
 
 
 def centroid(X):
-    """ Calculate the centroid from a vectorset X """
+    """
+    Calculate the centroid from a vectorset X
+    """
     C = sum(X)/len(X)
     return C
 
 
 def rmsd(V, W):
-    """ Calculate Root-mean-square deviation from two sets of vectors V and W.
+    """
+    Calculate Root-mean-square deviation from two sets of vectors V and W.
     """
     D = len(V[0])
     N = len(V)
@@ -108,8 +132,9 @@ def rmsd(V, W):
 
 
 def write_coordinates(atoms, V):
-    """ Write coordinates V """
-
+    """
+    Print coordinates V
+    """
     N, D = V.shape
 
     print str(N)
@@ -121,7 +146,8 @@ def write_coordinates(atoms, V):
 
 
 def get_coordinates(filename):
-    """ Get coordinates from filename.
+    """
+    Get coordinates from filename.
 
     Get coordinates from a filename.xyz and return a vectorset with all the
     coordinates.
@@ -177,8 +203,8 @@ usage:
 calculate_rmsd [--output] <structure_a.xyz> <structure_b.xyz>
 
 Options:
-    --output  Print out the structure a, centered and rotated unto structure
-              b's coordinates.
+    --output  Print out the structure A, centered and rotated unto structure
+              B's coordinates.
 
 Calculate Root-mean-square deviation (RMSD) between two molecules.
 The two sets of atoms must be in the same order.
@@ -186,8 +212,8 @@ The two sets of atoms must be in the same order.
 The script will return three RMSD values;
 
 1) Normal: The RMSD calculated the straight-forward way.
-2) Kabsch: The RMSD after the two coordinate sets are translated and rotated onto eachother.
-3) Fitted: The RMSD after a fitting function has optimized the centers of the two coordinat sets.
+2) Kabsch: The RMSD after the two coordinate sets are translated and rotated onto each other.
+3) Fitted: The RMSD after a fitting function has optimized the centers of the two coordinates sets.
 
 """
 
@@ -225,12 +251,14 @@ The script will return three RMSD values;
 
     if output:
 
-        V, r = kabsch(P, Q, output=True)
+        V = rotate(P, Q)
         V += Qc
         write_coordinates(atomsP, V)
 
     else:
 
         print "Normal RMSD:", normal_rmsd
-        print "Kabsch RMSD:", kabsch(P, Q)
+        print "Kabsch RMSD:", kabsch_rmsd(P, Q)
         print "Fitted RMSD:", fit(P, Q)
+
+
