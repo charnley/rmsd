@@ -14,7 +14,8 @@ import re
 
 
 def fit(P, Q):
-    """ Varies the distance between P and Q, and optimizes rotation for each step
+    """
+    Varies the distance between P and Q, and optimizes rotation for each step
     until a minimum is found.
     """
     step_size = P.max(0)
@@ -41,13 +42,13 @@ def fit(P, Q):
 
 
 def kabsch(P, Q, output=False):
-    """ The Kabsch algorithm
+    """
+    The optimal rotation matrix U is calculated and then used to rotate matrix
+    P unto matrix Q so the minimum root-mean-square deviation (RMSD) can be
+    calculated.
 
-    http://en.wikipedia.org/wiki/Kabsch_algorithm
-
-    The algorithm starts with two sets of paired points P and Q.
-    P and Q should already be centered on top of each other.
-
+    Using the Kabsch algorithm with two sets of paired point P and Q,
+    centered around the center-of-mass.
     Each vector set is represented as an NxD matrix, where D is the
     the dimension of the space.
 
@@ -56,9 +57,7 @@ def kabsch(P, Q, output=False):
     - the computation of a covariance matrix C
     - computation of the optimal rotation matrix U
 
-    The optimal rotation matrix U is then used to
-    rotate P unto Q so the RMSD can be caculated
-    from a straight forward fashion.
+    http://en.wikipedia.org/wiki/Kabsch_algorithm
 
     """
 
