@@ -20,10 +20,11 @@ If it isn't then run it with Python 2.7
 
 ## Citation
 
-[1] Kabsch W., 1976, A solution for the best rotation to relate two sets of vectors, Acta Crystallographica, A32:922-923, doi:10.1107/S0567739476001873
-[2] GitHub: Calculate RMSD for two XYZ structures, http://github.com/charnley/rmsd
+1. Kabsch W., 1976, A solution for the best rotation to relate two sets of vectors, Acta Crystallographica, A32:922-923, doi:10.1107/S0567739476001873
 
-Note: some journals requires commit id
+2. GitHub: Calculate RMSD for two XYZ structures, http://github.com/charnley/rmsd
+
+Note: some journals may require GitHub commit id.
 
 ## Examples
 
