@@ -12,11 +12,9 @@ For more information please read
 
 The code should be executable, so run it via terminal:
 
-    ./calculate_rmsd molecule1.xyz molecule2.xyz
+    calculate_rmsd molecule1.xyz molecule2.xyz
 
 If it isn't then run it with Python 2.7
-
-    python calculate_rmsd molecule1.xyz molecule2.xyz
 
 ## Citation
 
@@ -41,7 +39,7 @@ Same structure, different bondlengths
     ./calculate_rmsd examples/ethane.xyz examples/ethane_bond.xyz
 
 You can also output (stdout) `molecule1`'s coordinates centered and rotated to
-`molecule2`. Useful to visualize the difference.
+`molecule2`. Useful to visualize the difference. The output will be in XYZ format.
 
     ./calculate_rmsd --output examples/ethane.xyz examples/ethane_trans.xyz
 
