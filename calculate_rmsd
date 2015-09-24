@@ -141,11 +141,11 @@ def write_coordinates(atoms, V):
     print
 
     for i in xrange(N):
-        line = "{0:2s} {1:10.5f} {2:10.5f} {3:10.5f}".format(atoms[i], V[i, 0], V[i, 1], V[i, 2])
+        line = "{0:2s} {1:15.8f} {2:15.8f} {3:15.8f}".format(atoms[i], V[i, 0], V[i, 1], V[i, 2])
         print line
 
 
-def get_coordinates(filename):
+def get_coordinates(filename, ignore_hydrogens=False):
     """
     Get coordinates from filename.
 
@@ -173,12 +173,17 @@ def get_coordinates(filename):
 
     # Use the number of atoms to not read beyond the end of a file
     for line in f:
+
         if lines_read == n_atoms:
             break
 
         atom = re.findall(r'[a-zA-Z]+', line)[0]
         numbers = re.findall(r'[-]?\d+\.\d*', line)
         numbers = [float(number) for number in numbers]
+
+        # ignore hydrogens
+        if ignore_hydrogens and atom.lower() == "h":
+            continue
 
         # The numbers are not valid unless we obtain exacly three
         if len(numbers) == 3:
@@ -222,15 +227,12 @@ The script will return three RMSD values:
 
     args = parser.parse_args()
 
-
-    output = args.output
     no_hydrogen = args.no_hydrogen
-
     mol1 = args.structure_a
     mol2 = args.structure_b
 
-    atomsP, P = get_coordinates(mol1)
-    atomsQ, Q = get_coordinates(mol2)
+    atomsP, P = get_coordinates(mol1, ignore_hydrogens=no_hydrogen)
+    atomsQ, Q = get_coordinates(mol2, ignore_hydrogens=no_hydrogen)
 
     # Calculate 'dumb' RMSD
     normal_rmsd = rmsd(P, Q)
@@ -243,16 +245,15 @@ The script will return three RMSD values:
     P -= Pc
     Q -= Qc
 
-    if output:
-
+    if args.output:
         V = rotate(P, Q)
         V += Qc
         write_coordinates(atomsP, V)
+        quit()
 
-    else:
+    print "Normal RMSD:", normal_rmsd
+    print "Kabsch RMSD:", kabsch_rmsd(P, Q)
 
-        print "Normal RMSD:", normal_rmsd
-        print "Kabsch RMSD:", kabsch_rmsd(P, Q)
+    if args.fit:
         print "Fitted RMSD:", fit(P, Q)
-
 
