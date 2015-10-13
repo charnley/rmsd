@@ -178,7 +178,7 @@ def get_coordinates(filename, ignore_hydrogens=False):
             break
 
         atom = re.findall(r'[a-zA-Z]+', line)[0]
-        numbers = re.findall(r'[-]?\d+\.\d*', line)
+        numbers = re.findall(r'[-]?\d+\.\d*(?:[Ee][-\+]\d+)?', line)
         numbers = [float(number) for number in numbers]
 
         # ignore hydrogens
