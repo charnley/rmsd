@@ -102,7 +102,6 @@ def rmsd(V, W):
     return np.sqrt(rmsd/N)
 
 
-#TODO write coordinates pdb
 def write_coordinates(atoms, V):
     """
     Print coordinates V
@@ -185,7 +184,6 @@ def get_coordinates_pdb(filename, ignore_hydrogens):
 
 
     V = np.asarray(V)
-    print V[:,0]
     return atoms, V
 
 
@@ -238,7 +236,6 @@ def get_coordinates_xyz(filename, ignore_hydrogens):
 
     f.close()
     V = np.array(V)
-    print V[:,0]
     return atoms, V
 
 
