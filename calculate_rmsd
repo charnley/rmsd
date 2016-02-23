@@ -9,7 +9,6 @@ license: https://github.com/charnley/rmsd/blob/master/LICENSE
 
 """
 
-import argparse
 import numpy as np
 import re
 
@@ -221,7 +220,7 @@ def get_coordinates_xyz(filename, ignore_hydrogens):
             break
 
         atom = re.findall(r'[a-zA-Z]+', line)[0]
-        numbers = re.findall(r'[-]?\d+\.\d*', line)
+        numbers = re.findall(r'[-]?\d+\.\d*(?:[Ee][-\+]\d+)?', line)
         numbers = [float(number) for number in numbers]
 
         # ignore hydrogens
@@ -244,6 +243,7 @@ def get_coordinates_xyz(filename, ignore_hydrogens):
 
 
 if __name__ == "__main__":
+    import argparse
 
     description = """
 Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ or PDB format.
