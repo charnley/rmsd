@@ -2,7 +2,7 @@ Root-mean-square deviation (RMSD) of two XYZ structures.
 ====
 
 The root-mean-square deviation (RMSD) is calculated, using Kabsch algorithm (1976) for
-rotation, between two Cartesian coordinates (.xyz) files.
+rotation, between two Cartesian coordinates (.xyz) or (.pdb) files.
 
 For more information please read
 [RMSD](http://en.wikipedia.org/wiki/Root-mean-square_deviation) and
@@ -38,10 +38,15 @@ Same structure, different bondlengths
 
     ./calculate_rmsd examples/ethane.xyz examples/ethane_bond.xyz
 
+
 You can also output (stdout) `molecule1`'s coordinates centered and rotated to
 `molecule2`. Useful to visualize the difference. The output will be in XYZ format.
 
     ./calculate_rmsd --output examples/ethane.xyz examples/ethane_trans.xyz
+
+PDB file example:
+
+    ./calculate_rmsd examples/1ypa.pdb examples/3ci2.pdb -f pdb
 
 ## Help
 
@@ -49,5 +54,5 @@ Type `./calculate_rmsd --help` or look in the source file.
 
 ## Credit and Copyright
 
-Jimmy Charnley Kromann and Lars Bratholm
+Jimmy Charnley Kromann and Lars Andersen Bratholm
 
