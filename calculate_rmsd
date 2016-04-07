@@ -262,7 +262,7 @@ The script will return three RMSD values:
     parser.add_argument('structure_b', metavar='structure_b.xyz', type=str)
     parser.add_argument('-o', '--output', action='store_true', help='print out structure A, centered and rotated unto structure B\'s coordinates in XYZ format')
     parser.add_argument('-n', '--no-hydrogen', action='store_true', help='ignore hydrogens when calculating RMSD')
-    parser.add_argument('-f', '--format', action='store', help='Format of input files', default="xyz")
+    parser.add_argument('-f', '--format', action='store', help='Format of input files. Supports xyz or pdb.', default="xyz")
 
     args = parser.parse_args()
 
