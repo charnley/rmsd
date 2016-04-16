@@ -30,18 +30,17 @@ Note: some journals may require GitHub commit id.
 
 Same structure, but translated in space, so the RMSD should be zero
 
-    ./calculate_rmsd examples/ethane.xyz examples/ethane_trans.xyz
+    calculate_rmsd examples/ethane.xyz examples/ethane_trans.xyz
 
 You can also output (stdout) `molecule1`'s coordinates centered and rotated to
 `molecule2`. Useful to visualize the difference. The output will be in XYZ
 format.
 
-    ./calculate_rmsd --output examples/ethane.xyz examples/ethane_trans.xyz
+    calculate_rmsd --output examples/ethane.xyz examples/ethane_trans.xyz
 
 You can also use PDB format by using the argument `-f pdb` as seen:
 
-    ./calculate_rmsd examples/1ypa.pdb examples/3ci2.pdb -f pdb
-
+    calculate_rmsd examples/1ypa.pdb examples/3ci2.pdb -f pdb
 
 ## Problems?
 
