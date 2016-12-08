@@ -14,7 +14,7 @@ Type `calculate_rmsd --help` for all the arguments.
 
 Pretty straight forward execution, clone and run as
 
-    ./calculate_rmsd molecule1.xyz molecule2.xyz
+    calculate_rmsd molecule1.xyz molecule2.xyz
 
 If it isn't then run it with Python 2.7
 
@@ -40,11 +40,12 @@ format.
 
 You can also use PDB format by using the argument `-f pdb` as seen:
 
-    calculate_rmsd examples/1ypa.pdb examples/3ci2.pdb -f pdb
+    calculate_rmsd -f pdb examples/1ypa.pdb examples/3ci2.pdb
+
 
 ## Problems?
 
-Make an issue or do a fork an fix it yourself.
+Make a issue or fork and fix it.
 
 
 ## Credit and Copyright
