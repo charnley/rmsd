@@ -245,14 +245,23 @@ if __name__ == "__main__":
     import sys
 
     description = """
-Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ or PDB format.
-The order of the atoms *must* be the same for both structures.
+Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ
+or PDB format. The order of the atoms *must* be the same for both structures.
+
+citation:
+ - Kabsch W., 1976, A solution for the best rotation to relate two sets of
+   vectors, Acta Crystallographica, A32:922-923, doi:10.1107/S0567739476001873
+
+ - GitHub: Calculate RMSD for two XYZ structures,
+   http://github.com/charnley/rmsd
+
 """
 
     epilog = """
 The script will return three RMSD values:
 1) Normal: The RMSD calculated the straight-forward way.
-2) Kabsch: The RMSD after the two coordinate sets are translated and rotated onto each other.
+2) Kabsch: The RMSD after the two coordinate sets are translated and rotated
+onto each other.
 """
 
     parser = argparse.ArgumentParser(
