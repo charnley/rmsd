@@ -240,7 +240,9 @@ def get_coordinates_xyz(filename, ignore_hydrogens):
 
 
 if __name__ == "__main__":
+
     import argparse
+    import sys
 
     description = """
 Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ or PDB format.
@@ -263,6 +265,10 @@ The script will return three RMSD values:
     parser.add_argument('-o', '--output', action='store_true', help='print out structure A, centered and rotated unto structure B\'s coordinates in XYZ format')
     parser.add_argument('-n', '--no-hydrogen', action='store_true', help='ignore hydrogens when calculating RMSD')
     parser.add_argument('-f', '--format', action='store', help='Format of input files. Supports xyz or pdb.', default="xyz")
+
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(1)
 
     args = parser.parse_args()
 
