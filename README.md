@@ -22,7 +22,7 @@ If it isn't then run it with Python 2.7
 
 1. Kabsch algorithm: Kabsch W., 1976, A solution for the best rotation to relate two sets of vectors, Acta Crystallographica, A32:922-923, doi:[10.1107/S0567739476001873](http://dx.doi.org/10.1107/S0567739476001873)
 
-2. Quaternion algorithm: Michael W. Walker and Lejun Shao and Richard A. Volz, 1991, Estimating 3-D location parameters using dual number quaternions, CVGIP: Image Understanding, 54:358-367, doi:[10.1016/1049-9660(91)90036-o](http://dx.doi.org/1049-9660\(91\)20036-o)
+2. Quaternion algorithm: Michael W. Walker and Lejun Shao and Richard A. Volz, 1991, Estimating 3-D location parameters using dual number quaternions, CVGIP: Image Understanding, 54:358-367, doi:[10.1016/1049-9660(91)90036-o](http://dx.doi.org/1049-9660\(91\)90036-o)
 
 2. Calculate RMSD for two XYZ structures, GitHub, http://github.com/charnley/rmsd, doi: [10.5281/zenodo.46697](http://dx.doi.org/10.5281/zenodo.46697)
 
