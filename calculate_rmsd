@@ -81,6 +81,7 @@ def kabsch(P, Q):
 
     return U
 
+# based on doi:10.1016/1049-9660(91)90036-O
 def quaternion_rmsd(P, Q):
     """
     Rotate matrix P unto Q and calculate the RMSD
@@ -91,8 +92,8 @@ def quaternion_rmsd(P, Q):
 # get optimal rotation (translation will be zero when the centroids of each molecule are the same)
 def quaternion_transform(r):
     Wt_r = makeW(*r).T
-    P_r = makeP(*r)
-    rot = Wt_r.dot(P_r)[:3,:3]
+    Q_r = makeQ(*r)
+    rot = Wt_r.dot(Q_r)[:3,:3]
     return rot
 
 # matrix involved in quaternion rotation
@@ -105,15 +106,15 @@ def makeW(r1,r2,r3,r4=0):
     return W
 
 # matrix involved in quaternion rotation
-def makeP(r1,r2,r3,r4=0):
-    P = np.asarray([
+def makeQ(r1,r2,r3,r4=0):
+    Q = np.asarray([
              [r4, -r3, r2, r1],
              [r3, r4, -r1, r2],
              [-r2, r1, r4, r3],
              [-r1, -r2, -r3, r4] ])
     return P
 
-# generate matrices needed in the calculation
+# calculate the rotation
 def quaternion_rotate(X, Y):
     N = X.shape[0]
     W = np.asarray([makeW(*Y[k]) for k in range(N)])
