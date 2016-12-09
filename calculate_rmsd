@@ -297,19 +297,27 @@ Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ
 or PDB format. The order of the atoms *must* be the same for both structures.
 
 citation:
- - Kabsch W., 1976, A solution for the best rotation to relate two sets of
+
+ - Kabsch algorithm:
+   Kabsch W., 1976, A solution for the best rotation to relate two sets of
    vectors, Acta Crystallographica, A32:922-923, doi:10.1107/S0567739476001873
 
- - GitHub: Calculate RMSD for two XYZ structures,
+ - Quaternion algorithm:
+   Michael W. Walker and Lejun Shao and Richard A. Volz, 1991, Estimating 3-D
+   location parameters using dual number quaternions, CVGIP: Image Understanding,
+   54:358-367, doi: 10.1016/1049-9660(91)90036-o
+
+ - Implementation:
+   GitHub: Calculate RMSD for two XYZ structures,
    http://github.com/charnley/rmsd
 
 """
 
     epilog = """
 The script will return three RMSD values:
-1) Normal: The RMSD calculated the straight-forward way.
-2) Kabsch: The RMSD after the two coordinate sets are translated and rotated
-onto each other.
+Normal: The RMSD calculated the straight-forward way.
+Kabsch: RMSD after coordinates are translated and rotated using Kabsch.
+Quater: RMSD after coordinates are translated and rotated using quaternions.
 """
 
     parser = argparse.ArgumentParser(
@@ -351,4 +359,4 @@ onto each other.
 
     print "Normal RMSD:", normal_rmsd
     print "Kabsch RMSD:", kabsch_rmsd(P, Q)
-    print "Quaternion RMSD:", quaternion_rmsd(P, Q)
+    print "Quater RMSD:", quaternion_rmsd(P, Q)
