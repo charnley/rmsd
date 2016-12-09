@@ -308,7 +308,7 @@ citation:
    54:358-367, doi: 10.1016/1049-9660(91)90036-o
 
  - Implementation:
-   GitHub: Calculate RMSD for two XYZ structures,
+   Calculate RMSD for two XYZ structures, GitHub,
    http://github.com/charnley/rmsd
 
 """
