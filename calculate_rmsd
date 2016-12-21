@@ -191,17 +191,27 @@ def get_coordinates_pdb(filename, ignore_hydrogens):
     # Same with atoms and atom naming. The most robust way to do this is probably
     # to assume that the atomtype is given in column 3.
     atoms = []
+    count=0
+
+    # giving idx list rules out ignore_hydrogens
+    if args.remove_idx or args.add_idx: ignore_hydrogens=False
+
     with open(filename) as f:
         lines = f.readlines()
         for line in lines:
             if line.startswith("TER") or line.startswith("END"):
                 break
             if line.startswith("ATOM"):
+                count+=1
                 tokens = line.split()
                 # Try to get the atomtype
                 try:
                     atom = tokens[2][0]
-                    if ignore_hydrogens and atom == "H":
+                    if args.remove_idx and count in args.remove_idx:
+                       continue
+                    elif args.add_idx and count not in args.add_idx:
+                       continue
+                    elif ignore_hydrogens and atom == "H":
                         continue
                     elif atom in ["H", "C", "N", "O", "S", "P"]:
                         atoms.append(atom)
@@ -259,18 +269,26 @@ def get_coordinates_xyz(filename, ignore_hydrogens):
     # Skip the title line
     f.next()
 
+    # giving idx list rules out ignore_hydrogens
+    if args.remove_idx or args.add_idx: ignore_hydrogens=False
+
     # Use the number of atoms to not read beyond the end of a file
     for line in f:
 
         if lines_read == n_atoms:
             break
+        lines_read += 1
 
         atom = re.findall(r'[a-zA-Z]+', line)[0]
         numbers = re.findall(r'[-]?\d+\.\d*(?:[Ee][-\+]\d+)?', line)
         numbers = [float(number) for number in numbers]
 
-        # ignore hydrogens
-        if ignore_hydrogens and atom.lower() == "h":
+        # ignore hydrogens or selected idx atoms
+        if args.remove_idx and lines_read in args.remove_idx:
+            continue
+        elif args.add_idx and lines_read not in args.add_idx:
+            continue
+        elif ignore_hydrogens and atom.lower() == "h":
             continue
 
         # The numbers are not valid unless we obtain exacly three
@@ -280,7 +298,6 @@ def get_coordinates_xyz(filename, ignore_hydrogens):
         else:
             exit("Reading the .xyz file failed in line {0}. Please check the format.".format(lines_read + 2))
 
-        lines_read += 1
 
     f.close()
     V = np.array(V)
@@ -330,6 +347,8 @@ Quater: RMSD after coordinates are translated and rotated using quaternions.
     parser.add_argument('-o', '--output', action='store_true', help='print out structure A, centered and rotated unto structure B\'s coordinates in XYZ format')
     parser.add_argument('-n', '--no-hydrogen', action='store_true', help='ignore hydrogens when calculating RMSD')
     parser.add_argument('-f', '--format', action='store', help='Format of input files. Supports xyz or pdb.')
+    parser.add_argument('-r','--remove-idx', nargs='+', type=int, help='index list of atoms NOT to consider')
+    parser.add_argument('-a','--add-idx', nargs='+', type=int, help='index list of atoms to consider')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -359,6 +378,20 @@ Quater: RMSD after coordinates are translated and rotated using quaternions.
         V = rotate(P, Q)
         V += Qc
         write_coordinates(atomsP, V)
+
+
+        if args.no_hydrogen or args.add_idx or args.remove_idx:
+           U = kabsch(P, Q)
+           args.remove_idx=False
+           args.add_idx=False
+           atomsP2, P2 = get_coordinates(args.structure_a, args.format, False)
+           P2 -= Pc
+
+           # Rotate P2
+           P2 = np.dot(P2, U)
+           print('\n--------------- Full structure-a --------------')
+           write_coordinates(atomsP2, P2+Qc)
+
         quit()
 
     print "Normal RMSD:", normal_rmsd
