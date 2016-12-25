@@ -17,11 +17,11 @@ def kabsch_rmsd(P, Q):
     """
     Rotate matrix P unto Q and calculate the RMSD
     """
-    P = rotate(P, Q)
+    P = kabsch_rotate(P, Q)
     return rmsd(P, Q)
 
 
-def rotate(P, Q):
+def kabsch_rotate(P, Q):
     """
     Rotate matrix P unto matrix Q using Kabsch algorithm
     """
@@ -81,23 +81,33 @@ def kabsch(P, Q):
 
     return U
 
-# based on doi:10.1016/1049-9660(91)90036-O
+
 def quaternion_rmsd(P, Q):
     """
+    based on doi:10.1016/1049-9660(91)90036-O
     Rotate matrix P unto Q and calculate the RMSD
     """
-    P_rot = quaternion_rotate(P, Q)
-    return rmsd(P_rot, Q)
+    rot = quaternion_rotate(P, Q)
+    P = np.dot(P,rot)
+    return rmsd(P, Q)
 
-# get optimal rotation (translation will be zero when the centroids of each molecule are the same)
+
 def quaternion_transform(r):
+    """
+    Get optimal rotation
+    note: translation will be zero when the centroids of each molecule are the
+    same
+    """
     Wt_r = makeW(*r).T
     Q_r = makeQ(*r)
     rot = Wt_r.dot(Q_r)[:3,:3]
     return rot
 
-# matrix involved in quaternion rotation
+
 def makeW(r1,r2,r3,r4=0):
+    """
+    matrix involved in quaternion rotation
+    """
     W = np.asarray([
              [r4, r3, -r2, r1],
              [-r3, r4, r1, r2],
@@ -105,8 +115,11 @@ def makeW(r1,r2,r3,r4=0):
              [-r1, -r2, -r3, r4] ])
     return W
 
-# matrix involved in quaternion rotation
+
 def makeQ(r1,r2,r3,r4=0):
+    """
+    matrix involved in quaternion rotation
+    """
     Q = np.asarray([
              [r4, -r3, r2, r1],
              [r3, r4, -r1, r2],
@@ -114,8 +127,11 @@ def makeQ(r1,r2,r3,r4=0):
              [-r1, -r2, -r3, r4] ])
     return Q
 
-# calculate the rotation
+
 def quaternion_rotate(X, Y):
+    """
+    Calculate the rotation
+    """
     N = X.shape[0]
     W = np.asarray([makeW(*Y[k]) for k in range(N)])
     Q = np.asarray([makeQ(*X[k]) for k in range(N)])
@@ -128,7 +144,8 @@ def quaternion_rotate(X, Y):
     eigen = np.linalg.eigh(A)
     r = eigen[1][:,eigen[0].argmax()]
     rot = quaternion_transform(r)
-    return np.dot(X,rot)
+    return rot
+
 
 def centroid(X):
     """
@@ -150,32 +167,34 @@ def rmsd(V, W):
     return np.sqrt(rmsd/N)
 
 
-def write_coordinates(atoms, V):
+def write_coordinates(atoms, V, title=""):
     """
     Print coordinates V
     """
     N, D = V.shape
 
     print str(N)
-    print
+    print title
 
     for i in xrange(N):
-        line = "{0:2s} {1:15.8f} {2:15.8f} {3:15.8f}".format(atoms[i], V[i, 0], V[i, 1], V[i, 2])
+        atom = atoms[i]
+        atom = atom[0].upper() + atom[1:]
+        line = "{0:2s} {1:15.8f} {2:15.8f} {3:15.8f}".format(atom, V[i, 0], V[i, 1], V[i, 2])
         print line
 
 
-def get_coordinates(filename, fmt, ignore_hydrogens):
+def get_coordinates(filename, fmt, ignore_hydrogens=False):
     """
     Get coordinates from filename.
     """
     if fmt == "xyz":
-        return get_coordinates_xyz(filename, ignore_hydrogens)
+        return get_coordinates_xyz(filename)
     elif fmt == "pdb":
-        return get_coordinates_pdb(filename, ignore_hydrogens)
+        return get_coordinates_pdb(filename)
     exit("Could not recognize file format: {:s}".format(fmt))
 
 
-def get_coordinates_pdb(filename, ignore_hydrogens):
+def get_coordinates_pdb(filename):
     """
     Get coordinates from the first chain in a pdb file
     and return a vectorset with all the coordinates.
@@ -192,9 +211,6 @@ def get_coordinates_pdb(filename, ignore_hydrogens):
     atoms = []
     count=0
 
-    # giving idx list rules out ignore_hydrogens
-    if args.remove_idx or args.add_idx: ignore_hydrogens=False
-
     with open(filename) as f:
         lines = f.readlines()
         for line in lines:
@@ -206,13 +222,7 @@ def get_coordinates_pdb(filename, ignore_hydrogens):
                 # Try to get the atomtype
                 try:
                     atom = tokens[2][0]
-                    if args.remove_idx and count in args.remove_idx:
-                       continue
-                    elif args.add_idx and count not in args.add_idx:
-                       continue
-                    elif ignore_hydrogens and atom == "H":
-                        continue
-                    elif atom in ["H", "C", "N", "O", "S", "P"]:
+                    if atom in ["H", "C", "N", "O", "S", "P"]:
                         atoms.append(atom)
                 except:
                         exit("Error parsing atomtype for the following line: \n%s" % line)
@@ -244,7 +254,7 @@ def get_coordinates_pdb(filename, ignore_hydrogens):
     return atoms, V
 
 
-def get_coordinates_xyz(filename, ignore_hydrogens):
+def get_coordinates_xyz(filename):
     """
     Get coordinates from a filename.xyz and return a vectorset with all the
     coordinates.
@@ -252,10 +262,12 @@ def get_coordinates_xyz(filename, ignore_hydrogens):
     This function has been written to parse XYZ files, but can easily be
     written to parse others.
     """
+
     f = open(filename, 'r')
     V = []
     atoms = []
     n_atoms = 0
+    # TODO use enumerate istead
     lines_read = 0
 
     # Read the first line to obtain the number of atoms to read
@@ -278,16 +290,10 @@ def get_coordinates_xyz(filename, ignore_hydrogens):
         lines_read += 1
 
         atom = re.findall(r'[a-zA-Z]+', line)[0]
+        atom = atom.lower()
+
         numbers = re.findall(r'[-]?\d+\.\d*(?:[Ee][-\+]\d+)?', line)
         numbers = [float(number) for number in numbers]
-
-        # ignore hydrogens or selected idx atoms
-        if args.remove_idx and lines_read in args.remove_idx:
-            continue
-        elif args.add_idx and lines_read not in args.add_idx:
-            continue
-        elif ignore_hydrogens and atom.lower() == "h":
-            continue
 
         # The numbers are not valid unless we obtain exacly three
         if len(numbers) == 3:
@@ -296,8 +302,8 @@ def get_coordinates_xyz(filename, ignore_hydrogens):
         else:
             exit("Reading the .xyz file failed in line {0}. Please check the format.".format(lines_read + 2))
 
-
     f.close()
+    atoms = np.array(atoms)
     V = np.array(V)
     return atoms, V
 
@@ -357,8 +363,32 @@ Quater: RMSD after coordinates are translated and rotated using quaternions.
     if args.format == None:
         args.format = args.structure_a.split('.')[-1]
 
-    atomsP, P = get_coordinates(args.structure_a, args.format, args.no_hydrogen)
-    atomsQ, Q = get_coordinates(args.structure_b, args.format, args.no_hydrogen)
+    p_atoms, p_all = get_coordinates(args.structure_a, args.format)
+    q_atoms, q_all = get_coordinates(args.structure_b, args.format)
+
+    if np.count_nonzero(p_atoms != q_atoms):
+        exit("Atoms not in the same order")
+
+    P = p_all
+    Q = q_all
+
+    if args.no_hydrogen:
+        not_hydrogens = np.where(p_atoms != 'h')
+        P = p_all[not_hydrogens]
+        Q = q_all[not_hydrogens]
+
+    elif args.remove_idx:
+        N, = p_atoms.shape
+        index = range(N)
+        index = set(index) - set(args.remove_idx)
+        index = list(index)
+        P = p_all[index]
+        Q = q_all[index]
+
+    elif args.add_idx:
+        U = p_all[args.add_idx]
+        Q = q_all[args.add_idx]
+
 
     # Calculate 'dumb' RMSD
     normal_rmsd = rmsd(P, Q)
@@ -372,23 +402,10 @@ Quater: RMSD after coordinates are translated and rotated using quaternions.
     Q -= Qc
 
     if args.output:
-        V = rotate(P, Q)
-        V += Qc
-        write_coordinates(atomsP, V)
-
-
-        if args.no_hydrogen or args.add_idx or args.remove_idx:
-           U = kabsch(P, Q)
-           args.remove_idx=False
-           args.add_idx=False
-           atomsP2, P2 = get_coordinates(args.structure_a, args.format, False)
-           P2 -= Pc
-
-           # Rotate P2
-           P2 = np.dot(P2, U)
-           print('\n--------------- Full structure-a --------------')
-           write_coordinates(atomsP2, P2+Qc)
-
+        U = kabsch(P, Q)
+        p_all -= Pc
+        p_all = np.dot(p_all, U)
+        write_coordinates(p_atoms, p_all, title="{} translated".format(args.structure_a))
         quit()
 
     print "Normal RMSD:", normal_rmsd
