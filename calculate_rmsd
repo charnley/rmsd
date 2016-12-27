@@ -183,7 +183,7 @@ def write_coordinates(atoms, V, title=""):
         print line
 
 
-def get_coordinates(filename, fmt, ignore_hydrogens=False):
+def get_coordinates(filename, fmt):
     """
     Get coordinates from filename.
     """
@@ -209,7 +209,6 @@ def get_coordinates_pdb(filename):
     # Same with atoms and atom naming. The most robust way to do this is probably
     # to assume that the atomtype is given in column 3.
     atoms = []
-    count=0
 
     with open(filename) as f:
         lines = f.readlines()
@@ -217,13 +216,19 @@ def get_coordinates_pdb(filename):
             if line.startswith("TER") or line.startswith("END"):
                 break
             if line.startswith("ATOM"):
-                count+=1
                 tokens = line.split()
                 # Try to get the atomtype
                 try:
                     atom = tokens[2][0]
                     if atom in ["H", "C", "N", "O", "S", "P"]:
                         atoms.append(atom)
+                    else:
+                        # e.g. 1HD1
+                        atom = tokens[2][1]
+                        if atom == "H":
+                            atoms.append(atom)
+                        else:
+                            raise Exception
                 except:
                         exit("Error parsing atomtype for the following line: \n%s" % line)
 
@@ -251,6 +256,8 @@ def get_coordinates_pdb(filename):
 
 
     V = np.asarray(V)
+    atoms = np.asarray(atoms)
+    assert(V.shape[0] == atoms.size)
     return atoms, V
 
 
@@ -279,9 +286,6 @@ def get_coordinates_xyz(filename):
     # Skip the title line
     f.next()
 
-    # giving idx list rules out ignore_hydrogens
-    if args.remove_idx or args.add_idx: ignore_hydrogens=False
-
     # Use the number of atoms to not read beyond the end of a file
     for line in f:
 
@@ -290,7 +294,7 @@ def get_coordinates_xyz(filename):
         lines_read += 1
 
         atom = re.findall(r'[a-zA-Z]+', line)[0]
-        atom = atom.lower()
+        atom = atom.upper()
 
         numbers = re.findall(r'[-]?\d+\.\d*(?:[Ee][-\+]\d+)?', line)
         numbers = [float(number) for number in numbers]
@@ -373,7 +377,7 @@ Quater: RMSD after coordinates are translated and rotated using quaternions.
     Q = q_all
 
     if args.no_hydrogen:
-        not_hydrogens = np.where(p_atoms != 'h')
+        not_hydrogens = np.where(p_atoms != 'H')
         P = p_all[not_hydrogens]
         Q = q_all[not_hydrogens]
 
