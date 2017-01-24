@@ -390,7 +390,7 @@ Quater: RMSD after coordinates are translated and rotated using quaternions.
         Q = q_all[index]
 
     elif args.add_idx:
-        U = p_all[args.add_idx]
+        P = p_all[args.add_idx]
         Q = q_all[args.add_idx]
 
 
