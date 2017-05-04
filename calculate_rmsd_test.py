@@ -3,7 +3,7 @@
 """
 Perform some test of the calculate_rmsd function
 Needs to be expanded
-by: Maximilian Peters (peters.maximilian@gmail.com)
+by: Maximilian Peters (lastNameDotFirstNameATgmail)
 project: https://github.com/charnley/rmsd
 license: https://github.com/charnley/rmsd/blob/master/LICENSE
 
