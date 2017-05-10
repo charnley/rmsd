@@ -12,6 +12,11 @@ license: https://github.com/charnley/rmsd/blob/master/LICENSE
 import numpy as np
 import re
 
+#enable Python2/3 compatability
+try:
+    xrange(1)
+except:
+    from builtins import range as xrange
 
 def kabsch_rmsd(P, Q):
     """
@@ -88,7 +93,7 @@ def quaternion_rmsd(P, Q):
     Rotate matrix P unto Q and calculate the RMSD
     """
     rot = quaternion_rotate(P, Q)
-    P = np.dot(P,rot)
+    P = np.dot(P, rot)
     return rmsd(P, Q)
 
 
@@ -135,12 +140,12 @@ def quaternion_rotate(X, Y):
     N = X.shape[0]
     W = np.asarray([makeW(*Y[k]) for k in range(N)])
     Q = np.asarray([makeQ(*X[k]) for k in range(N)])
-    Qt_dot_W = np.asarray([np.dot(Q[k].T,W[k]) for k in range(N)])
+    Qt_dot_W = np.asarray([np.dot(Q[k].T, W[k]) for k in range(N)])
     W_minus_Q = np.asarray([W[k] - Q[k] for k in range(N)])
-    C1 = -np.sum(Qt_dot_W,axis=0)
-    C2 = 0.5*N
-    C3 = np.sum(W_minus_Q,axis=0)
-    A = np.dot(C3.T,C3)*C2-C1
+    C1 = -np.sum(Qt_dot_W, axis=0)
+    C2 = 0.5 * N
+    C3 = np.sum(W_minus_Q, axis=0)
+    A = np.dot(C3.T, C3) * C2 - C1
     eigen = np.linalg.eigh(A)
     r = eigen[1][:,eigen[0].argmax()]
     rot = quaternion_transform(r)
@@ -163,7 +168,7 @@ def rmsd(V, W):
     N = len(V)
     rmsd = 0.0
     for v, w in zip(V, W):
-        rmsd += sum([(v[i]-w[i])**2.0 for i in range(D)])
+        rmsd += sum([(v[i] - w[i])**2.0 for i in range(D)])
     return np.sqrt(rmsd/N)
 
 
@@ -173,14 +178,13 @@ def write_coordinates(atoms, V, title=""):
     """
     N, D = V.shape
 
-    print str(N)
-    print title
+    print(str(N))
+    print(title)
 
     for i in xrange(N):
         atom = atoms[i]
         atom = atom[0].upper() + atom[1:]
-        line = "{0:2s} {1:15.8f} {2:15.8f} {3:15.8f}".format(atom, V[i, 0], V[i, 1], V[i, 2])
-        print line
+        print("{0:2s} {1:15.8f} {2:15.8f} {3:15.8f}".format(atom, V[i, 0], V[i, 1], V[i, 2]))
 
 
 def get_coordinates(filename, fmt):
@@ -205,12 +209,12 @@ def get_coordinates_pdb(filename):
     # Since the format doesn't require a space between columns, we use the above
     # column indices as a fallback.
     x_column = None
-    V = []
+    V = list()
     # Same with atoms and atom naming. The most robust way to do this is probably
     # to assume that the atomtype is given in column 3.
-    atoms = []
+    atoms = list()
 
-    with open(filename) as f:
+    with open(filename, 'r') as f:
         lines = f.readlines()
         for line in lines:
             if line.startswith("TER") or line.startswith("END"):
@@ -220,7 +224,7 @@ def get_coordinates_pdb(filename):
                 # Try to get the atomtype
                 try:
                     atom = tokens[2][0]
-                    if atom in ["H", "C", "N", "O", "S", "P"]:
+                    if atom in ("H", "C", "N", "O", "S", "P"):
                         atoms.append(atom)
                     else:
                         # e.g. 1HD1
@@ -230,29 +234,29 @@ def get_coordinates_pdb(filename):
                         else:
                             raise Exception
                 except:
-                        exit("Error parsing atomtype for the following line: \n%s" % line)
+                        exit("Error parsing atomtype for the following line: \n{0:s}".format(line))
 
                 if x_column == None:
                     try:
                         # look for x column
                         for i, x in enumerate(tokens):
-                            if "." in x and "." in tokens[i+1] and "." in tokens[i+2]:
+                            if "." in x and "." in tokens[i + 1] and "." in tokens[i + 2]:
                                 x_column = i
                                 break
                     except IndexError:
-                        exit("Error parsing coordinates for the following line: \n%s" % line)
+                        exit("Error parsing coordinates for the following line: \n{0:s}".format(line))
                 # Try to read the coordinates
                 try:
-                    V.append(np.asarray(tokens[x_column:x_column+3],dtype=float))
+                    V.append(np.asarray(tokens[x_column:x_column + 3], dtype=float))
                 except:
                     # If that doesn't work, use hardcoded indices
                     try:
                         x = line[30:38]
                         y = line[38:46]
                         z = line[46:54]
-                        V.append(np.asarray([x,y,z],dtype=float))
+                        V.append(np.asarray([x, y ,z], dtype=float))
                     except:
-                        exit("Error parsing input for the following line: \n%s" % line)
+                        exit("Error parsing input for the following line: \n{0:s}".format(line))
 
 
     V = np.asarray(V)
@@ -271,27 +275,24 @@ def get_coordinates_xyz(filename):
     """
 
     f = open(filename, 'r')
-    V = []
-    atoms = []
+    V = list()
+    atoms = list()
     n_atoms = 0
-    # TODO use enumerate istead
-    lines_read = 0
 
     # Read the first line to obtain the number of atoms to read
     try:
-        n_atoms = int(f.next())
+        n_atoms = int(f.readline())
     except ValueError:
         exit("Could not obtain the number of atoms in the .xyz file.")
 
     # Skip the title line
-    f.next()
+    f.readline()
 
     # Use the number of atoms to not read beyond the end of a file
-    for line in f:
+    for lines_read, line in enumerate(f):
 
         if lines_read == n_atoms:
             break
-        lines_read += 1
 
         atom = re.findall(r'[a-zA-Z]+', line)[0]
         atom = atom.upper()
@@ -412,6 +413,6 @@ Quater: RMSD after coordinates are translated and rotated using quaternions.
         write_coordinates(p_atoms, p_all, title="{} translated".format(args.structure_a))
         quit()
 
-    print "Normal RMSD:", normal_rmsd
-    print "Kabsch RMSD:", kabsch_rmsd(P, Q)
-    print "Quater RMSD:", quaternion_rmsd(P, Q)
+    print("Normal RMSD: {0}".format(normal_rmsd))
+    print("Kabsch RMSD: {0}".format(kabsch_rmsd(P, Q)))
+    print("Quater RMSD: {0}".format(quaternion_rmsd(P, Q)))
