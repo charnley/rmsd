@@ -6,23 +6,25 @@ except ImportError:
 
 try:
     import pypandoc
-    long_description = pypandoc.convert('README.md', 'rst',
-                                        format='markdown_github',
-                                        extra_args=("--no-wrap",))
+    long_description = pypandoc.convert('README.rst', 'rst')
 except:
     long_description = ''
 
 print long_description
 
+quit()
+
+short_description = 'Calculate RMSD using rotation algorithms between two molecules'
+
 setup(name='rmsd',
       version='1.2.0',
       maintainer='Jimmy Kromann',
       maintainer_email='jimmy@charnley.dk',
-      description='Calculate RMSD between two XYZ/PDB molecules',
+      description=short_description,
       long_description=long_description,
       url='https://github.com/charnley/rmsd',
       license='BSD-2-Clause',
-      scripts=['calculate_rmsd.py'],
+      packages=['rmsd'],
       install_requires=[
           'argparse',
           'numpy',
