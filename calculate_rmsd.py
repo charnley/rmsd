@@ -320,43 +320,53 @@ if __name__ == "__main__":
 
     description = """
 Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ
-or PDB format. The order of the atoms *must* be the same for both structures.
-
-citation:
- - Kabsch algorithm:
-   Kabsch W., 1976, A solution for the best rotation to relate two sets of
-   vectors, Acta Crystallographica, A32:922-923, doi:10.1107/S0567739476001873
-
- - Quaternion algorithm:
-   Michael W. Walker and Lejun Shao and Richard A. Volz, 1991, Estimating 3-D
-   location parameters using dual number quaternions, CVGIP: Image
-   Understanding, 54:358-367, doi: 10.1016/1049-9660(91)90036-o
-
- - Implementation:
-   Calculate RMSD for two XYZ structures, GitHub,
-   http://github.com/charnley/rmsd
-
+or PDB format, using transformation and rotation. The order of the atoms *must*
+be the same for both structures.
 """
 
     epilog = """
-The script will return three RMSD values:
-Normal: The RMSD calculated the straight-forward way.
-Kabsch: RMSD after coordinates are translated and rotated using Kabsch.
-Quater: RMSD after coordinates are translated and rotated using quaternions.
+license:
+  https://github.com/charnley/rmsd/blob/master/LICENSE
+
+citation:
+  Kabsch algorithm:
+    Kabsch W., 1976, A solution for the best rotation to relate two sets of
+    vectors, Acta Crystallographica, A32:922-923, doi:10.1107/S0567739476001873
+
+  Quaternion algorithm:
+    Michael W. Walker and Lejun Shao and Richard A. Volz, 1991, Estimating 3-D
+    location parameters using dual number quaternions, CVGIP: Image
+    Understanding, 54:358-367, doi: 10.1016/1049-9660(91)90036-o
+
+  Implementation:
+    Calculate RMSD for two XYZ structures, GitHub,
+    http://github.com/charnley/rmsd
+
+output:
+  Normal - RMSD calculated the straight-forward way, no translation or rotation.
+  Kabsch - RMSD after coordinates are translated and rotated using Kabsch.
+  Quater - RMSD after coordinates are translated and rotated using quaternions.
 """
 
     parser = argparse.ArgumentParser(
+                    usage='%(prog)s [options] structure_a structure_b',
                     description=description,
                     formatter_class=argparse.RawDescriptionHelpFormatter,
                     epilog=epilog)
 
-    parser.add_argument('structure_a', metavar='structure_a.xyz', type=str)
-    parser.add_argument('structure_b', metavar='structure_b.xyz', type=str)
+    parser.add_argument('structure_a', metavar='structure_a', type=str, help='Structure in .xyz or .pdb format')
+    parser.add_argument('structure_b', metavar='structure_b', type=str)
     parser.add_argument('-o', '--output', action='store_true', help='print out structure A, centered and rotated unto structure B\'s coordinates in XYZ format')
+    parser.add_argument('-f', '--format', action='store', help='Format of input files (XYZ, PDB)')
+
+    parser.add_argument('-m', '--normal', action='store_true', help='Use no transformation')
+    parser.add_argument('-k', '--kabsch', action='store_true', help='Use Kabsch algorithm for transformation')
+    parser.add_argument('-q', '--quater', action='store_true', help='Use Quaternion algorithm for transformation')
+
     parser.add_argument('-n', '--no-hydrogen', action='store_true', help='ignore hydrogens when calculating RMSD')
-    parser.add_argument('-f', '--format', action='store', help='Format of input files. Supports xyz or pdb.')
     parser.add_argument('-r', '--remove-idx', nargs='+', type=int, help='index list of atoms NOT to consider')
     parser.add_argument('-a', '--add-idx', nargs='+', type=int, help='index list of atoms to consider')
+
 
     if len(sys.argv) == 1:
         parser.print_help()
