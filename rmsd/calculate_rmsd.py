@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 """
-Calculate RMSD between two XYZ files
+Calculate the root-mean-square deviation (RMSD)  between two Cartesian
+coordinates (.xyz) or (.pdb) files, using different rotation schemes.
 
 by: Jimmy Charnley Kromann <jimmy@charnley.dk> and Lars Andersen Bratholm <larsbratholm@gmail.com>
 project: https://github.com/charnley/rmsd
@@ -357,15 +358,15 @@ output:
     parser.add_argument('structure_a', metavar='structure_a', type=str, help='Structure in .xyz or .pdb format')
     parser.add_argument('structure_b', metavar='structure_b', type=str)
     parser.add_argument('-o', '--output', action='store_true', help='print out structure A, centered and rotated unto structure B\'s coordinates in XYZ format')
-    parser.add_argument('-f', '--format', action='store', help='Format of input files (XYZ, PDB)')
+    parser.add_argument('-f', '--format', action='store', help='Format of input files. Valid format are XYZ and PDB', metavar='<format>')
 
     parser.add_argument('-m', '--normal', action='store_true', help='Use no transformation')
     parser.add_argument('-k', '--kabsch', action='store_true', help='Use Kabsch algorithm for transformation')
     parser.add_argument('-q', '--quater', action='store_true', help='Use Quaternion algorithm for transformation')
 
     parser.add_argument('-n', '--no-hydrogen', action='store_true', help='ignore hydrogens when calculating RMSD')
-    parser.add_argument('-r', '--remove-idx', nargs='+', type=int, help='index list of atoms NOT to consider')
-    parser.add_argument('-a', '--add-idx', nargs='+', type=int, help='index list of atoms to consider')
+    parser.add_argument('-r', '--remove-idx', nargs='+', type=int, help='index list of atoms NOT to consider', metavar='idx')
+    parser.add_argument('-a', '--add-idx', nargs='+', type=int, help='index list of atoms to consider', metavar='idx')
 
 
     if len(sys.argv) == 1:
