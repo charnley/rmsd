@@ -14,10 +14,8 @@ import numpy as np
 import re
 
 #enable Python2/3 compatability
-try:
-    xrange(1)
-except:
-    from builtins import range as xrange
+from builtins import range
+
 
 def kabsch_rmsd(P, Q):
     """
@@ -182,7 +180,7 @@ def write_coordinates(atoms, V, title=""):
     print(str(N))
     print(title)
 
-    for i in xrange(N):
+    for i in range(N):
         atom = atoms[i]
         atom = atom[0].upper() + atom[1:]
         print("{0:2s} {1:15.8f} {2:15.8f} {3:15.8f}".format(atom, V[i, 0], V[i, 1], V[i, 2]))
@@ -323,6 +321,8 @@ def main():
 Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ
 or PDB format, using transformation and rotation. The order of the atoms *must*
 be the same for both structures.
+
+Read more at https://github.com/charnley/rmsd
 """
 
     epilog = """
