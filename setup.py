@@ -1,20 +1,19 @@
 #!/usr/bin/env python
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
 
-try:
-    import pypandoc
-    long_description = pypandoc.convert('README.rst', 'rst')
-except:
-    long_description = ''
+import setuptools
+from setuptools import setup
 
-print long_description
+# To use a consistent encoding
+from codecs import open
+from os import path
 
-quit()
+here = path.abspath(path.dirname(__file__))
 
-short_description = 'Calculate RMSD using rotation algorithms between two molecules'
+# Get the long description from the README file
+with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+    long_description = f.read()
+
+short_description = 'Calculate RMSD using, translation and rotation, between molecules'
 
 setup(name='rmsd',
       version='1.2.0',
@@ -24,13 +23,13 @@ setup(name='rmsd',
       long_description=long_description,
       url='https://github.com/charnley/rmsd',
       license='BSD-2-Clause',
-      packages=['rmsd'],
       install_requires=[
           'argparse',
           'numpy',
-          're'
       ],
-      extras_require={
+      packages=['rmsd'],
+      entry_points={
+          'console_scripts': ['calculate_rmsd=rmsd.calculate_rmsd:main']
       },
       classifiers=[
           "Development Status :: 5 - Production/Stable",
@@ -40,5 +39,4 @@ setup(name='rmsd',
           "Programming Language :: Python :: 3",
           "Programming Language :: Python :: 2.7"
       ])
-
 
