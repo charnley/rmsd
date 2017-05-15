@@ -102,8 +102,3 @@ Problems?
 
 Submit issues on GitHub or submit pull requests.
 
-Credit and Copyright
---------------------
-
-Jimmy Charnley Kromann and Lars Andersen Bratholm
-
