@@ -16,7 +16,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 short_description = 'Calculate RMSD using, translation and rotation, between molecules'
 
 setup(name='rmsd',
-      version='1.2.0',
+      version='1.2.2',
       maintainer='Jimmy Kromann',
       maintainer_email='jimmy@charnley.dk',
       description=short_description,
@@ -24,7 +24,6 @@ setup(name='rmsd',
       url='https://github.com/charnley/rmsd',
       license='BSD-2-Clause',
       install_requires=[
-          'argparse',
           'numpy',
       ],
       packages=['rmsd'],
@@ -35,7 +34,7 @@ setup(name='rmsd',
           "Development Status :: 5 - Production/Stable",
           "Environment :: Console",
           "Intended Audience :: End Users/Desktop",
-          "License :: OSI Approved :: BSD-2-Clause",
+          "License :: OSI Approved :: BSD License",
           "Programming Language :: Python :: 3",
           "Programming Language :: Python :: 2.7"
       ])
