@@ -13,10 +13,10 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
-short_description = 'Calculate RMSD using, translation and rotation, between molecules'
+short_description = 'Calculate root-mean-square deviation (RMSD), using Kabsch or Quaternion algorithm for rotation, between two Cartesian coordinates in .xyz or .pdb format, resulting in the minimal RMSD.'
 
 setup(name='rmsd',
-      version='1.2.2',
+      version='1.2.3',
       maintainer='Jimmy Kromann',
       maintainer_email='jimmy@charnley.dk',
       description=short_description,
