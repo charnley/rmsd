@@ -314,7 +314,7 @@ def get_coordinates_xyz(filename):
     return atoms, V
 
 
-if __name__ == "__main__":
+def main():
 
     import argparse
     import sys
@@ -427,3 +427,7 @@ output:
     print("Normal RMSD: {0}".format(normal_rmsd))
     print("Kabsch RMSD: {0}".format(kabsch_rmsd(P, Q)))
     print("Quater RMSD: {0}".format(quaternion_rmsd(P, Q)))
+
+
+if __name__ == "__main__":
+    main()
