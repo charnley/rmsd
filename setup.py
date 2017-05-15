@@ -7,6 +7,10 @@ from setuptools import setup
 from codecs import open
 from os import path
 
+# import version
+from rmsd.calculate_rmsd import __version__
+
+# Find the absolute path
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
@@ -16,7 +20,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 short_description = 'Calculate root-mean-square deviation (RMSD), using Kabsch or Quaternion algorithm for rotation, between two Cartesian coordinates in .xyz or .pdb format, resulting in the minimal RMSD.'
 
 setup(name='rmsd',
-      version='1.2.3',
+      version=__version__,
       maintainer='Jimmy Kromann',
       maintainer_email='jimmy@charnley.dk',
       description=short_description,

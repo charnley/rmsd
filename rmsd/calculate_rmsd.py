@@ -16,6 +16,8 @@ import re
 #enable Python2/3 compatability
 from builtins import range
 
+__version__ = '1.2.3'
+
 
 def kabsch_rmsd(P, Q):
     """
@@ -354,6 +356,8 @@ output:
                     description=description,
                     formatter_class=argparse.RawDescriptionHelpFormatter,
                     epilog=epilog)
+
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
 
     parser.add_argument('structure_a', metavar='structure_a', type=str, help='Structure in .xyz or .pdb format')
     parser.add_argument('structure_b', metavar='structure_b', type=str)
