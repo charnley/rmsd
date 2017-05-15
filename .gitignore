@@ -1,5 +1,8 @@
 *.py[cod]
 
+# setup.py output
+files.txt
+
 # C extensions
 *.so
 
