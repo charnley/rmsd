@@ -4,8 +4,7 @@ Calculate Root-mean-square deviation (RMSD) of Two Molecules Using Rotation
 
 The root-mean-square deviation (RMSD) is calculated, using Kabsch algorithm
 (1976) or Quaternion algorithm (1991) for rotation, between two Cartesian
-coordinates in either ``.xyz`` or ``.pdb`` format, resulting in the prober
-minimal RMSD.
+coordinates in either ``.xyz`` or ``.pdb`` format, resulting in the minimal RMSD.
 
 For more information please read RMSD_ and `Kabsch algorithm`_.
 
