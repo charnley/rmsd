@@ -21,18 +21,21 @@ From PyPI
 
 .. code-block:: bash
 
-    $ pip install rmsd
+    pip install rmsd
 
 
 Download Python file
 ~~~~~~~~~~~~~~~~~~~~
 
-You can also just download the Python file, put it in your bin folder and make it executable.
+There is only one Python file, so you can also download that and put it in your bin folder.
 
 .. code-block:: bash
 
-    $ wget -O calculate_rmsd https://raw.githubusercontent.com/charnley/rmsd/master/calculate_rmsd.py
-    $ chmod +x calculate_rmsd
+    wget -O calculate_rmsd https://raw.githubusercontent.com/charnley/rmsd/master/calculate_rmsd.py
+
+If you want to use it as a python package, then clone it the down and
+copy-paste the rmsd folder to the directory you need.
+
 
 Usage
 -----
@@ -43,32 +46,32 @@ Pretty straight forward execution, clone and run as
 
 .. code-block:: bash
 
-    $ calculate_rmsd molecule1.xyz molecule2.xyz
+    calculate_rmsd molecule1.xyz molecule2.xyz
 
 or
 
 .. code-block:: bash
 
-    $ calculate_rmsd protein.pdb protein.pdb
+    calculate_rmsd protein.pdb protein.pdb
 
 
 Citation
 --------
 
-    - **Kabsch algorithm**:
-      Kabsch W., 1976,
-      A solution for the best rotation to relate two sets of vectors,
-      Acta Crystallographica, A32:922-923,
-      doi: http://dx.doi.org/10.1107/S0567739476001873
+- **Kabsch algorithm**:
+    Kabsch W., 1976,
+    A solution for the best rotation to relate two sets of vectors,
+    Acta Crystallographica, A32:922-923,
+    doi: http://dx.doi.org/10.1107/S0567739476001873
 
-    - **Quaternion algorithm**:
-      Michael W. Walker and Lejun Shao and Richard A. Volz, 1991,
-      Estimating 3-D location parameters using dual number quaternions, CVGIP: Image Understanding, 54:358-367,
-      doi: http://dx.doi.org/10.1016/1049-9660(91)90036-o
+- **Quaternion algorithm**:
+    Michael W. Walker and Lejun Shao and Richard A. Volz, 1991,
+    Estimating 3-D location parameters using dual number quaternions, CVGIP: Image Understanding, 54:358-367,
+    doi: http://dx.doi.org/10.1016/1049-9660(91)90036-o
 
-    - **Implementation**:
-      Calculate RMSD for two XYZ structures, GitHub,
-      http://github.com/charnley/rmsd, <commit hash or version number>
+- **Implementation**:
+    Calculate RMSD for two XYZ structures, GitHub,
+    http://github.com/charnley/rmsd, <commit hash or version number>
 
 Please remmeber to cite this implementation when using it for scientific publications.
 
