@@ -13,10 +13,7 @@ license: https://github.com/charnley/rmsd/blob/master/LICENSE
 import numpy as np
 import re
 
-#enable Python2/3 compatability
-from builtins import range
-
-__version__ = '1.2.3'
+__version__ = '1.2.4'
 
 
 def kabsch_rmsd(P, Q):

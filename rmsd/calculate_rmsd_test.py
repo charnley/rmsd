@@ -39,8 +39,8 @@ def test_xyz(threshold=0.001):
     :return: True if all test passed 
     """
 
-    p_atoms, P = calculate_rmsd.get_coordinates('examples/ethane.xyz', 'xyz')
-    q_atoms, Q = calculate_rmsd.get_coordinates('examples/ethane.xyz', 'xyz')
+    p_atoms, P = calculate_rmsd.get_coordinates('../examples/ethane.xyz', 'xyz')
+    q_atoms, Q = calculate_rmsd.get_coordinates('../examples/ethane.xyz', 'xyz')
 
     n_rmsd = calculate_rmsd.rmsd(P, Q)
     Pc = calculate_rmsd.centroid(P)
@@ -70,8 +70,8 @@ def test_pdb(threshold=0.001):
     A simple test for the PDB functionality
     :return: True if all test passed
     """
-    p_atoms, P = calculate_rmsd.get_coordinates('examples/ci2_1.pdb', 'pdb')
-    q_atoms, Q = calculate_rmsd.get_coordinates('examples/ci2_2.pdb', 'pdb')
+    p_atoms, P = calculate_rmsd.get_coordinates('../examples/ci2_1.pdb', 'pdb')
+    q_atoms, Q = calculate_rmsd.get_coordinates('../examples/ci2_2.pdb', 'pdb')
 
     n_rmsd = calculate_rmsd.rmsd(P, Q)
     Pc = calculate_rmsd.centroid(P)
