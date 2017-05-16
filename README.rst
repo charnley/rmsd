@@ -28,8 +28,8 @@ bin folder.
     wget -O calculate_rmsd https://raw.githubusercontent.com/charnley/rmsd/master/calculate_rmsd.py
     chmod +x calculate_rmsd
 
-If you want to use it as a python package, then clone it the down and
-copy-paste the rmsd folder to the directory you need.
+If you want to use it as a Python module, then clone it the and copy-paste the
+rmsd folder to the directory you need.
 
 
 Usage
