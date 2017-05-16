@@ -11,26 +11,22 @@ For more information please read RMSD_ and `Kabsch algorithm`_.
 .. _RMSD: http://en.wikipedia.org/wiki/Root-mean-square_deviation
 .. _Kabsch algorithm: http://en.wikipedia.org/wiki/Kabsch_algorithm
 
+
 Installation
 ------------
-
-From PyPI
-~~~~~~~~~
-
 
 .. code-block:: bash
 
     pip install rmsd
 
-
-Download Python file
-~~~~~~~~~~~~~~~~~~~~
-
-There is only one Python file, so you can also download that and put it in your bin folder.
+There is only one Python file, so you can also download that and put it in your
+bin folder.
 
 .. code-block:: bash
 
+    cd ~/bin
     wget -O calculate_rmsd https://raw.githubusercontent.com/charnley/rmsd/master/calculate_rmsd.py
+    chmod +x calculate_rmsd
 
 If you want to use it as a python package, then clone it the down and
 copy-paste the rmsd folder to the directory you need.
@@ -72,7 +68,8 @@ Citation
     Calculate RMSD for two XYZ structures, GitHub,
     http://github.com/charnley/rmsd, <commit hash or version number>
 
-Please remmeber to cite this implementation when using it for scientific publications.
+Please cite this project when using it for scientific publications.
+
 
 More usage examples
 -------------------
@@ -97,8 +94,9 @@ You can also use PDB format by using the argument `-f pdb` as seen:
 
     calculate_rmsd -f pdb examples/ci2_1.pdb examples/ci2_2.pdb
 
+
 Problems?
 ---------
 
-Submit issues on GitHub or submit pull requests.
+Submit issues or pull requests on GitHub.
 
