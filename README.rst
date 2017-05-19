@@ -49,6 +49,25 @@ or
 
     calculate_rmsd protein.pdb protein.pdb
 
+It is also possible to use this as a library in other scripts:
+
+.. code-block:: python
+
+    import rmsd
+    import numpy as np
+    P = np.array([[-0.9835 ,  1.8109 , -0.0314 ],
+           [ 0.1268 ,  1.8041 , -0.03242],
+           [-1.4899 ,  3.2274 ,  0.18102],
+           [-1.3504 ,  1.1535 ,  0.78475]])
+
+    Q = np.array([[-2.1217 ,  4.0933 ,  0.12713],
+           [-1.0113 ,  4.0865 ,  0.12611],
+           [-2.628  ,  5.5097 ,  0.33955],
+           [-2.4885 ,  3.4358 ,  0.94328]])
+    print "RMSD before translation: ", rmsd.kabsch_rmsd(P, Q)
+    P -= rmsd.centroid(P)
+    Q -= rmsd.centroid(Q)
+    print "RMSD after translation: ", rmsd.kabsch_rmsd(P, Q)
 
 Citation
 --------
@@ -99,4 +118,3 @@ Problems?
 ---------
 
 Submit issues or pull requests on GitHub.
-
