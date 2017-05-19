@@ -36,20 +36,24 @@ Usage
 -----
 
 Type ``calculate_rmsd --help`` for all the arguments.
-
-Pretty straight forward execution, clone and run as
-
-.. code-block:: bash
-
-    calculate_rmsd molecule1.xyz molecule2.xyz
-
-or
+Usage is pretty straight forward, call ``calculate_rmsd`` with two structures
+in either ``.xyz`` or ``.pdb``. In this example Ethane has the exact same structure,
+but is translated in space, so the RMSD should be zero.
 
 .. code-block:: bash
 
-    calculate_rmsd protein.pdb protein.pdb
+    calculate_rmsd examples/ethane.xyz examples/ethane_translate.xyz
 
-It is also possible to use this as a library in other scripts:
+It is also possible to ignore all Hydrogens (useful for larger molecules where
+Hydrogens move around indistinguishable) and output the rotated structure for
+visual comparison. The output will be in XYZ format.
+
+.. code-block:: bash
+
+    calculate_rmsd --no-hydrogen --output examples/ethane.xyz examples/ethane_mini.xyz
+
+
+It is also possible to use RMSD as a library in other scripts:
 
 .. code-block:: python
 
@@ -68,6 +72,7 @@ It is also possible to use this as a library in other scripts:
     P -= rmsd.centroid(P)
     Q -= rmsd.centroid(Q)
     print "RMSD after translation: ", rmsd.kabsch_rmsd(P, Q)
+
 
 Citation
 --------
@@ -88,30 +93,6 @@ Citation
     http://github.com/charnley/rmsd, <commit hash or version number>
 
 Please cite this project when using it for scientific publications.
-
-
-More usage examples
--------------------
-
-Same structure, but translated in space, so the RMSD should be zero
-
-.. code-block:: bash
-
-    calculate_rmsd examples/ethane.xyz examples/ethane_translate.xyz
-
-You can also output (stdout) ``molecule1``'s coordinates centered and rotated to
-``molecule2``. Useful to visualize the difference. The output will be in XYZ
-format.
-
-.. code-block:: bash
-
-    calculate_rmsd --output examples/ethane.xyz examples/ethane_translate.xyz
-
-You can also use PDB format by using the argument `-f pdb` as seen:
-
-.. code-block:: bash
-
-    calculate_rmsd -f pdb examples/ci2_1.pdb examples/ci2_2.pdb
 
 
 Problems?
