@@ -1,17 +1,25 @@
 #!/usr/bin/env python
 
 """
+project: https://github.com/charnley/rmsd
+license: https://github.com/charnley/rmsd/blob/master/LICENSE
+
 Calculate the root-mean-square deviation (RMSD)  between two Cartesian
 coordinates (.xyz) or (.pdb) files, using different rotation schemes.
 
 by: Jimmy Charnley Kromann <jimmy@charnley.dk> and Lars Andersen Bratholm <larsbratholm@gmail.com>
-project: https://github.com/charnley/rmsd
-license: https://github.com/charnley/rmsd/blob/master/LICENSE
 
 """
 
 import numpy as np
 import re
+
+# Python 2/3 compatibility
+# Make range a iterator in Python 2
+try:
+    range = xrange
+except NameError:
+    pass
 
 __version__ = '1.2.4'
 
@@ -321,28 +329,11 @@ Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ
 or PDB format, using transformation and rotation. The order of the atoms *must*
 be the same for both structures.
 
-Read more at https://github.com/charnley/rmsd
+For more information, usage, example and citation read more at
+https://github.com/charnley/rmsd
 """
 
-    epilog = """
-license:
-  https://github.com/charnley/rmsd/blob/master/LICENSE
-
-citation:
-  Kabsch algorithm:
-    Kabsch W., 1976, A solution for the best rotation to relate two sets of
-    vectors, Acta Crystallographica, A32:922-923, doi:10.1107/S0567739476001873
-
-  Quaternion algorithm:
-    Michael W. Walker and Lejun Shao and Richard A. Volz, 1991, Estimating 3-D
-    location parameters using dual number quaternions, CVGIP: Image
-    Understanding, 54:358-367, doi: 10.1016/1049-9660(91)90036-o
-
-  Implementation:
-    Calculate RMSD for two XYZ structures, GitHub,
-    http://github.com/charnley/rmsd
-
-output:
+    epilog = """output:
   Normal - RMSD calculated the straight-forward way, no translation or rotation.
   Kabsch - RMSD after coordinates are translated and rotated using Kabsch.
   Quater - RMSD after coordinates are translated and rotated using quaternions.
