@@ -356,9 +356,10 @@ https://github.com/charnley/rmsd
     parser.add_argument('-k', '--kabsch', action='store_true', help='Use Kabsch algorithm for transformation')
     parser.add_argument('-q', '--quater', action='store_true', help='Use Quaternion algorithm for transformation')
 
-    parser.add_argument('-n', '--no-hydrogen', action='store_true', help='ignore hydrogens when calculating RMSD')
-    parser.add_argument('-r', '--remove-idx', nargs='+', type=int, help='index list of atoms NOT to consider', metavar='idx')
-    parser.add_argument('-a', '--add-idx', nargs='+', type=int, help='index list of atoms to consider', metavar='idx')
+    index_group = parser.add_mutually_exclusive_group()
+    index_group.add_argument('-n', '--no-hydrogen', action='store_true', help='ignore hydrogens when calculating RMSD')
+    index_group.add_argument('-r', '--remove-idx', nargs='+', type=int, help='index list of atoms NOT to consider', metavar='idx')
+    index_group.add_argument('-a', '--add-idx', nargs='+', type=int, help='index list of atoms to consider', metavar='idx')
 
 
     if len(sys.argv) == 1:
