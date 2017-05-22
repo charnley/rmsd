@@ -4,16 +4,16 @@ import setuptools
 from setuptools import setup
 
 # To use a consistent encoding
-from os import path
+import os
 
 # import version
 from rmsd.calculate_rmsd import __version__
 
 # Find the absolute path
-here = path.abspath(path.dirname(__file__))
+here = os.path.abspath(os.path.dirname(__file__))
 
 # Get the long description from the README file
-with open(path.join(here, 'README.rst')) as f:
+with open(os.path.join(here, 'README.rst')) as f:
     long_description = f.read()
 
 short_description = 'Calculate root-mean-square deviation (RMSD), using Kabsch or Quaternion algorithm for rotation, between two Cartesian coordinates in .xyz or .pdb format, resulting in the minimal RMSD.'
