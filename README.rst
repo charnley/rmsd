@@ -47,8 +47,7 @@ bin folder.
 
 .. code-block:: bash
 
-    cd ~/bin
-    wget -O calculate_rmsd https://raw.githubusercontent.com/charnley/rmsd/master/calculate_rmsd.py
+    wget -O calculate_rmsd https://raw.githubusercontent.com/charnley/rmsd/master/rmsd/calculate_rmsd.py
     chmod +x calculate_rmsd
 
 If you want it as a Python module, without pip, then clone the project with
