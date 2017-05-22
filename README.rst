@@ -14,9 +14,15 @@ For more information please read RMSD_ and `Kabsch algorithm`_.
 Motivation
 ----------
 
+You have molecule A and B and want to calculate the structural difference
+between those two.
+If you just calculate the RMSD_ straight-forward you might get a too big of a
+value as seen below.
+You would need to first recenter the two molecules and then rotate them unto
+each other to get the true minimal RMSD. This is what this script does.
 
 ==========  ===========  ==========
-No Changes  Re-centered  Translated
+No Changes  Re-centered  Rotated
 ----------  -----------  ----------
 |begin|     |center|     |translate|
 ==========  ===========  ==========
