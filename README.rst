@@ -38,9 +38,19 @@ RMSD 2.50   RMSD 1.07    RMSD 0.25
 Installation
 ------------
 
+You can get the package via pip under the name ``rmsd``,
+
 .. code-block:: bash
 
     pip install rmsd
+
+
+or download the project from GitHub via
+
+.. code-block:: bash
+
+    git clone https://github.com/charnley/rmsd
+
 
 There is only one Python file, so you can also download that and put it in your
 bin folder.
@@ -49,9 +59,6 @@ bin folder.
 
     wget -O calculate_rmsd https://raw.githubusercontent.com/charnley/rmsd/master/rmsd/calculate_rmsd.py
     chmod +x calculate_rmsd
-
-If you want it as a Python module, without pip, then clone the project with
-git, then copy the ``rmsd`` folder to the directory you need.
 
 
 Usage
