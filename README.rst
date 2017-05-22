@@ -26,7 +26,7 @@ No Changes  Re-centered  Rotated
 ----------  -----------  ----------
 |begin|     |center|     |translate|
 ==========  ===========  ==========
-RMSD 2.97   RMSD 0.88    RMSD 0.00
+RMSD 2.50   RMSD 1.07    RMSD 0.25
 ==========  ===========  ==========
 
 
