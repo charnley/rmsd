@@ -509,6 +509,12 @@ https://github.com/charnley/rmsd
 
     args = parser.parse_args()
 
+    # As default use all three methods
+    if not args.normal and not args.kabsch and not args.quater:
+        args.normal = True
+        args.kabsch = True
+        args.quater = True
+
     # As default, load the extension as format
     if args.format == None:
         args.format = args.structure_a.split('.')[-1]
@@ -558,9 +564,14 @@ https://github.com/charnley/rmsd
         write_coordinates(p_atoms, p_all, title="{} translated".format(args.structure_a))
         quit()
 
-    print("Normal RMSD: {0}".format(normal_rmsd))
-    print("Kabsch RMSD: {0}".format(kabsch_rmsd(P, Q)))
-    print("Quater RMSD: {0}".format(quaternion_rmsd(P, Q)))
+    if args.normal:
+        print("Normal RMSD: {0}".format(normal_rmsd))
+
+    if args.kabsch:
+        print("Kabsch RMSD: {0}".format(kabsch_rmsd(P, Q)))
+
+    if args.quater:
+        print("Quater RMSD: {0}".format(quaternion_rmsd(P, Q)))
 
 
 if __name__ == "__main__":
