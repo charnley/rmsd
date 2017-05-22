@@ -9,22 +9,24 @@ license: https://github.com/charnley/rmsd/blob/master/LICENSE
 
 """
 
-import calculate_rmsd
+from os import path
 
-def test_all(threshold=0.001):
+import rmsd
+
+def test_all(example_path="examples", threshold=0.001):
     """
     Some very basic functional tests
     :return: True if all test passed
     """
 
     print('Testing PDB RMSD')
-    if not test_pdb(threshold=threshold):
+    if not test_pdb(example_path=example_path, threshold=threshold):
         return False
     else:
         print('Passed')
 
     print('Testing xyz RMSD')
-    if not test_xyz(threshold=threshold):
+    if not test_xyz(example_path=example_path, threshold=threshold):
         return False
     else:
         print('Passed')
@@ -33,23 +35,23 @@ def test_all(threshold=0.001):
 
     return True
 
-def test_xyz(threshold=0.001):
+def test_xyz(example_path="examples", threshold=0.001):
     """
     A simple test for the xyz functionality
     :return: True if all test passed 
     """
 
-    p_atoms, P = calculate_rmsd.get_coordinates('examples/ethane.xyz', 'xyz')
-    q_atoms, Q = calculate_rmsd.get_coordinates('examples/ethane.xyz', 'xyz')
+    p_atoms, P = rmsd.get_coordinates(example_path+'/ethane.xyz', 'xyz')
+    q_atoms, Q = rmsd.get_coordinates(example_path+'/ethane.xyz', 'xyz')
 
-    n_rmsd = calculate_rmsd.rmsd(P, Q)
-    Pc = calculate_rmsd.centroid(P)
-    Qc = calculate_rmsd.centroid(Q)
+    n_rmsd = rmsd.rmsd(P, Q)
+    Pc = rmsd.centroid(P)
+    Qc = rmsd.centroid(Q)
     P -= Pc
     Q -= Qc
 
-    k_rmsd = calculate_rmsd.kabsch_rmsd(P, Q)
-    q_rmsd = calculate_rmsd.quaternion_rmsd(P, Q)
+    k_rmsd = rmsd.kabsch_rmsd(P, Q)
+    q_rmsd = rmsd.quaternion_rmsd(P, Q)
 
     if abs(n_rmsd) > threshold:
         print('Failed to calculate normal RMSD, result: {0}'.format(n_rmsd))
@@ -65,22 +67,22 @@ def test_xyz(threshold=0.001):
         return False
     return True
 
-def test_pdb(threshold=0.001):
+def test_pdb(example_path="examples", threshold=0.001):
     """
     A simple test for the PDB functionality
     :return: True if all test passed
     """
-    p_atoms, P = calculate_rmsd.get_coordinates('examples/ci2_1.pdb', 'pdb')
-    q_atoms, Q = calculate_rmsd.get_coordinates('examples/ci2_2.pdb', 'pdb')
+    p_atoms, P = rmsd.get_coordinates(example_path+'/ci2_1.pdb', 'pdb')
+    q_atoms, Q = rmsd.get_coordinates(example_path+'/ci2_2.pdb', 'pdb')
 
-    n_rmsd = calculate_rmsd.rmsd(P, Q)
-    Pc = calculate_rmsd.centroid(P)
-    Qc = calculate_rmsd.centroid(Q)
+    n_rmsd = rmsd.rmsd(P, Q)
+    Pc = rmsd.centroid(P)
+    Qc = rmsd.centroid(Q)
     P -= Pc
     Q -= Qc
 
-    k_rmsd = calculate_rmsd.kabsch_rmsd(P, Q)
-    q_rmsd = calculate_rmsd.quaternion_rmsd(P, Q)
+    k_rmsd = rmsd.kabsch_rmsd(P, Q)
+    q_rmsd = rmsd.quaternion_rmsd(P, Q)
 
     if abs(n_rmsd - 26.975) > threshold:
         print('Failed to calculate normal RMSD, result: {0}'.format(n_rmsd))
@@ -97,4 +99,9 @@ def test_pdb(threshold=0.001):
     return True
 
 if __name__ == '__main__':
-    test_all()
+
+    # Find the absolute path
+    here = path.abspath(path.dirname(__file__))
+
+    test_all(example_path=here+"/examples")
+
