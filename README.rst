@@ -18,15 +18,15 @@ Motivation
 ==========  ===========  ==========
 No Changes  Re-centered  Translated
 ----------  -----------  ----------
-begin_      center_      translate_
+|begin|     |center|     |translate|
 ==========  ===========  ==========
 RMSD 2.97   RMSD 0.88    RMSD 0.00
 ==========  ===========  ==========
 
 
-.. begin:: https://raw.githubusercontent.com/charnley/rmsd/pip/img/plot_beginning.png
-.. center:: https://raw.githubusercontent.com/charnley/rmsd/pip/img/plot_centered.png
-.. translate:: https://raw.githubusercontent.com/charnley/rmsd/pip/img/plot_translated.png
+.. |begin| image:: https://raw.githubusercontent.com/charnley/rmsd/pip/img/plot_beginning.png
+.. |center| image:: https://raw.githubusercontent.com/charnley/rmsd/pip/img/plot_centered.png
+.. |translate| image:: https://raw.githubusercontent.com/charnley/rmsd/pip/img/plot_translated.png
 
 
 Installation
