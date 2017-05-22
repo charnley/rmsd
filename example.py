@@ -60,16 +60,19 @@ B -= 3
 # Rotate
 B = np.dot(B, rotation_matrix(90))
 
+print "Normal RMSD", rmsd.rmsd(A, B)
 save_plot(A, B, "plot_beginning.png")
 
 # Manipulate
 A -= rmsd.centroid(A)
 B -= rmsd.centroid(B)
 
+print "Centered RMSD", rmsd.rmsd(A, B)
 save_plot(A, B, "plot_centered.png")
 
 U = rmsd.kabsch(A, B)
 A = np.dot(A, U)
 
+print "Translated RMSD", rmsd.rmsd(A, B)
 save_plot(A, B, "plot_translated.png")
 

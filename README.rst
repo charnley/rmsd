@@ -11,6 +11,21 @@ For more information please read RMSD_ and `Kabsch algorithm`_.
 .. _RMSD: http://en.wikipedia.org/wiki/Root-mean-square_deviation
 .. _Kabsch algorithm: http://en.wikipedia.org/wiki/Kabsch_algorithm
 
+Motivation
+----------
+
+
+==========  ===========  ==========
+No Changes  Re-centered  Translated
+----------  -----------  ----------
+image_           B          A or B 
+==========  ===========  ==========
+True        True         True 
+==========  ===========  ==========
+
+
+    .. image:: https://raw.githubusercontent.com/charnley/rmsd/pip/img/plot_beginning.png
+
 
 Installation
 ------------
