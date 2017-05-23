@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -62,19 +64,18 @@ B -= 3
 # Rotate
 B = np.dot(B, rotation_matrix(90))
 
-print "Normal RMSD", rmsd.rmsd(A, B)
+print("Normal RMSD", rmsd.rmsd(A, B))
 save_plot(A, B, "plot_beginning.png")
 
 # Manipulate
 A -= rmsd.centroid(A)
 B -= rmsd.centroid(B)
 
-print "Translated RMSD", rmsd.rmsd(A, B)
+print("Translated RMSD", rmsd.rmsd(A, B))
 save_plot(A, B, "plot_translated.png")
 
 U = rmsd.kabsch(A, B)
 A = np.dot(A, U)
 
-print "Rotated RMSD", rmsd.rmsd(A, B)
+print("Rotated RMSD", rmsd.rmsd(A, B))
 save_plot(A, B, "plot_rotated.png")
-
