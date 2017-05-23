@@ -69,12 +69,12 @@ save_plot(A, B, "plot_beginning.png")
 A -= rmsd.centroid(A)
 B -= rmsd.centroid(B)
 
-print "Centered RMSD", rmsd.rmsd(A, B)
-save_plot(A, B, "plot_centered.png")
+print "Translated RMSD", rmsd.rmsd(A, B)
+save_plot(A, B, "plot_translated.png")
 
 U = rmsd.kabsch(A, B)
 A = np.dot(A, U)
 
-print "Translated RMSD", rmsd.rmsd(A, B)
-save_plot(A, B, "plot_translated.png")
+print "Rotated RMSD", rmsd.rmsd(A, B)
+save_plot(A, B, "plot_rotated.png")
 

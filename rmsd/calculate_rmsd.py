@@ -211,10 +211,7 @@ def quaternion_rotate(X, Y):
     Q = np.asarray([makeQ(*X[k]) for k in range(N)])
     Qt_dot_W = np.asarray([np.dot(Q[k].T, W[k]) for k in range(N)])
     W_minus_Q = np.asarray([W[k] - Q[k] for k in range(N)])
-    C1 = -np.sum(Qt_dot_W, axis=0)
-    C2 = 0.5 * N
-    C3 = np.sum(W_minus_Q, axis=0)
-    A = np.dot(C3.T, C3) * C2 - C1
+    A = np.sum(Qt_dot_W, axis=0)
     eigen = np.linalg.eigh(A)
     r = eigen[1][:,eigen[0].argmax()]
     rot = quaternion_transform(r)
