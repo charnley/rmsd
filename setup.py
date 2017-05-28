@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 
 import setuptools
-from setuptools import setup
-
-# To use a consistent encoding
 import os
 
-# import version
-from rmsd.calculate_rmsd import __version__
+# import rmsd for version
+import rmsd
 
 # Find the absolute path
 here = os.path.abspath(os.path.dirname(__file__))
@@ -18,8 +15,8 @@ with open(os.path.join(here, 'README.rst')) as f:
 
 short_description = 'Calculate root-mean-square deviation (RMSD), using Kabsch or Quaternion algorithm for rotation, between two Cartesian coordinates in .xyz or .pdb format, resulting in the minimal RMSD.'
 
-setup(name='rmsd',
-      version=__version__,
+setuptools.setup(name='rmsd',
+      version=rmsd.__version__,
       maintainer='Jimmy Kromann',
       maintainer_email='jimmy@charnley.dk',
       description=short_description,
