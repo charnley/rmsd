@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 __doc__ = \
-"""
+    """
 
 Calculate Root-mean-square deviation (RMSD) of Two Molecules Using Rotation
 ===========================================================================
@@ -162,31 +162,31 @@ def quaternion_transform(r):
     """
     Wt_r = makeW(*r).T
     Q_r = makeQ(*r)
-    rot = Wt_r.dot(Q_r)[:3,:3]
+    rot = Wt_r.dot(Q_r)[:3, :3]
     return rot
 
 
-def makeW(r1,r2,r3,r4=0):
+def makeW(r1, r2, r3, r4=0):
     """
     matrix involved in quaternion rotation
     """
     W = np.asarray([
-             [r4, r3, -r2, r1],
-             [-r3, r4, r1, r2],
-             [r2, -r1, r4, r3],
-             [-r1, -r2, -r3, r4] ])
+        [r4, r3, -r2, r1],
+        [-r3, r4, r1, r2],
+        [r2, -r1, r4, r3],
+        [-r1, -r2, -r3, r4]])
     return W
 
 
-def makeQ(r1,r2,r3,r4=0):
+def makeQ(r1, r2, r3, r4=0):
     """
     matrix involved in quaternion rotation
     """
     Q = np.asarray([
-             [r4, -r3, r2, r1],
-             [r3, r4, -r1, r2],
-             [-r2, r1, r4, r3],
-             [-r1, -r2, -r3, r4] ])
+        [r4, -r3, r2, r1],
+        [r3, r4, -r1, r2],
+        [-r2, r1, r4, r3],
+        [-r1, -r2, -r3, r4]])
     return Q
 
 
@@ -213,7 +213,7 @@ def quaternion_rotate(X, Y):
     W_minus_Q = np.asarray([W[k] - Q[k] for k in range(N)])
     A = np.sum(Qt_dot_W, axis=0)
     eigen = np.linalg.eigh(A)
-    r = eigen[1][:,eigen[0].argmax()]
+    r = eigen[1][:, eigen[0].argmax()]
     rot = quaternion_transform(r)
     return rot
 
@@ -265,7 +265,7 @@ def rmsd(V, W):
     rmsd = 0.0
     for v, w in zip(V, W):
         rmsd += sum([(v[i] - w[i])**2.0 for i in range(D)])
-    return np.sqrt(rmsd/N)
+    return np.sqrt(rmsd / N)
 
 
 def write_coordinates(atoms, V, title=""):
@@ -290,7 +290,8 @@ def write_coordinates(atoms, V, title=""):
     for i in range(N):
         atom = atoms[i]
         atom = atom[0].upper() + atom[1:]
-        print("{0:2s} {1:15.8f} {2:15.8f} {3:15.8f}".format(atom, V[i, 0], V[i, 1], V[i, 2]))
+        print("{0:2s} {1:15.8f} {2:15.8f} {3:15.8f}".format(
+            atom, V[i, 0], V[i, 1], V[i, 2]))
 
 
 def get_coordinates(filename, fmt):
@@ -368,7 +369,8 @@ def get_coordinates_pdb(filename):
                         else:
                             raise Exception
                 except:
-                        exit("Error parsing atomtype for the following line: \n{0:s}".format(line))
+                    exit(
+                        "Error parsing atomtype for the following line: \n{0:s}".format(line))
 
                 if x_column == None:
                     try:
@@ -378,20 +380,22 @@ def get_coordinates_pdb(filename):
                                 x_column = i
                                 break
                     except IndexError:
-                        exit("Error parsing coordinates for the following line: \n{0:s}".format(line))
+                        exit(
+                            "Error parsing coordinates for the following line: \n{0:s}".format(line))
                 # Try to read the coordinates
                 try:
-                    V.append(np.asarray(tokens[x_column:x_column + 3], dtype=float))
+                    V.append(np.asarray(
+                        tokens[x_column:x_column + 3], dtype=float))
                 except:
                     # If that doesn't work, use hardcoded indices
                     try:
                         x = line[30:38]
                         y = line[38:46]
                         z = line[46:54]
-                        V.append(np.asarray([x, y ,z], dtype=float))
+                        V.append(np.asarray([x, y, z], dtype=float))
                     except:
-                        exit("Error parsing input for the following line: \n{0:s}".format(line))
-
+                        exit(
+                            "Error parsing input for the following line: \n{0:s}".format(line))
 
     V = np.asarray(V)
     atoms = np.asarray(atoms)
@@ -449,7 +453,8 @@ def get_coordinates_xyz(filename):
             V.append(np.array(numbers))
             atoms.append(atom)
         else:
-            exit("Reading the .xyz file failed in line {0}. Please check the format.".format(lines_read + 2))
+            exit("Reading the .xyz file failed in line {0}. Please check the format.".format(
+                lines_read + 2))
 
     f.close()
     atoms = np.array(atoms)
@@ -478,27 +483,36 @@ https://github.com/charnley/rmsd
 """
 
     parser = argparse.ArgumentParser(
-                    usage='%(prog)s [options] structure_a structure_b',
-                    description=description,
-                    formatter_class=argparse.RawDescriptionHelpFormatter,
-                    epilog=epilog)
+        usage='%(prog)s [options] structure_a structure_b',
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=epilog)
 
-    parser.add_argument('-v', '--version', action='version', version='rmsd ' + __version__ + "\nhttps://github.com/charnley/rmsd")
+    parser.add_argument('-v', '--version', action='version',
+                        version='rmsd ' + __version__ + "\nhttps://github.com/charnley/rmsd")
 
-    parser.add_argument('structure_a', metavar='structure_a', type=str, help='Structure in .xyz or .pdb format')
+    parser.add_argument('structure_a', metavar='structure_a',
+                        type=str, help='Structure in .xyz or .pdb format')
     parser.add_argument('structure_b', metavar='structure_b', type=str)
-    parser.add_argument('-o', '--output', action='store_true', help='print out structure A, centered and rotated unto structure B\'s coordinates in XYZ format')
-    parser.add_argument('-f', '--format', action='store', help='Format of input files. Valid format are XYZ and PDB', metavar='fmt')
+    parser.add_argument('-o', '--output', action='store_true',
+                        help='print out structure A, centered and rotated unto structure B\'s coordinates in XYZ format')
+    parser.add_argument('-f', '--format', action='store',
+                        help='Format of input files. Valid format are XYZ and PDB', metavar='fmt')
 
-    parser.add_argument('-m', '--normal', action='store_true', help='Use no transformation')
-    parser.add_argument('-k', '--kabsch', action='store_true', help='Use Kabsch algorithm for transformation')
-    parser.add_argument('-q', '--quater', action='store_true', help='Use Quaternion algorithm for transformation')
+    parser.add_argument('-m', '--normal', action='store_true',
+                        help='Use no transformation')
+    parser.add_argument('-k', '--kabsch', action='store_true',
+                        help='Use Kabsch algorithm for transformation')
+    parser.add_argument('-q', '--quater', action='store_true',
+                        help='Use Quaternion algorithm for transformation')
 
     index_group = parser.add_mutually_exclusive_group()
-    index_group.add_argument('-n', '--no-hydrogen', action='store_true', help='ignore hydrogens when calculating RMSD')
-    index_group.add_argument('-r', '--remove-idx', nargs='+', type=int, help='index list of atoms NOT to consider', metavar='idx')
-    index_group.add_argument('-a', '--add-idx', nargs='+', type=int, help='index list of atoms to consider', metavar='idx')
-
+    index_group.add_argument('-n', '--no-hydrogen', action='store_true',
+                             help='ignore hydrogens when calculating RMSD')
+    index_group.add_argument('-r', '--remove-idx', nargs='+', type=int,
+                             help='index list of atoms NOT to consider', metavar='idx')
+    index_group.add_argument('-a', '--add-idx', nargs='+', type=int,
+                             help='index list of atoms to consider', metavar='idx')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -542,7 +556,6 @@ https://github.com/charnley/rmsd
         P = p_all[args.add_idx]
         Q = q_all[args.add_idx]
 
-
     # Calculate 'dumb' RMSD
     normal_rmsd = rmsd(P, Q)
 
@@ -558,7 +571,8 @@ https://github.com/charnley/rmsd
         U = kabsch(P, Q)
         p_all -= Pc
         p_all = np.dot(p_all, U)
-        write_coordinates(p_atoms, p_all, title="{} translated".format(args.structure_a))
+        write_coordinates(
+            p_atoms, p_all, title="{} translated".format(args.structure_a))
         quit()
 
     if args.normal:
