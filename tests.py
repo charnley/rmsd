@@ -1,107 +1,229 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 """
-Perform some test of the calculate_rmsd function
-Needs to be expanded
-by: Maximilian Peters (lastNameDotFirstNameATgmail)
 project: https://github.com/charnley/rmsd
 license: https://github.com/charnley/rmsd/blob/master/LICENSE
-
 """
 
-from os import path
+import os
+import sys
+import unittest
+import numpy as np
+from contextlib import contextmanager
 
-import rmsd
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
-def test_all(example_path="examples", threshold=0.001):
-    """
-    Some very basic functional tests
-    :return: True if all test passed
-    """
+from rmsd import (get_coordinates_pdb, get_coordinates_xyz, get_coordinates,
+                  rmsd, centroid, kabsch_rmsd, kabsch_rotate, kabsch,
+                  quaternion_rmsd, quaternion_rotate, quaternion_transform,
+                  makeQ, makeW, write_coordinates)
 
-    print('Testing PDB RMSD')
-    if not test_pdb(example_path=example_path, threshold=threshold):
-        return False
-    else:
-        print('Passed')
+@contextmanager
+def captured_output():
+    new_out, new_err = StringIO(), StringIO()
+    old_out, old_err = sys.stdout, sys.stderr
+    try:
+        sys.stdout, sys.stderr = new_out, new_err
+        yield sys.stdout, sys.stderr
+    finally:
+        sys.stdout, sys.stderr = old_out, old_err
 
-    print('Testing xyz RMSD')
-    if not test_xyz(example_path=example_path, threshold=threshold):
-        return False
-    else:
-        print('Passed')
 
-    print('\nPassed all tests')
+class TestRMSD(unittest.TestCase):
+    """Test the DSSP parser methods."""
 
-    return True
+    def setUp(self):
+        """Initialize the framework for testing."""
 
-def test_xyz(example_path="examples", threshold=0.001):
-    """
-    A simple test for the xyz functionality
-    :return: True if all test passed 
-    """
+        self.centroid = centroid
+        self.rmsd = rmsd
+        abs_path = os.path.abspath(os.path.dirname(__file__))
+        self.examples = abs_path + "/examples/"
+        self.get_coordinates = get_coordinates
+        self.get_coordinates_pdb = get_coordinates_pdb
+        self.get_coordinates_xyz = get_coordinates_xyz
 
-    p_atoms, P = rmsd.get_coordinates(example_path+'/ethane.xyz', 'xyz')
-    q_atoms, Q = rmsd.get_coordinates(example_path+'/ethane.xyz', 'xyz')
+        self.kabsch_rmsd = kabsch_rmsd
+        self.kabsch_rotate = kabsch_rotate
+        self.kabsch_algo = kabsch
 
-    n_rmsd = rmsd.rmsd(P, Q)
-    Pc = rmsd.centroid(P)
-    Qc = rmsd.centroid(Q)
-    P -= Pc
-    Q -= Qc
+        self.quaternion_rmsd = quaternion_rmsd
+        self.quaternion_rotate = quaternion_rotate
+        self.quaternion_transform = quaternion_transform
+        self.makeQ = makeQ
+        self.makeW = makeW
+        self.write_coordinates = write_coordinates
 
-    k_rmsd = rmsd.kabsch_rmsd(P, Q)
-    q_rmsd = rmsd.quaternion_rmsd(P, Q)
+    def tearDown(self):
+        """Clear the testing framework."""
 
-    if abs(n_rmsd) > threshold:
-        print('Failed to calculate normal RMSD, result: {0}'.format(n_rmsd))
-        return False
-    if abs(k_rmsd) > threshold:
-        print('Failed to calculate Kabsch RMSD, result: {0}'.format(k_rmsd))
-        return False
-    if abs(q_rmsd) > threshold:
-        print('Failed to calculate quaternion RMSD, result: {0}'.format(q_rmsd))
-        return False
-    if abs(q_rmsd - k_rmsd) > threshold ** 2:
-        print('Failed to yield similar Kabsch and quaternion RMSD, result: {0} vs {1}'.format(k_rmsd, q_rmsd))
-        return False
-    return True
+        self.centroid = None
+        self.rmsd = None
+        self.examples = None
+        self.get_coordinates = None
+        self.get_coordinates_pdb = None
+        self.get_coordinates_xyz = None
 
-def test_pdb(example_path="examples", threshold=0.001):
-    """
-    A simple test for the PDB functionality
-    :return: True if all test passed
-    """
-    p_atoms, P = rmsd.get_coordinates(example_path+'/ci2_1.pdb', 'pdb')
-    q_atoms, Q = rmsd.get_coordinates(example_path+'/ci2_2.pdb', 'pdb')
+        self.kabsch_rmsd = None
+        self.kabsch_rotate = None
+        self.kabsch_algo = None
 
-    n_rmsd = rmsd.rmsd(P, Q)
-    Pc = rmsd.centroid(P)
-    Qc = rmsd.centroid(Q)
-    P -= Pc
-    Q -= Qc
+        self.quaternion_rmsd = None
+        self.quaternion_rotate = None
+        self.quaternion_transform = None
+        self.makeQ = None
+        self.makeW = None
+        self.write_coordinates = None
 
-    k_rmsd = rmsd.kabsch_rmsd(P, Q)
-    q_rmsd = rmsd.quaternion_rmsd(P, Q)
+    def assertListAlmostEqual(self, list1, list2, places):
+        self.assertEqual(len(list1), len(list2))
+        for a, b in zip(list1, list2):
+            self.assertAlmostEqual(a, b, places=places)
 
-    if abs(n_rmsd - 26.975) > threshold:
-        print('Failed to calculate normal RMSD, result: {0}'.format(n_rmsd))
-        return False
-    if abs(k_rmsd - 11.777) > threshold:
-        print('Failed to calculate Kabsch RMSD, result: {0}'.format(k_rmsd))
-        return False
-    if abs(q_rmsd - 11.777) > threshold:
-        print('Failed to calculate quaternion RMSD, result: {0}'.format(q_rmsd))
-        return False
-    if abs(q_rmsd - k_rmsd) > threshold ** 2:
-        print('Failed to yield similar Kabsch and quaternion RMSD, result: {0} vs {1}'.format(k_rmsd, q_rmsd))
-        return False
-    return True
+    def test_get_coordinates_pdb(self):
+        infile = self.examples + 'ci2_1.pdb'
+        coords = self.get_coordinates_pdb(infile)
+        self.assertEqual('N', coords[0][0])
+        self.assertEqual([-7.173, -13.891, -6.266], coords[1][0].tolist())
+
+    def test_get_coordinates_xyz(self):
+        infile = self.examples + 'ethane.xyz'
+        coords = self.get_coordinates_xyz(infile)
+        self.assertEqual('C', coords[0][0])
+        self.assertEqual([-0.98353, 1.81095, -0.0314], coords[1][0].tolist())
+
+    def test_get_coordinates(self):
+        infile = self.examples + 'ci2_1.pdb'
+        coords = self.get_coordinates(infile, 'pdb')
+        self.assertEqual('N', coords[0][0])
+        self.assertEqual([-7.173, -13.891, -6.266], coords[1][0].tolist())
+
+        infile = self.examples + 'ethane.xyz'
+        coords = self.get_coordinates(infile, 'xyz')
+        self.assertEqual('C', coords[0][0])
+        self.assertEqual([-0.98353, 1.81095, -0.0314], coords[1][0].tolist())
+
+    def test_centroid(self):
+        a1 = np.array([-19.658, 17.18, 25.163], dtype=float)
+        a2 = np.array([-20.573, 18.059, 25.88], dtype=float)
+        a3 = np.array([-22.018, 17.551, 26.0], dtype=float)
+        atms = np.asarray([a1, a2, a3])
+        centroid = self.centroid(atms)
+        self.assertEqual(3, len(centroid))
+        self.assertListAlmostEqual([-20.7496, 17.5966, 25.6810],
+                                   centroid, places=3)
+
+    def test_rmsd_pdb(self):
+        infile1 = self.examples + 'ci2_1.pdb'
+        infile2 = self.examples + 'ci2_2.pdb'
+        p_atoms, P = self.get_coordinates_pdb(infile1)
+        q_atoms, Q = self.get_coordinates_pdb(infile2)
+        rmsd = self.rmsd(P, Q)
+        self.assertAlmostEqual(26.9750, rmsd, places=3)
+
+    def test_rmsd_xyz(self):
+        infile1 = self.examples + 'ethane.xyz'
+        infile2 = self.examples + 'ethane_mini.xyz'
+        p_atoms, P = self.get_coordinates_xyz(infile1)
+        q_atoms, Q = self.get_coordinates_xyz(infile2)
+        rmsd = self.rmsd(P, Q)
+        self.assertAlmostEqual(0.33512, rmsd, places=3)
+
+    def test_kabash_algorith_pdb(self):
+        infile1 = self.examples + 'ci2_1.pdb'
+        infile2 = self.examples + 'ci2_2.pdb'
+        p_atoms, P = self.get_coordinates_pdb(infile1)
+        q_atoms, Q = self.get_coordinates_pdb(infile2)
+        U = self.kabsch_algo(P, Q)
+        self.assertListAlmostEqual([-0.5124, 0.8565, 0.0608],
+                                   U[0].tolist(), places=3)
+
+    def test_kabash_rotate_pdb(self):
+        infile1 = self.examples + 'ci2_1.pdb'
+        infile2 = self.examples + 'ci2_2.pdb'
+        p_atoms, P = self.get_coordinates_pdb(infile1)
+        q_atoms, Q = self.get_coordinates_pdb(infile2)
+        nP = self.kabsch_rotate(P, Q)
+        self.assertListAlmostEqual([10.6822, -2.8867, 12.6977],
+                                   nP[0].tolist(), places=3)
+
+    def test_kabash_rmsd_pdb(self):
+        infile1 = self.examples + 'ci2_1.pdb'
+        infile2 = self.examples + 'ci2_2.pdb'
+        p_atoms, P = self.get_coordinates_pdb(infile1)
+        q_atoms, Q = self.get_coordinates_pdb(infile2)
+        Pc = self.centroid(P)
+        Qc = self.centroid(Q)
+        P -= Pc
+        Q -= Qc
+        rmsd = self.kabsch_rmsd(P, Q)
+        self.assertAlmostEqual(11.7768, rmsd, places=3)
+
+    def test_quaternion_rmsd_pdb(self):
+        infile1 = self.examples + 'ci2_1.pdb'
+        infile2 = self.examples + 'ci2_2.pdb'
+        p_atoms, P = self.get_coordinates_pdb(infile1)
+        q_atoms, Q = self.get_coordinates_pdb(infile2)
+        Pc = self.centroid(P)
+        Qc = self.centroid(Q)
+        P -= Pc
+        Q -= Qc
+        rmsd = self.quaternion_rmsd(P, Q)
+        self.assertAlmostEqual(11.7768, rmsd, places=3)
+
+    def test_quaternion_rotate_pdb(self):
+        infile1 = self.examples + 'ci2_1.pdb'
+        infile2 = self.examples + 'ci2_2.pdb'
+        p_atoms, P = self.get_coordinates_pdb(infile1)
+        q_atoms, Q = self.get_coordinates_pdb(infile2)
+        nP = self.quaternion_rotate(P, Q)
+        self.assertListAlmostEqual([-0.5124, 0.8565, 0.0608],
+                                   nP[0].tolist(), places=3)
+
+    def test_quaternion_transform(self):
+        r = [-0.31019, -0.59291, 0.63612, -0.38415]
+        U = self.quaternion_transform(r)
+        self.assertListAlmostEqual([-0.5124, 0.8565, 0.0608],
+                                   U[0].tolist(), places=3)
+
+    def test_makeQ(self):
+        r = [-0.31019, -0.59291, 0.63612, -0.38415]
+        Q_r = self.makeQ(*r)
+        self.assertListAlmostEqual([-0.3841, -0.6361, -0.5929, -0.3101],
+                                   Q_r[0].tolist(), places=3)
+
+    def test_makeW(self):
+        r = [-0.31019, -0.59291, 0.63612, -0.38415]
+        Wt_r = self.makeW(*r)
+        self.assertListAlmostEqual([-0.3841,  0.6361, 0.5929, -0.3101],
+                                   Wt_r[0].tolist(), places=3)
+
+    def test_write_coordinates(self):
+        infile1 = self.examples + 'ci2_1.pdb'
+        infile2 = self.examples + 'ci2_2.pdb'
+        p_atoms, P = self.get_coordinates_pdb(infile1)
+        q_atoms, Q = self.get_coordinates_pdb(infile2)
+        Pc = self.centroid(P)
+        Qc = self.centroid(Q)
+        P -= Pc
+        Q -= Qc
+        U = self.kabsch_algo(P, Q)
+        P -= Pc
+        p_all = np.dot(P, U)
+
+        with captured_output() as (out, err):
+            self.write_coordinates(p_atoms, p_all, title="ci2_1.pdb")
+        output = out.getvalue().strip().split('\n')
+        self.assertEqual(output[0:4],
+                         ['1064', 'ci2_1.pdb',
+                          'N      10.57220149     -0.21712538     12.41498910',
+                          'C       9.34616675     -0.15741025     11.60646766'])
+
 
 if __name__ == '__main__':
-
-    # Find the absolute path
-    here = path.abspath(path.dirname(__file__))
-
-    test_all(example_path=here+"/examples")
-
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestRMSD)
+    unittest.TextTestRunner(verbosity=2).run(suite)
