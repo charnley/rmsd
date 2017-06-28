@@ -24,14 +24,14 @@ each other to get the true minimal RMSD. This is what this script does.
 ==========  ===========  ==========
 No Changes  Re-centered  Rotated
 ----------  -----------  ----------
-|begin|     |center|     |translate|
+|begin|     |translate|  |rotate|
 ==========  ===========  ==========
 RMSD 2.50   RMSD 1.07    RMSD 0.25
 ==========  ===========  ==========
 
 .. |begin| image:: https://raw.githubusercontent.com/charnley/rmsd/master/img/plot_beginning.png
-.. |center| image:: https://raw.githubusercontent.com/charnley/rmsd/master/img/plot_centered.png
 .. |translate| image:: https://raw.githubusercontent.com/charnley/rmsd/master/img/plot_translated.png
+.. |rotate| image:: https://raw.githubusercontent.com/charnley/rmsd/master/img/plot_rotated.png
 
 
 Installation

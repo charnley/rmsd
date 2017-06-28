@@ -37,8 +37,8 @@ def save_plot(A, B, filename):
     plt.plot(Ax, Ay, 'o-')
     plt.plot(Bx, By, 'o-')
 
-    plt.ylim([-4, 4])
-    plt.xlim([-4, 4])
+    plt.ylim([-2.5, 2.5])
+    plt.xlim([-2.5, 2.5])
     plt.grid(True)
     plt.savefig(filename)
     plt.clf()
