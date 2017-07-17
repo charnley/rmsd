@@ -81,7 +81,7 @@ def kabsch(P, Q):
     calculated.
 
     Using the Kabsch algorithm with two sets of paired point P and Q, centered
-    around the center-of-mass. Each vector set is represented as an NxD
+    around the centroid. Each vector set is represented as an NxD
     matrix, where D is the the dimension of the space.
 
     The algorithm works in three steps:
@@ -162,11 +162,11 @@ def quaternion_transform(r):
     """
     Wt_r = makeW(*r).T
     Q_r = makeQ(*r)
-    rot = Wt_r.dot(Q_r)[:3,:3]
+    rot = Wt_r.dot(Q_r)[:3, :3]
     return rot
 
 
-def makeW(r1,r2,r3,r4=0):
+def makeW(r1, r2, r3 , r4=0):
     """
     matrix involved in quaternion rotation
     """
@@ -174,11 +174,11 @@ def makeW(r1,r2,r3,r4=0):
              [r4, r3, -r2, r1],
              [-r3, r4, r1, r2],
              [r2, -r1, r4, r3],
-             [-r1, -r2, -r3, r4] ])
+             [-r1, -r2, -r3, r4]])
     return W
 
 
-def makeQ(r1,r2,r3,r4=0):
+def makeQ(r1, r2, r3, r4=0):
     """
     matrix involved in quaternion rotation
     """
@@ -186,7 +186,7 @@ def makeQ(r1,r2,r3,r4=0):
              [r4, -r3, r2, r1],
              [r3, r4, -r1, r2],
              [-r2, r1, r4, r3],
-             [-r1, -r2, -r3, r4] ])
+             [-r1, -r2, -r3, r4]])
     return Q
 
 
@@ -213,7 +213,7 @@ def quaternion_rotate(X, Y):
     W_minus_Q = np.asarray([W[k] - Q[k] for k in range(N)])
     A = np.sum(Qt_dot_W, axis=0)
     eigen = np.linalg.eigh(A)
-    r = eigen[1][:,eigen[0].argmax()]
+    r = eigen[1][:, eigen[0].argmax()]
     rot = quaternion_transform(r)
     return rot
 
@@ -290,7 +290,8 @@ def write_coordinates(atoms, V, title=""):
     for i in range(N):
         atom = atoms[i]
         atom = atom[0].upper() + atom[1:]
-        print("{0:2s} {1:15.8f} {2:15.8f} {3:15.8f}".format(atom, V[i, 0], V[i, 1], V[i, 2]))
+        print("{0:2s} {1:15.8f} {2:15.8f} {3:15.8f}".format(
+                atom, V[i, 0], V[i, 1], V[i, 2]))
 
 
 def get_coordinates(filename, fmt):
@@ -338,13 +339,15 @@ def get_coordinates_pdb(filename):
 
     """
     # PDB files tend to be a bit of a mess. The x, y and z coordinates
-    # are supposed to be in column 31-38, 39-46 and 47-54, but this is not always the case.
+    # are supposed to be in column 31-38, 39-46 and 47-54, but this is
+    # not always the case.
     # Because of this the three first columns containing a decimal is used.
-    # Since the format doesn't require a space between columns, we use the above
-    # column indices as a fallback.
+    # Since the format doesn't require a space between columns, we use the
+    # above column indices as a fallback.
     x_column = None
     V = list()
-    # Same with atoms and atom naming. The most robust way to do this is probably
+    # Same with atoms and atom naming.
+    # The most robust way to do this is probably
     # to assume that the atomtype is given in column 3.
     atoms = list()
 
