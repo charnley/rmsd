@@ -117,7 +117,7 @@ Citation
     doi: http://dx.doi.org/10.1016/1049-9660(91)90036-o
 
 - **Implementation**:
-    Calculate RMSD for two XYZ structures, GitHub,
+    Calculate Root-mean-square deviation (RMSD) of Two Molecules Using Rotation, GitHub,
     http://github.com/charnley/rmsd, <commit hash or version number>
 
 Please cite this project when using it for scientific publications.
