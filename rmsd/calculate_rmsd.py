@@ -166,7 +166,7 @@ def quaternion_transform(r):
     return rot
 
 
-def makeW(r1, r2, r3 , r4=0):
+def makeW(r1, r2, r3, r4=0):
     """
     matrix involved in quaternion rotation
     """
