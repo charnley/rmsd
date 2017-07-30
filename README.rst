@@ -1,4 +1,7 @@
 
+.. image:: https://travis-ci.org/charnley/rmsd.svg?branch=master
+    :target: https://travis-ci.org/charnley/rmsd
+
 Calculate Root-mean-square deviation (RMSD) of Two Molecules Using Rotation
 ===========================================================================
 
