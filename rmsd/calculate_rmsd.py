@@ -545,9 +545,10 @@ https://github.com/charnley/rmsd
         P = p_all[args.add_idx]
         Q = q_all[args.add_idx]
 
-
     # Calculate 'dumb' RMSD
-    normal_rmsd = rmsd(P, Q)
+    if args.normal and not args.output:
+        normal_rmsd = rmsd(P, Q)
+        print("Normal RMSD: {0}".format(normal_rmsd))
 
     # Create the centroid of P and Q which is the geometric center of a
     # N-dimensional region and translate P and Q onto that center.
@@ -563,9 +564,6 @@ https://github.com/charnley/rmsd
         p_all = np.dot(p_all, U)
         write_coordinates(p_atoms, p_all, title="{} translated".format(args.structure_a))
         quit()
-
-    if args.normal:
-        print("Normal RMSD: {0}".format(normal_rmsd))
 
     if args.kabsch:
         print("Kabsch RMSD: {0}".format(kabsch_rmsd(P, Q)))
