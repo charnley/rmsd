@@ -41,7 +41,7 @@ def save_plot(A, B, filename):
     plt.xlim([-2.5, 2.5])
     plt.grid(True)
     plt.tick_params(labelsize=15)
-    plt.savefig(filename+'.svg')
+    plt.savefig(filename+'.png')
 
     plt.clf()
 
