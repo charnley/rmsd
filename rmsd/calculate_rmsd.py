@@ -525,9 +525,6 @@ https://github.com/charnley/rmsd
     if np.count_nonzero(p_atoms != q_atoms):
         exit("Atoms not in the same order")
 
-    P = p_all
-    Q = q_all
-
     if args.no_hydrogen:
         not_hydrogens = np.where(p_atoms != 'H')
         P = p_all[not_hydrogens]
@@ -544,6 +541,11 @@ https://github.com/charnley/rmsd
     elif args.add_idx:
         P = p_all[args.add_idx]
         Q = q_all[args.add_idx]
+
+    else:
+        P = p_all[:]
+        Q = q_all[:]
+
 
     # Calculate 'dumb' RMSD
     if args.normal and not args.output:
@@ -562,6 +564,7 @@ https://github.com/charnley/rmsd
         U = kabsch(P, Q)
         p_all -= Pc
         p_all = np.dot(p_all, U)
+        p_all += Qc
         write_coordinates(p_atoms, p_all, title="{} translated".format(args.structure_a))
         quit()
 
