@@ -37,9 +37,9 @@ No Changes  Re-centered  Rotated
 RMSD 2.50   RMSD 1.07    RMSD 0.25
 ==========  ===========  ==========
 
-.. |begin| image:: https://raw.githubusercontent.com/charnley/rmsd/master/img/plot_beginning.png
-.. |translate| image:: https://raw.githubusercontent.com/charnley/rmsd/master/img/plot_translated.png
-.. |rotate| image:: https://raw.githubusercontent.com/charnley/rmsd/master/img/plot_rotated.png
+.. |begin| image:: https://raw.githubusercontent.com/charnley/rmsd/master/img/plot_beginning.svg
+.. |translate| image:: https://raw.githubusercontent.com/charnley/rmsd/master/img/plot_translated.svg
+.. |rotate| image:: https://raw.githubusercontent.com/charnley/rmsd/master/img/plot_rotated.svg
 
 
 Installation

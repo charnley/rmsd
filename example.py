@@ -34,13 +34,15 @@ def save_plot(A, B, filename):
     Bx = B[:,0]
     By = B[:,1]
 
-    plt.plot(Ax, Ay, 'o-')
-    plt.plot(Bx, By, 'o-')
+    plt.plot(Ax, Ay, 'o-', markersize=15, linewidth=3)
+    plt.plot(Bx, By, 'o-', markersize=15, linewidth=3)
 
     plt.ylim([-2.5, 2.5])
     plt.xlim([-2.5, 2.5])
     plt.grid(True)
-    plt.savefig(filename)
+    plt.tick_params(labelsize=15)
+    plt.savefig(filename+'.svg')
+
     plt.clf()
 
     return
@@ -65,17 +67,17 @@ B -= 3
 B = np.dot(B, rotation_matrix(90))
 
 print("Normal RMSD", rmsd.rmsd(A, B))
-save_plot(A, B, "plot_beginning.png")
+save_plot(A, B, "plot_beginning")
 
 # Manipulate
 A -= rmsd.centroid(A)
 B -= rmsd.centroid(B)
 
 print("Translated RMSD", rmsd.rmsd(A, B))
-save_plot(A, B, "plot_translated.png")
+save_plot(A, B, "plot_translated")
 
 U = rmsd.kabsch(A, B)
 A = np.dot(A, U)
 
 print("Rotated RMSD", rmsd.rmsd(A, B))
-save_plot(A, B, "plot_rotated.png")
+save_plot(A, B, "plot_rotated")
