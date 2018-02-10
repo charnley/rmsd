@@ -14,7 +14,7 @@ https://github.com/charnley/rmsd
 
 """
 
-__version__ = '1.2.5'
+__version__ = '1.2.6'
 
 import copy
 import numpy as np
