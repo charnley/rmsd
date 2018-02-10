@@ -16,7 +16,7 @@ https://github.com/charnley/rmsd
 
 __version__ = '1.2.5'
 
-
+import copy
 import numpy as np
 import re
 
@@ -510,7 +510,11 @@ https://github.com/charnley/rmsd
     args = parser.parse_args()
 
     # As default use all three methods
-    if not args.normal and not args.kabsch and not args.quater:
+    if args.output:
+        args.normal = False
+        args.kabsch = False
+        args.quater = False
+    elif not args.normal and not args.kabsch and not args.quater:
         args.normal = True
         args.kabsch = True
         args.quater = True
@@ -527,24 +531,24 @@ https://github.com/charnley/rmsd
 
     if args.no_hydrogen:
         not_hydrogens = np.where(p_atoms != 'H')
-        P = p_all[not_hydrogens]
-        Q = q_all[not_hydrogens]
+        P = copy.deepcopy(p_all[not_hydrogens])
+        Q = copy.deepcopy(q_all[not_hydrogens])
 
     elif args.remove_idx:
         N, = p_atoms.shape
         index = range(N)
         index = set(index) - set(args.remove_idx)
         index = list(index)
-        P = p_all[index]
-        Q = q_all[index]
+        P = copy.deepcopy(p_all[index])
+        Q = copy.deepcopy(q_all[index])
 
     elif args.add_idx:
-        P = p_all[args.add_idx]
-        Q = q_all[args.add_idx]
+        P = copy.deepcopy(p_all[args.add_idx])
+        Q = copy.deepcopy(q_all[args.add_idx])
 
     else:
-        P = p_all[:]
-        Q = q_all[:]
+        P = copy.deepcopy(p_all)
+        Q = copy.deepcopy(q_all)
 
 
     # Calculate 'dumb' RMSD
@@ -560,20 +564,20 @@ https://github.com/charnley/rmsd
     P -= Pc
     Q -= Qc
 
-    if args.output:
-        U = kabsch(P, Q)
-        p_all -= Pc
-        p_all = np.dot(p_all, U)
-        p_all += Qc
-        write_coordinates(p_atoms, p_all, title="{} translated".format(args.structure_a))
-        quit()
-
     if args.kabsch:
         print("Kabsch RMSD: {0}".format(kabsch_rmsd(P, Q)))
 
     if args.quater:
         print("Quater RMSD: {0}".format(quaternion_rmsd(P, Q)))
 
+    if args.output:
+        U = kabsch(P, Q)
+        p_all -= Pc
+        p_all = np.dot(p_all, U)
+        p_all += Qc
+        write_coordinates(p_atoms, p_all, title="{} translated".format(args.structure_a))
+
+    return
 
 if __name__ == "__main__":
     main()
