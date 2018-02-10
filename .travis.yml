@@ -7,7 +7,7 @@ python:
 - '3.4'
 - '3.5'
 - '3.6'
-install: pip install -r .
+install: pip install -e .
 script:
 - python tests.py
 deploy:
