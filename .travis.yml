@@ -1,14 +1,20 @@
 language: python
 python:
-  - "2.6"
-  - "2.7"
-  - "3.2"
-  - "3.3"
-  - "3.4"
-  - "3.5"
-  - "3.6"
-# command to install dependencies
-install: "pip install numpy"
-# command to run tests
+- '2.6'
+- '2.7'
+- '3.2'
+- '3.3'
+- '3.4'
+- '3.5'
+- '3.6'
+install: pip install -r
 script:
-  - python tests.py
+- python tests.py
+deploy:
+  provider: pypi
+  user: charnley
+  password:
+    secure: K3PVavVdLKKT7eSDnfjOEThVwcTyZQqEgPzu0ATdmXX/eclu1JM1RxwC2T7MQoq76UNZBnKYf/aW5FuGwXYY6Z5hQ9kjw4+T2x4nogDWUT1ErvgTxlTiKCL2DMrHndxDATpb493HTaQ8dFIONACyF3vDw711OTtwqGEx50D2aPcUqeQR6Xpp7uAV8PTnI01rIPRZTZ/cFZHOkx4jGeB7eajJFe9Pf2i7LDE9omRL3P5lJDP++XMZEeYVNmC43pd8mGp8iqLEj3brMUQlgays0BSjkDmdUihu/8Q7LwPVC3lY8kKtIIWKPbmpaNoeNKYCyJlEiq7k7kjmRh3mo6L9SqyhrwNpgOT9C6vzjvyMkv+UGDmD5RLX2Pn3pMM5xwQWBmQQMGvPPqK8NPRdg8x2cVfGvOoMo990w7UVsFW+0zI9cU2DS/LZVxyPpdiLrJaZp66nEWXmSFtEoWVOvoZnTBc+4kMbHmdXTt4uPtVByY9PTYI9cb0Oe+fRUV1baWeIbetU9DPFfqG3fVLJOFwwlDWXb9nxNZaJSLM9MwH/KY5ECBCPhwJEa90lhWhmr1U8tZ5y2exVNqs12CBq0t6z3IJop260J6V2hSKGLAtmYzOUnNsRj5qEQCWyMdf1MenppLnvL7AG+3ASUMIznJEO8jtxwG+zWsDhXehw5pObNSw=
+  on:
+    tags: true
+    branch: master
