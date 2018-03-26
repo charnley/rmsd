@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iterator>
 #include <vector>
+#include <string.h>
 
 #include <tuple>
 
@@ -11,9 +12,13 @@
 #include <lapacke.h>
 
 #include <valarray>
+
+#include "matrix.h"
+
 typedef std::valarray<double> matrix;
 
-double matrix_det3x3(matrix A)
+template <class M>
+double matrix_det3x3(M A)
 {
     // determinant of a square 3x3 matrix
     double det = A[0]*A[4]*A[8]
@@ -45,6 +50,9 @@ matrix multiply(matrix A, matrix B,
     return C;
 }
 
+// Should be
+// template <class M>
+// M transpose_multiply(M A, M B)
 
 matrix transpose_multiply(matrix A, matrix B,
     const int M,
@@ -122,6 +130,23 @@ std::vector<std::string> split(const std::string &s, char delim)
     std::vector<std::string> elems;
     split(s, delim, back_inserter(elems));
     return elems;
+}
+
+
+void print_coordinates(
+    const matrix coord,
+    const std::valarray<std::string> atoms,
+    const unsigned int n_atoms)
+{
+    for(unsigned int i=0; i<n_atoms; i++)
+    {
+        std::cout << atoms[i] << " ";
+        for(unsigned int j=0; j<3; j++)
+        {
+            std::cout << coord[3*i + j] << " ";
+        }
+        std::cout << std::endl;
+    }
 }
 
 
@@ -260,7 +285,7 @@ std::valarray<double> centroid(const matrix coordinates)
     unsigned int size = coordinates.size();
     unsigned int n_atoms = size / 3;
 
-    int i = 0;
+    unsigned int i = 0;
     while(i<size)
     {
         x += coordinates[i++];
@@ -291,8 +316,37 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    const std::string p_file = argv[1];
-    const std::string q_file = argv[2];
+    bool output = false;
+    int a = 0;
+    int b = 0;
+
+    if(argc > 3)
+    {
+        for(int i=1; i<argc; i++)
+        {
+            if(strcmp(argv[i], "-o") == 0)
+            {
+                output = true;
+            }
+            else if (a == 0)
+            {
+                a = i;
+            }
+            else
+            {
+                b = i;
+            }
+
+        }
+    }
+    else
+    {
+        a = 1;
+        b = 2;
+    }
+
+    const std::string p_file = argv[a];
+    const std::string q_file = argv[b];
 
     unsigned int n_atoms {0};
     unsigned int p_no_atoms;
@@ -315,6 +369,8 @@ int main(int argc, char* argv[])
     // Calculate the center of the molecules
     p_center = centroid(p_coord);
     q_center = centroid(q_coord);
+    print_coordinates(p_coord, p_atoms, n_atoms);
+    printf("\n");
 
     // Recenter molecules in origin
     for(unsigned int i = 0; i < n_atoms; i++) {
@@ -324,7 +380,34 @@ int main(int argc, char* argv[])
         }
     }
 
-    double krmsd = kabsch_rmsd(p_coord, q_coord, n_atoms);
-    std::cout << krmsd << std::endl;
+    if (!output)
+    {
+        double krmsd = kabsch_rmsd(p_coord, q_coord, n_atoms);
+        std::cout << krmsd << std::endl;
+    }
+    else
+    {
+
+        printf("p_coord\n");
+        print_matrix(p_coord, n_atoms, 3);
+        printf("\n");
+
+        matrix U = kabsch(p_coord, q_coord, n_atoms);
+        matrix product = multiply(p_coord, U, n_atoms, 3, 3);
+
+        printf("\n");
+
+        print_matrix(U, 3, 3);
+
+        printf("\n");
+
+        for(unsigned int i = 0; i < n_atoms; i++) {
+            for(unsigned int d = 0; d < 3; d++) {
+                product[3*i + d] += q_center[d];
+            }
+        }
+
+        print_coordinates(product, p_atoms, n_atoms);
+    }
 }
 
