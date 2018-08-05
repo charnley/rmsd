@@ -272,15 +272,16 @@ def reorder_distance(atoms, X):
 
     if debug_distance:
         # unsorted array print
-        print('Original atoms: \n', atoms)
-        print('Original norms: \n', norms)
-        print('Original array: \n', X)
+        print('------------------')
+        print('Original atoms: {}'.format(atoms))
+        print('Original norms: {}'.format(norms))
+        print('Original array: {}'.format(X))
 
     # Array indices for re-ordering atoms
     reorder_indices = np.lexsort((norms, atoms))
-    
+
     if debug_distance:
-        print('Sorted indices of original atoms, then norms->', reorder_indices)
+        print('Sorted indices of original atoms, then norms: {}'.format(reorder_indices))
 
     # Create new arrays for the atoms, norms (not really necessary), and coordinate matrix
     atoms_ordered = np.zeros(len(reorder_indices),  'U2')
@@ -288,19 +289,39 @@ def reorder_distance(atoms, X):
     coords_ordered = np.zeros((len(reorder_indices), 3), dtype = float)
 
     # Re-order the atom array, norms (not really necessary), and coordinate matrix
-    for i in range(0, len(reorder_indices)):
-        atoms_ordered[i] = atoms[reorder_indices[i]]
-        norms_ordered[i] = norms[reorder_indices[i]]
-        coords_ordered[i, :]= X[reorder_indices[i]]
+    atoms_ordered = atoms[reorder_indices]
+    norms_ordere = norms[reorder_indices]
+    coords_ordered = X[reorder_indices]
+
 
     if debug_distance:
         for (i, j, k) in zip(atoms_ordered, norms_ordered, coords_ordered):
-            print("%3s %8.5f %s" % (i, j, k))
+            print('%3s %8.5f %s' % (i, j, k))
+        print('\n')
 
     return (atoms_ordered, coords_ordered)
 
 
-def reorder_hungarian(atoms, A, B):
+def generate_permutations(elements, n):
+    # Heap's algorithm for generating all n! permutations in a list
+    c = [0] * n
+    yield elements
+    i = 0
+    while i < n:
+        if c[i] < i:
+            if i % 2 == 0:
+                elements[0], elements[i] = elements[i], elements[0]
+            else:
+                elements[c[i]], elements[i] = elements[i], elements[c[i]]
+            yield elements
+            c[i] += 1
+            i = 0
+        else:
+            c[i] = 0
+            i += 1
+
+
+def reorder_brute_or_hungarian(atoms, A, B, reorder_type):
     """
     Re-orders the input atom list and xyz coordinates using the Hungarian method (using optimized column results)
 
@@ -312,6 +333,8 @@ def reorder_hungarian(atoms, A, B):
         (N,D) matrix, where N is points and D is dimension
     B : array
         (N,D) matrix, where N is points and D is dimension
+    reorder_type : string
+        Contains the method for re-ordering, either "brute" or "hungarian"
 
     Returns
     -------
@@ -323,6 +346,7 @@ def reorder_hungarian(atoms, A, B):
     """
 
     debug_hungarian = 0
+    debug_hungarian2 = 0
 
     swaps = np.array([[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 1, 0], [2, 0, 1]])
     reflections = np.array([[1, 1, 1], [-1, 1, 1], [1, -1, 1], [1, 1, -1], [-1, -1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, -1]])
@@ -330,6 +354,9 @@ def reorder_hungarian(atoms, A, B):
     rmsd_min = 100000000
     atoms_min = np.zeros(len(A),  'U2')
     coords_min = np.zeros((len(A), 3), dtype = float)
+
+    # Sets initial ordering for row indices to [0, 1, 2, ..., len(A)], used in brute-force method
+    initial_order = list(range(len(A)))
 
     # Needed for creating the distance ("cost") matrix for the Hungarian
     from scipy.spatial import distance
@@ -340,11 +367,6 @@ def reorder_hungarian(atoms, A, B):
         # Iterate over all reflections (eg Y transformed to -Y -> X, -Y, Z)
         for s in range(0, len(reflections)):
 
-            if debug_hungarian:
-                rmsd_temp = kabsch_rmsd(A, B)
-                print("r = %s, s = %s, RMSD = %8.5f\n" % (r, s, rmsd_temp))
-
-
             # Create blank arrays for the re-ordered atoms and coordinates
             atoms_ordered = np.zeros(len(A),  'U2')
             coords_ordered = np.zeros((len(A), 3), dtype = float)
@@ -353,67 +375,101 @@ def reorder_hungarian(atoms, A, B):
             coords_temp = np.zeros((len(B), 3), dtype = float)
 
             # Apply coordinate swap r and coordinate reflection s to 2nd structure
-            for t in range(0, 3): 
-                coords_temp[:, t] = B[:, swaps[r, t]] * reflections[s, t]
-            
-            if debug_hungarian:
-                rmsd_temp = kabsch_rmsd(A, coords_temp)
-                print("r = %s, s = %s, RMSD = %8.5f\n" % (r, s, rmsd_temp))
+            coords_temp[:, range(0, 3)] = np.dot(B[:, swaps[r, range(0, 3)]], np.diag(reflections[s])) 
 
-            # Create distance matrix between atoms in structure 1 and 2
-            distances = distance.cdist(A, coords_temp, 'euclidean')
- 
-            # unsorted array print
-            if debug_hungarian:
-                print('Swaps: \n', swaps)
-                print('Reflections: \n', reflections)
-                print('Original atoms: \n', atoms)
-                print('Original array: \n', B)
-                print('New array: \n', coords_temp)
-                print('Distance matrix: \n', distances)
+            # Calculates optimal row re-ordering via Hungarian algorithm
+            if reorder_type == 'hungarian':
 
-            # Perform Hungarian analysis on distance matrix between atoms of 1st structure and trial structure
-            from scipy.optimize import linear_sum_assignment
-            row_reorder, col_reorder = linear_sum_assignment(distances)
+                # Create distance matrix between atoms in structure 1 and 2
+                distances = distance.cdist(A, coords_temp, 'euclidean')
 
-            if debug_hungarian:
-                print('Optimal row assignment: \n', row_reorder)
-                print('Optimal col assignment: \n', col_reorder)
+                # unsorted array print
+                if debug_hungarian:
+                    print('------------------')
+                    print('Swaps: {}'.format(swaps[r]))
+                    print('Reflections: {}'.format(reflections[s]))
+                    print('Original atoms: {}'.format(atoms))
+                    print('Original array: {}'.format(B))
+                    print('New array: {}'.format(coords_temp))
+                    print('Distance matrix: {}'.format(distances))
 
-            # Re-order the atom array and coordinate matrix
-            for i in range(0, len(col_reorder)):
-                atoms_ordered[i] = atoms[col_reorder[i]]
-                coords_ordered[i, :]= coords_temp[col_reorder[i]]
+                # Perform Hungarian analysis on distance matrix between atoms of 1st structure and trial structure
+                from scipy.optimize import linear_sum_assignment
+                row_indices, reorder_indices = linear_sum_assignment(distances)
+
+                # Re-order the atom array and coordinate matrix
+                atoms_ordered = atoms[reorder_indices]
+                coords_ordered = coords_temp[reorder_indices]
 
                 if debug_hungarian:
-                    print('i: ', i)
-                    print('New assigned row: %s',col_reorder[i]) 
-                    print('atoms ordered i: %s', atoms_ordered[i])
-                    print('coords ordered i: %s', coords_ordered[i, :])
-               
+                    print('New assigned row: {}'.format(reorder_indices)) 
+                    for (i, j) in zip(atoms_ordered, coords_ordered):
+                        print("%3s  %s" % (i, j))
 
-            if debug_hungarian:
-                for (i, j) in zip(atoms_ordered, coords_ordered):
-                    print("%3s  %s" % (i, j))
-
-            # Calculate the RMSD between structure 1 and the Hungarian re-ordered structure 2
-            rmsd_temp = kabsch_rmsd(A, coords_ordered)
-
-            if debug_hungarian:
-                print("r = %s, s = %s, temp RMSD = %10.5f, min RMSD = %10.5f\n" % (r, s, rmsd_temp, rmsd_min))
-
-            # Replaces the atoms and coordinates with the current structure if the RMSD is lower
-            if rmsd_temp < rmsd_min:
-                swap_min = swaps[r]
-                reflection_min = reflections[s]
-                atoms_min = atoms_ordered
-                rmsd_min = rmsd_temp
-                coords_min = coords_ordered            
+                # Calculate the RMSD between structure 1 and the Hungarian re-ordered structure 2
+                rmsd_temp = quaternion_rmsd(A, coords_ordered)
 
                 if debug_hungarian:
-                    print("r = %s, s = %s, RMSD = %10.5f\n" % (r, s, rmsd_temp))
-                    print('Optimal row assignment: \n', row_reorder)
-                    print('Optimal col assignment: \n', col_reorder)
+                    print('temp RMSD = %10.5e, min RMSD = %10.5e\n' % (rmsd_temp, rmsd_min))
+
+                # Replaces the atoms and coordinates with the current structure if the RMSD is lower
+                if rmsd_temp < rmsd_min:
+                    swap_min = swaps[r]
+                    reflection_min = reflections[s]
+                    atoms_min = atoms_ordered
+                    rmsd_min = rmsd_temp
+                    coords_min = coords_ordered
+
+                    if debug_hungarian2:
+                        print('------------------')
+                        print('Swaps: {}'.format(swaps[r]))
+                        print('Reflections: {}'.format(reflections[s]))
+                        print('New row indices: {}'.format(reorder_indices))
+                        print('temp RMSD = %10.5e, min RMSD = %10.5e\n' % (rmsd_temp, rmsd_min))
+
+
+            # Calculates all permutations of row re-ordering via Heap's algorithm (brute force method) 
+            else:
+                for reorder_indices in generate_permutations(initial_order, len(initial_order)):
+
+                    # unsorted array print
+                    if debug_hungarian:
+                        print('Swaps: {}'.format(swaps[r]))
+                        print('Reflections: {}'.format(reflections[s]))
+                        print('Original atoms: {}'.format(atoms))
+                        print('Original array: {}'.format(B))
+                        print('New array: {}'.format(coords_temp))
+
+
+                    # Re-order the atom array and coordinate matrix
+                    atoms_ordered = atoms[reorder_indices]
+                    coords_ordered = coords_temp[reorder_indices]
+
+                    if debug_hungarian:
+                        print('New assigned row: {}'.format(reorder_indices)) 
+                        for (i, j) in zip(atoms_ordered, coords_ordered):
+                            print("%3s  %s" % (i, j))
+
+                    # Calculate the RMSD between structure 1 and the Hungarian re-ordered structure 2
+                    rmsd_temp = quaternion_rmsd(A, coords_ordered)
+
+                    if debug_hungarian:
+                        print('temp RMSD = %10.5f, min RMSD = %10.5e\n' % (rmsd_temp, rmsd_min))
+
+                    # Replaces the atoms and coordinates with the current structure if the RMSD is lower
+                    if rmsd_temp < rmsd_min:
+                        swap_min = swaps[r]
+                        reflection_min = reflections[s]
+                        atoms_min = atoms_ordered
+                        rmsd_min = rmsd_temp
+                        coords_min = coords_ordered
+
+                        if debug_hungarian2:
+                            print('------------------')
+                            print('Swaps: {}'.format(swaps[r]))
+                            print('Reflections: {}'.format(reflections[s]))
+                            print('New row indices: {}'.format(reorder_indices))
+                            print('temp RMSD = %10.5e, min RMSD = %10.5e\n' % (rmsd_temp, rmsd_min))
 
     return (atoms_min, coords_min)
 
@@ -667,7 +723,7 @@ https://github.com/charnley/rmsd
     parser.add_argument('structure_b', metavar='structure_b', type=str)
     parser.add_argument('-o', '--output', action='store_true', help='print out structure A, centered and rotated unto structure B\'s coordinates in XYZ format')
     parser.add_argument('-f', '--format', action='store', help='Format of input files. Valid format are XYZ and PDB', metavar='fmt')
-    parser.add_argument('-s', '--ordering', action='store', help='Re-order input XYZ by atom type and then distance from centroid. Valid methods are distance and hungarian')
+    parser.add_argument('-s', '--ordering', action='store', help='Valid methods are brute (only use if # atoms < 10 or you enjoy twiddling your thumbs), distance, and hungarian')
 
     parser.add_argument('-m', '--normal', action='store_true', help='Use no transformation')
     parser.add_argument('-k', '--kabsch', action='store_true', help='Use Kabsch algorithm for transformation')
@@ -703,7 +759,7 @@ https://github.com/charnley/rmsd
     q_atoms, q_all = get_coordinates(args.structure_b, args.format)
 
 
-    if np.count_nonzero(p_atoms != q_atoms) and args.ordering != 'distance' and args.ordering != 'hungarian':
+    if np.count_nonzero(p_atoms != q_atoms) and args.ordering != 'brute' and args.ordering != 'distance' and args.ordering != 'hungarian':
         exit("Atoms not in the same order")
 
     if args.no_hydrogen:
@@ -728,11 +784,6 @@ https://github.com/charnley/rmsd
         Q = copy.deepcopy(q_all)
 
 
-    # Calculate 'dumb' RMSD
-    if args.normal and not args.output:
-        normal_rmsd = rmsd(P, Q)
-        print("Normal RMSD: {0}".format(normal_rmsd))
-
     # Create the centroid of P and Q which is the geometric center of a
     # N-dimensional region and translate P and Q onto that center.
     # http://en.wikipedia.org/wiki/Centroid
@@ -741,12 +792,17 @@ https://github.com/charnley/rmsd
     P -= Pc
     Q -= Qc
 
+    # Calculate 'dumb' RMSD
+    if args.normal and not args.output:
+        normal_rmsd = rmsd(P, Q)
+        print("Normal RMSD: {0}".format(normal_rmsd))
+
     if args.ordering == 'distance' and args.format == 'xyz':
        (p_atoms, P) = reorder_distance(p_atoms, P)
        (q_atoms, Q) = reorder_distance(q_atoms, Q)
 
-    elif args.ordering == 'hungarian' and args.format == 'xyz':
-       (q_atoms, Q) = reorder_hungarian(q_atoms, P, Q)
+    elif args.ordering == 'brute' or args.ordering == 'hungarian' and args.format == 'xyz':
+       (q_atoms, Q) = reorder_brute_or_hungarian(q_atoms, P, Q, args.ordering)
 
     if args.kabsch:
         print("Kabsch RMSD: {0}".format(kabsch_rmsd(P, Q)))
