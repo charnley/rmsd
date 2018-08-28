@@ -806,6 +806,7 @@ https://github.com/charnley/rmsd
     P -= Pc
     Q -= Qc
 
+    
     # Calculate 'dumb' RMSD
     if args.normal and not args.output:
         normal_rmsd = rmsd(P, Q)
@@ -820,6 +821,7 @@ https://github.com/charnley/rmsd
     elif args.reorder_distance and args.format == 'xyz':
        (p_atoms, P) = reorder_distance(p_atoms, P)
        (q_atoms, Q) = reorder_distance(q_atoms, Q)
+
 
     if args.kabsch:
         print("Kabsch RMSD: {0}".format(kabsch_rmsd(P, Q)))
