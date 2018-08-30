@@ -24,6 +24,7 @@ setuptools.setup(name='rmsd',
       license='BSD-2-Clause',
       install_requires=[
           'numpy',
+          'scipy',
       ],
       packages=['rmsd'],
       entry_points={
