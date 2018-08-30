@@ -21,7 +21,7 @@ import scipy as scipy
 from scipy.spatial import distance as spatial_distance
 
 # Needed for finding the re-ordering in the Hungarian method
-from scipy.optimize import linear_sum_assignment as optimize_lsm
+from scipy.optimize import linear_sum_assignment
 
 
 # Python 2/3 compatibility
@@ -224,16 +224,18 @@ def centroid(X):
     return C
 
 
-def reorder_distance(atoms, X, debug = False):
+def reorder_distance(atoms, coord, debug=False):
     """
-    Re-orders the input atom list and xyz coordinates by atom type and then 
-    by distance of each atom from the centroid
+    Re-orders the input atom list and xyz coordinates by atom type and then by
+    distance of each atom from the centroid.
+
     Parameters
     ----------
     atoms : array
         (N,1) matrix, where N is points holding the atoms' names
-    X : array
+    coord : array
         (N,D) matrix, where N is points and D is dimension
+
     Returns
     -------
     atoms_reordered : array
@@ -243,14 +245,14 @@ def reorder_distance(atoms, X, debug = False):
     """
 
     # Calculate distance from each atom to centroid
-    norms = np.linalg.norm(X, axis=1)
+    norms = np.linalg.norm(coord, axis=1)
 
     if debug:
         # unsorted array print
         print('------------------')
         print('Original atoms: {}'.format(atoms))
         print('Original norms: {}'.format(norms))
-        print('Original array: {}'.format(X))
+        print('Original array: {}'.format(coord))
 
     # Array indices for re-ordering atoms
     reorder_indices = np.lexsort((norms, atoms))
@@ -258,26 +260,7 @@ def reorder_distance(atoms, X, debug = False):
     if debug:
         print('Sorted indices of original atoms, then norms: {}'.format(reorder_indices))
 
-    # Calculates length (# of atoms) for new atom and coord matrics
-    num_atoms = reorder_indices.shape[0]
-
-    # Create new arrays for the atoms, norms (not really necessary), and coordinate matrix
-    atoms_ordered = np.zeros(num_atoms,  'U2')
-    norms_ordered = np.zeros(num_atoms, dtype = float)
-    coords_ordered = np.zeros((num_atoms, 3), dtype = float)
-
-    # Re-order the atom array, norms (not really necessary), and coordinate matrix
-    atoms_ordered = atoms[reorder_indices]
-    norms_ordere = norms[reorder_indices]
-    coords_ordered = X[reorder_indices]
-
-
-    if debug:
-        for (i, j, k) in zip(atoms_ordered, norms_ordered, coords_ordered):
-            print('%3s %8.5f %s' % (i, j, k))
-        print('\n')
-
-    return (atoms_ordered, coords_ordered)
+    return reorder_indices
 
 
 def generate_permutations(elements, n):
@@ -299,25 +282,13 @@ def generate_permutations(elements, n):
             i += 1
 
 
-def reorder_hungarian(atoms, A, B, debug = False, debug_abridged = False):
+
+def hungarian(A, B, debug=False, debug_abridged=False):
     """
-    Re-orders the input atom list and xyz coordinates using the Hungarian method (using optimized column results)
-    Parameters
-    ----------
-    atoms : array
-        (N,1) matrix, where N is points holding the atoms' names
-    A : array
-        (N,D) matrix, where N is points and D is dimension
-    B : array
-        (N,D) matrix, where N is points and D is dimension
-    reorder_type : string
-        Contains the method for re-ordering, either "brute" or "hungarian"
-    Returns
-    -------
-    atoms_min : array
-             (N,1) matrix, where N is points holding the ordered atoms' names
-    coords_min : array
-             (N,D) matrix, where N is points and D is dimension (rows re-ordered)
+    re-order the coordinates.
+
+    Note: expects coordinates A and B are of same atom type.
+
     """
 
     swaps = np.array([[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 1, 0], [2, 0, 1]])
@@ -330,12 +301,8 @@ def reorder_hungarian(atoms, A, B, debug = False, debug_abridged = False):
     num_swaps = swaps.shape[0]
     num_reflections = reflections.shape[0]
 
-    atoms_min = np.zeros(num_atoms,  'U2')
-    coords_min = np.zeros((num_atoms, 3), dtype = float)
-
-    # Sets initial ordering for row indices to [0, 1, 2, ..., len(A)], used in brute-force method
-    initial_order = list(range(num_atoms))
-
+    coords_min = np.zeros((num_atoms, 3), dtype=float)
+    view_min = []
 
     # Iterate over all swaps (eg X and Z coords exchanged -> Z, Y, X)
     for r in range(0, num_swaps):
@@ -344,16 +311,16 @@ def reorder_hungarian(atoms, A, B, debug = False, debug_abridged = False):
         for s in range(0, num_reflections):
 
             # Create blank arrays for the re-ordered atoms and coordinates
-            atoms_ordered = np.zeros(num_atoms,  'U2')
-            coords_ordered = np.zeros((num_atoms, 3), dtype = float)
+            coords_ordered = np.zeros((num_atoms, 3), dtype=float)
 
             # Create blank array for trial coordiantes
-            coords_temp = np.zeros((num_atoms, 3), dtype = float)
+            coords_temp = np.zeros((num_atoms, 3), dtype=float)
 
             # Apply coordinate swap r and coordinate reflection s to 2nd structure
-            coords_temp[:, range(0, 3)] = np.dot(B[:, swaps[r, range(0, 3)]], np.diag(reflections[s])) 
+            coords_temp[:, range(0, 3)] = np.dot(B[:, swaps[r, range(0, 3)]], np.diag(reflections[s]))
 
             # Create distance matrix between atoms in structure 1 and 2
+
             distances = spatial_distance.cdist(A, coords_temp, 'euclidean')
 
             # unsorted array print
@@ -361,25 +328,22 @@ def reorder_hungarian(atoms, A, B, debug = False, debug_abridged = False):
                 print('------------------')
                 print('Swaps: {}'.format(swaps[r]))
                 print('Reflections: {}'.format(reflections[s]))
-                print('Original atoms: {}'.format(atoms))
                 print('Original array: {}'.format(B))
                 print('New array: {}'.format(coords_temp))
                 print('Distance matrix: {}'.format(distances))
 
             # Perform Hungarian analysis on distance matrix between atoms of 1st structure and trial structure
-            row_indices, reorder_indices = optimize_lsm(distances)
+            row_indices, reorder_indices = linear_sum_assignment(distances)
 
             # Re-order the atom array and coordinate matrix
-            atoms_ordered = atoms[reorder_indices]
             coords_ordered = coords_temp[reorder_indices]
 
             if debug:
-                print('New assigned row: {}'.format(reorder_indices)) 
-                for (i, j) in zip(atoms_ordered, coords_ordered):
-                    print("%3s  %s" % (i, j))
+                print("reorder_indices", reorder_indices)
+                print("row_indices", reorder_indices)
 
             # Calculate the RMSD between structure 1 and the Hungarian re-ordered structure 2
-            rmsd_temp = quaternion_rmsd(A, coords_ordered)
+            rmsd_temp = kabsch_rmsd(A, coords_ordered)
 
             if debug:
                 print('temp RMSD = %10.5e, min RMSD = %10.5e\n' % (rmsd_temp, rmsd_min))
@@ -388,40 +352,77 @@ def reorder_hungarian(atoms, A, B, debug = False, debug_abridged = False):
             if rmsd_temp < rmsd_min:
                 swap_min = swaps[r]
                 reflection_min = reflections[s]
-                atoms_min = atoms_ordered
                 rmsd_min = rmsd_temp
                 coords_min = coords_ordered
+                view_min = reorder_indices
 
                 if debug_abridged:
-                    print('------------------')
+                    print('--------NEW----------')
                     print('Swaps: {}'.format(swaps[r]))
                     print('Reflections: {}'.format(reflections[s]))
                     print('New row indices: {}'.format(reorder_indices))
                     print('temp RMSD = %10.5e, min RMSD = %10.5e\n' % (rmsd_temp, rmsd_min))
 
-    return (atoms_min, coords_min)
+    return view_min
+
+
+def reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord, debug=False, debug_abridged=False):
+    """
+    Re-orders the input atom list and xyz coordinates using the Hungarian method (using optimized column results)
+    Parameters
+    ----------
+    p_atoms : array
+        (N,1) matrix, where N is points holding the atoms' names
+    p_atoms : array
+        (N,1) matrix, where N is points holding the atoms' names
+    p_coord : array
+        (N,D) matrix, where N is points and D is dimension
+    q_coord : array
+        (N,D) matrix, where N is points and D is dimension
+
+    Returns
+    -------
+    view_reorder : array
+             (N,1) matrix, reordered indexes of atom alignment based on the
+             coordinates of the atoms
+
+    """
+
+    # Find unique atoms
+    unique_atoms = np.unique(p_atoms)
+
+    # generate full view from q shape to fill in atom view on the fly
+    view_reorder = np.zeros(q_atoms.shape, dtype=int)
+    view_reorder -= 1
+
+    for atom in unique_atoms:
+        p_atom_idx, = np.where(p_atoms == atom)
+        q_atom_idx, = np.where(q_atoms == atom)
+
+        A_coord = p_coord[p_atom_idx]
+        B_coord = q_coord[q_atom_idx]
+
+        view = hungarian(A_coord, B_coord, debug=debug, debug_abridged=debug_abridged)
+        view_reorder[p_atom_idx] = q_atom_idx[view]
+
+    return view_reorder
 
 
 
-def reorder_brute(atoms, A, B, debug = False, debug_abridged = False):
+def brute_permutation(A, B, debug=False, debug_abridged=False):
     """
     Re-orders the input atom list and xyz coordinates using the brute force method of permuting all rows of the input coordinates
     Parameters
     ----------
-    atoms : array
-        (N,1) matrix, where N is points holding the atoms' names
     A : array
         (N,D) matrix, where N is points and D is dimension
     B : array
         (N,D) matrix, where N is points and D is dimension
-    reorder_type : string
-        Contains the method for re-ordering, either "brute" or "hungarian"
+
     Returns
     -------
-    atoms_min : array
-             (N,1) matrix, where N is points holding the ordered atoms' names
-    coords_min : array
-             (N,D) matrix, where N is points and D is dimension (rows re-ordered)
+    view : array
+             (N,1) matrix, reordered view of B projected to A
     """
 
     swaps = np.array([[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 1, 0], [2, 0, 1]])
@@ -434,8 +435,7 @@ def reorder_brute(atoms, A, B, debug = False, debug_abridged = False):
     num_swaps = swaps.shape[0]
     num_reflections = reflections.shape[0]
 
-    atoms_min = np.zeros(num_atoms,  'U2')
-    coords_min = np.zeros((num_atoms, 3), dtype = float)
+    view_min = []
 
     # Sets initial ordering for row indices to [0, 1, 2, ..., len(A)], used in brute-force method
     initial_order = list(range(num_atoms))
@@ -448,14 +448,13 @@ def reorder_brute(atoms, A, B, debug = False, debug_abridged = False):
         for s in range(0, num_reflections):
 
             # Create blank arrays for the re-ordered atoms and coordinates
-            atoms_ordered = np.zeros(num_atoms,  'U2')
             coords_ordered = np.zeros((num_atoms, 3), dtype = float)
 
             # Create blank array for trial coordiantes
             coords_temp = np.zeros((num_atoms, 3), dtype = float)
 
             # Apply coordinate swap r and coordinate reflection s to 2nd structure
-            coords_temp[:, range(0, 3)] = np.dot(B[:, swaps[r, range(0, 3)]], np.diag(reflections[s])) 
+            coords_temp[:, range(0, 3)] = np.dot(B[:, swaps[r, range(0, 3)]], np.diag(reflections[s]))
 
             for reorder_indices in generate_permutations(initial_order, num_atoms):
 
@@ -463,25 +462,18 @@ def reorder_brute(atoms, A, B, debug = False, debug_abridged = False):
                 if debug:
                     print('Swaps: {}'.format(swaps[r]))
                     print('Reflections: {}'.format(reflections[s]))
-                    print('Original atoms: {}'.format(atoms))
                     print('Original array: {}'.format(B))
                     print('New array: {}'.format(coords_temp))
 
 
                 # Re-order the atom array and coordinate matrix
-                atoms_ordered = atoms[reorder_indices]
                 coords_ordered = coords_temp[reorder_indices]
 
-                if debug:
-                    print('New assigned row: {}'.format(reorder_indices)) 
-                    for (i, j) in zip(atoms_ordered, coords_ordered):
-                        print("%3s  %s" % (i, j))
-
                 # Calculate the RMSD between structure 1 and the Hungarian re-ordered structure 2
-                rmsd_temp = quaternion_rmsd(A, coords_ordered)
+                rmsd_temp = kabsch_rmsd(A, coords_ordered)
 
                 if debug:
-                    print('temp RMSD = %10.5f, min RMSD = %10.5e\n' % (rmsd_temp, rmsd_min))
+                    print('temp RMSD = {:10.5f}, min RMSD = {:10.5e}\n'.format(rmsd_temp, rmsd_min))
 
                 # Replaces the atoms and coordinates with the current structure if the RMSD is lower
                 if rmsd_temp < rmsd_min:
@@ -490,15 +482,59 @@ def reorder_brute(atoms, A, B, debug = False, debug_abridged = False):
                     atoms_min = atoms_ordered
                     rmsd_min = rmsd_temp
                     coords_min = coords_ordered
+                    view_min = reorder_indices
 
                     if debug_abridged:
-                        print('------------------')
+                        print('-------NEW-----------')
                         print('Swaps: {}'.format(swaps[r]))
                         print('Reflections: {}'.format(reflections[s]))
                         print('New row indices: {}'.format(reorder_indices))
-                        print('temp RMSD = %10.5e, min RMSD = %10.5e\n' % (rmsd_temp, rmsd_min))
+                        print('temp RMSD = {:10.5f}, min RMSD = {:10.5e}\n'.format(rmsd_temp, rmsd_min))
 
-    return (atoms_min, coords_min)
+    return view_min
+
+
+def reorder_brute(p_atoms, q_atoms, p_coord, q_coord, debug=False, debug_abridged=False):
+    """
+    Re-orders the input atom list and xyz coordinates using all permutation of rows (using optimized column results)
+    Parameters
+    ----------
+    p_atoms : array
+        (N,1) matrix, where N is points holding the atoms' names
+    p_atoms : array
+        (N,1) matrix, where N is points holding the atoms' names
+    p_coord : array
+        (N,D) matrix, where N is points and D is dimension
+    q_coord : array
+        (N,D) matrix, where N is points and D is dimension
+
+    Returns
+    -------
+    view_reorder : array
+             (N,1) matrix, reordered indexes of atom alignment based on the
+             coordinates of the atoms
+
+    """
+
+    # Find unique atoms
+    unique_atoms = np.unique(p_atoms)
+
+    # generate full view from q shape to fill in atom view on the fly
+    view_reorder = np.zeros(q_atoms.shape, dtype=int)
+    view_reorder -= 1
+
+    for atom in unique_atoms:
+        p_atom_idx, = np.where(p_atoms == atom)
+        q_atom_idx, = np.where(q_atoms == atom)
+
+        A_coord = p_coord[p_atom_idx]
+        B_coord = q_coord[q_atom_idx]
+
+        view = brute_permutation(A_coord, B_coord, debug=debug, debug_abridged=debug_abridged)
+        view_reorder[p_atom_idx] = q_atom_idx[view]
+
+
+    return reorder_view
 
 
 def rmsd(V, W):
@@ -711,8 +747,8 @@ def main():
 
     description = """
 Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ
-or PDB format, using transformation and rotation. The order of the atoms *must*
-be the same for both structures.
+or PDB format, using transformation and rotation.
+
 For more information, usage, example and citation read more at
 https://github.com/charnley/rmsd
 """
@@ -731,17 +767,18 @@ https://github.com/charnley/rmsd
 
     parser.add_argument('-v', '--version', action='version', version='rmsd ' + __version__ + "\nhttps://github.com/charnley/rmsd")
 
-    parser.add_argument('structure_a', metavar='structure_a', type=str, help='Structure in .xyz or .pdb format')
-    parser.add_argument('structure_b', metavar='structure_b', type=str)
-    parser.add_argument('-o', '--output', action='store_true', help='print out structure A, centered and rotated unto structure B\'s coordinates in XYZ format')
-    parser.add_argument('-f', '--format', action='store', help='Format of input files. Valid format are XYZ and PDB', metavar='fmt')
-    parser.add_argument('-s', '--reorder', action='store_true', help='Uses Hungarian method for re-ordering atoms for improved alignment')
-    parser.add_argument('-sb', '--reorder_brute', action='store_true', help='Uses brute-force method for re-ordering atoms for optimal alignment  (only use if # atoms < 10 or you enjoy twiddling your thumbs)')
-    parser.add_argument('-sd', '--reorder_distance', action='store_true', help='Uses distance from centroid to re-order atoms for improved alignment')
-
     parser.add_argument('-m', '--normal', action='store_true', help='Use no transformation')
     parser.add_argument('-k', '--kabsch', action='store_true', help='Use Kabsch algorithm for transformation')
     parser.add_argument('-q', '--quater', action='store_true', help='Use Quaternion algorithm for transformation')
+
+    parser.add_argument('structure_a', metavar='structure_a', type=str, help='Structure in .xyz or .pdb format')
+    parser.add_argument('structure_b', metavar='structure_b', type=str)
+
+    parser.add_argument('-o', '--output', action='store_true', help='print out structure A, centered and rotated unto structure B\'s coordinates in XYZ format')
+    parser.add_argument('-f', '--format', action='store', help='Format of input files. Valid format are XYZ and PDB', metavar='fmt')
+
+    parser.add_argument('-e', '--reorder', action='store_true', help='Re-order atoms of the molecules before RMSD (Default method: Hungarian)')
+    parser.add_argument('-em', '--reorder_method', action='store', default="hungarian", metavar="method", help='Select which reorder method to use; hungarian, brute, distance (default: hungarian)')
 
     index_group = parser.add_mutually_exclusive_group()
     index_group.add_argument('-n', '--no-hydrogen', action='store_true', help='ignore hydrogens when calculating RMSD')
@@ -755,11 +792,12 @@ https://github.com/charnley/rmsd
 
     args = parser.parse_args()
 
-    # As default use all three methods
+    # As default use all three methods, but don't print rmsd if output is selected
     if args.output:
         args.normal = False
         args.kabsch = False
         args.quater = False
+
     elif not args.normal and not args.kabsch and not args.quater:
         args.normal = True
         args.kabsch = True
@@ -769,65 +807,120 @@ https://github.com/charnley/rmsd
     if args.format == None:
         args.format = args.structure_a.split('.')[-1]
 
-    p_atoms, p_all = get_coordinates(args.structure_a, args.format)
-    q_atoms, q_all = get_coordinates(args.structure_b, args.format)
+    p_all_atoms, p_all = get_coordinates(args.structure_a, args.format)
+    q_all_atoms, q_all = get_coordinates(args.structure_b, args.format)
+
+    p_size = p_all.shape[0]
+    q_size = q_all.shape[0]
+
+    if not p_size == q_size:
+        print("Error: Molecules not same size")
+        quit()
+
+    if np.count_nonzero(p_all_atoms != q_all_atoms) and not args.reorder:
+        msg = """
+Error: Atoms are not in the same order.
+
+Use --reorder to align the atoms (can be expensive for large moleculees).
+Please see --help or documentation for more information.
+"""
+        print(msg)
+        exit()
 
 
-    if np.count_nonzero(p_atoms != q_atoms) and not args.reorder and not args.reorder_brute and not args.order_distance:
-        exit("Atoms not in the same order")
+    # Set local view
+    p_view = None
+    q_view = None
+
 
     if args.no_hydrogen:
+
         not_hydrogens = np.where(p_atoms != 'H')
-        P = copy.deepcopy(p_all[not_hydrogens])
-        Q = copy.deepcopy(q_all[not_hydrogens])
+        p_view = p_all[not_hydrogens]
+
+        not_hydrogens = np.where(q_atoms != 'H')
+        p_view = q_all[not_hydrogens]
 
     elif args.remove_idx:
-        N, = p_atoms.shape
-        index = range(N)
+        index = range(p_size)
         index = set(index) - set(args.remove_idx)
         index = list(index)
-        P = copy.deepcopy(p_all[index])
-        Q = copy.deepcopy(q_all[index])
+        p_view = p_all[index]
+        q_view = q_all[index]
 
     elif args.add_idx:
-        P = copy.deepcopy(p_all[args.add_idx])
-        Q = copy.deepcopy(q_all[args.add_idx])
+        p_view = p_all[args.add_idx]
+        q_view = q_all[args.add_idx]
+
+
+    # Set local view
+    if p_view is not None:
+        p_coord = copy.deepcopy(p_all[p_view])
+        q_coord = copy.deepcopy(q_all[q_view])
+        p_atoms = copy.deepcopy(p_all_atoms[p_view])
+        q_atoms = copy.deepcopy(q_all_atoms[q_view])
 
     else:
-        P = copy.deepcopy(p_all)
-        Q = copy.deepcopy(q_all)
+        p_coord = copy.deepcopy(p_all)
+        q_coord = copy.deepcopy(q_all)
+        p_atoms = copy.deepcopy(p_all_atoms)
+        q_atoms = copy.deepcopy(q_all_atoms)
 
 
     # Create the centroid of P and Q which is the geometric center of a
     # N-dimensional region and translate P and Q onto that center.
     # http://en.wikipedia.org/wiki/Centroid
-    Pc = centroid(P)
-    Qc = centroid(Q)
-    P -= Pc
-    Q -= Qc
+    p_cent = centroid(p_coord)
+    q_cent = centroid(q_coord)
+    p_coord -= p_cent
+    q_coord -= q_cent
 
-    
+
+
+    # If the atoms are not correctly ordered, use algorithms to reorder/align
+    # the atoms
+    if args.reorder:
+
+        if args.reorder_method == "hungarian":
+            q_review = reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord)
+            q_coord = q_coord[q_review]
+            q_atoms = q_atoms[q_review]
+
+        elif args.reorder_method == "brute":
+            q_review = reorder_brute(q_coord, q_atoms, p_coord, q_coord)
+            q_coord = q_coord[q_review]
+            q_atoms = q_atoms[q_review]
+
+        elif args.reorder_method == "distance":
+            p_review = reorder_distance(p_atoms, p_coord)
+            q_review = reorder_distance(q_atoms, q_coord)
+
+            # TODO project q onto p
+
+            quit()
+
+        else:
+            print("Unknown reorder method:", args.reorder_method)
+            quit()
+
+
+        if not all(p_atoms == q_atoms):
+            print("Error: not aligned")
+            quit()
+
+        pass
+
+
     # Calculate 'dumb' RMSD
     if args.normal and not args.output:
-        normal_rmsd = rmsd(P, Q)
+        normal_rmsd = rmsd(p_coord, q_coord)
         print("Normal RMSD: {0}".format(normal_rmsd))
 
-    if args.reorder and args.format == 'xyz':
-       (q_atoms, Q) = reorder_hungarian(q_atoms, P, Q)
-
-    elif args.reorder_brute and args.format == 'xyz':
-       (q_atoms, Q) = reorder_brute(q_atoms, P, Q)
-
-    elif args.reorder_distance and args.format == 'xyz':
-       (p_atoms, P) = reorder_distance(p_atoms, P)
-       (q_atoms, Q) = reorder_distance(q_atoms, Q)
-
-
     if args.kabsch:
-        print("Kabsch RMSD: {0}".format(kabsch_rmsd(P, Q)))
+        print("Kabsch RMSD: {0}".format(kabsch_rmsd(p_coord, q_coord)))
 
     if args.quater:
-        print("Quater RMSD: {0}".format(quaternion_rmsd(P, Q)))
+        print("Quater RMSD: {0}".format(quaternion_rmsd(p_coord, q_coord)))
 
     if args.output:
         U = kabsch(P, Q)
