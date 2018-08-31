@@ -771,17 +771,17 @@ See https://github.com/charnley/rmsd for citation information
                     formatter_class=argparse.RawDescriptionHelpFormatter,
                     epilog=epilog)
 
-    parser.add_argument('-v', '--version', action='version', version=version_msg)
-
-    parser.add_argument('-m', '--normal', action='store_true', help='Use no transformation')
-    parser.add_argument('-k', '--kabsch', action='store_true', help='Use Kabsch algorithm for transformation')
-    parser.add_argument('-q', '--quater', action='store_true', help='Use Quaternion algorithm for transformation')
 
     parser.add_argument('structure_a', metavar='structure_a', type=str, help='Structure in .xyz or .pdb format')
     parser.add_argument('structure_b', metavar='structure_b', type=str)
 
-    parser.add_argument('-o', '--output', action='store_true', help='print out structure A, centered and rotated unto structure B\'s coordinates in XYZ format')
+    parser.add_argument('-v', '--version', action='version', version=version_msg)
+
     parser.add_argument('-f', '--format', action='store', help='Format of input files. Valid format are XYZ and PDB', metavar='fmt')
+
+    parser.add_argument('-m', '--normal', action='store_true', help='Use no transformation')
+    parser.add_argument('-k', '--kabsch', action='store_true', help='Use Kabsch algorithm for transformation')
+    parser.add_argument('-q', '--quater', action='store_true', help='Use Quaternion algorithm for transformation')
 
     parser.add_argument('-e', '--reorder', action='store_true', help='Re-order atoms of the molecules before RMSD (Default method: Hungarian)')
     parser.add_argument('-em', '--reorder_method', action='store', default="hungarian", metavar="method", help='Select which reorder method to use; hungarian, brute, distance (default: hungarian)')
@@ -791,6 +791,7 @@ See https://github.com/charnley/rmsd for citation information
     index_group.add_argument('-r', '--remove-idx', nargs='+', type=int, help='index list of atoms NOT to consider', metavar='idx')
     index_group.add_argument('-a', '--add-idx', nargs='+', type=int, help='index list of atoms to consider', metavar='idx')
 
+    parser.add_argument('-o', '--output', action='store_true', help='print out structure B, centered and rotated unto structure A\'s coordinates in XYZ format')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -926,13 +927,10 @@ Please see --help or documentation for more information.
         print("Quater RMSD: {0}".format(quaternion_rmsd(p_coord, q_coord)))
 
     if args.output:
-        # TODO Make function?
-        # TODO Check
-        # TODO hmmm, choice, p to q or q to p! Decide!
-        U = kabsch(p_coord, q_coord)
-        p_all -= p_cent
-        p_all = np.dot(p_all, U)
-        p_all += q_cent
+        U = kabsch(q_coord, p_coord)
+        q_all -= q_cent
+        q_all = np.dot(q_all, U)
+        q_all += p_cent
         write_coordinates(p_all_atoms, p_all, title="{} translated".format(args.structure_a))
 
     return
