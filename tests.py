@@ -10,6 +10,7 @@ import os
 import sys
 import unittest
 import numpy as np
+import copy
 from contextlib import contextmanager
 
 try:
@@ -17,10 +18,24 @@ try:
 except ImportError:
     from io import StringIO
 
-from rmsd import (get_coordinates_pdb, get_coordinates_xyz, get_coordinates,
-                  rmsd, centroid, kabsch_rmsd, kabsch_rotate, kabsch,
-                  quaternion_rmsd, quaternion_rotate, quaternion_transform,
-                  makeQ, makeW, write_coordinates)
+from rmsd import \
+    get_coordinates_pdb, \
+    get_coordinates_xyz, \
+    get_coordinates, \
+    rmsd, \
+    centroid, \
+    kabsch_rmsd, \
+    kabsch_rotate, \
+    kabsch, \
+    quaternion_rmsd, \
+    quaternion_rotate, \
+    quaternion_transform, \
+    makeQ, \
+    makeW, \
+    write_coordinates, \
+    reorder_distance, \
+    reorder_hungarian, \
+    reorder_brute
 
 @contextmanager
 def captured_output():
@@ -42,7 +57,7 @@ class TestRMSD(unittest.TestCase):
         self.centroid = centroid
         self.rmsd = rmsd
         abs_path = os.path.abspath(os.path.dirname(__file__))
-        self.examples = abs_path + "/examples/"
+        self.xyzpath = abs_path + "/tests/"
         self.get_coordinates = get_coordinates
         self.get_coordinates_pdb = get_coordinates_pdb
         self.get_coordinates_xyz = get_coordinates_xyz
@@ -63,7 +78,7 @@ class TestRMSD(unittest.TestCase):
 
         self.centroid = None
         self.rmsd = None
-        self.examples = None
+        self.xyzpath = None
         self.get_coordinates = None
         self.get_coordinates_pdb = None
         self.get_coordinates_xyz = None
@@ -85,24 +100,24 @@ class TestRMSD(unittest.TestCase):
             self.assertAlmostEqual(a, b, places=places)
 
     def test_get_coordinates_pdb(self):
-        infile = self.examples + 'ci2_1.pdb'
+        infile = self.xyzpath + 'ci2_1.pdb'
         coords = self.get_coordinates_pdb(infile)
         self.assertEqual('N', coords[0][0])
         self.assertEqual([-7.173, -13.891, -6.266], coords[1][0].tolist())
 
     def test_get_coordinates_xyz(self):
-        infile = self.examples + 'ethane.xyz'
+        infile = self.xyzpath + 'ethane.xyz'
         coords = self.get_coordinates_xyz(infile)
         self.assertEqual('C', coords[0][0])
         self.assertEqual([-0.98353, 1.81095, -0.0314], coords[1][0].tolist())
 
     def test_get_coordinates(self):
-        infile = self.examples + 'ci2_1.pdb'
+        infile = self.xyzpath + 'ci2_1.pdb'
         coords = self.get_coordinates(infile, 'pdb')
         self.assertEqual('N', coords[0][0])
         self.assertEqual([-7.173, -13.891, -6.266], coords[1][0].tolist())
 
-        infile = self.examples + 'ethane.xyz'
+        infile = self.xyzpath + 'ethane.xyz'
         coords = self.get_coordinates(infile, 'xyz')
         self.assertEqual('C', coords[0][0])
         self.assertEqual([-0.98353, 1.81095, -0.0314], coords[1][0].tolist())
@@ -118,24 +133,24 @@ class TestRMSD(unittest.TestCase):
                                    centroid, places=3)
 
     def test_rmsd_pdb(self):
-        infile1 = self.examples + 'ci2_1.pdb'
-        infile2 = self.examples + 'ci2_2.pdb'
+        infile1 = self.xyzpath + 'ci2_1.pdb'
+        infile2 = self.xyzpath + 'ci2_2.pdb'
         p_atoms, P = self.get_coordinates_pdb(infile1)
         q_atoms, Q = self.get_coordinates_pdb(infile2)
         rmsd = self.rmsd(P, Q)
         self.assertAlmostEqual(26.9750, rmsd, places=3)
 
     def test_rmsd_xyz(self):
-        infile1 = self.examples + 'ethane.xyz'
-        infile2 = self.examples + 'ethane_mini.xyz'
+        infile1 = self.xyzpath + 'ethane.xyz'
+        infile2 = self.xyzpath + 'ethane_mini.xyz'
         p_atoms, P = self.get_coordinates_xyz(infile1)
         q_atoms, Q = self.get_coordinates_xyz(infile2)
         rmsd = self.rmsd(P, Q)
         self.assertAlmostEqual(0.33512, rmsd, places=3)
 
     def test_kabash_algorith_pdb(self):
-        infile1 = self.examples + 'ci2_1.pdb'
-        infile2 = self.examples + 'ci2_2.pdb'
+        infile1 = self.xyzpath + 'ci2_1.pdb'
+        infile2 = self.xyzpath + 'ci2_2.pdb'
         p_atoms, P = self.get_coordinates_pdb(infile1)
         q_atoms, Q = self.get_coordinates_pdb(infile2)
         U = self.kabsch_algo(P, Q)
@@ -143,8 +158,8 @@ class TestRMSD(unittest.TestCase):
                                    U[0].tolist(), places=3)
 
     def test_kabash_rotate_pdb(self):
-        infile1 = self.examples + 'ci2_1.pdb'
-        infile2 = self.examples + 'ci2_2.pdb'
+        infile1 = self.xyzpath + 'ci2_1.pdb'
+        infile2 = self.xyzpath + 'ci2_2.pdb'
         p_atoms, P = self.get_coordinates_pdb(infile1)
         q_atoms, Q = self.get_coordinates_pdb(infile2)
         nP = self.kabsch_rotate(P, Q)
@@ -152,8 +167,8 @@ class TestRMSD(unittest.TestCase):
                                    nP[0].tolist(), places=3)
 
     def test_kabash_rmsd_pdb(self):
-        infile1 = self.examples + 'ci2_1.pdb'
-        infile2 = self.examples + 'ci2_2.pdb'
+        infile1 = self.xyzpath + 'ci2_1.pdb'
+        infile2 = self.xyzpath + 'ci2_2.pdb'
         p_atoms, P = self.get_coordinates_pdb(infile1)
         q_atoms, Q = self.get_coordinates_pdb(infile2)
         Pc = self.centroid(P)
@@ -164,8 +179,8 @@ class TestRMSD(unittest.TestCase):
         self.assertAlmostEqual(11.7768, rmsd, places=3)
 
     def test_quaternion_rmsd_pdb(self):
-        infile1 = self.examples + 'ci2_1.pdb'
-        infile2 = self.examples + 'ci2_2.pdb'
+        infile1 = self.xyzpath + 'ci2_1.pdb'
+        infile2 = self.xyzpath + 'ci2_2.pdb'
         p_atoms, P = self.get_coordinates_pdb(infile1)
         q_atoms, Q = self.get_coordinates_pdb(infile2)
         Pc = self.centroid(P)
@@ -176,8 +191,8 @@ class TestRMSD(unittest.TestCase):
         self.assertAlmostEqual(11.7768, rmsd, places=3)
 
     def test_quaternion_rotate_pdb(self):
-        infile1 = self.examples + 'ci2_1.pdb'
-        infile2 = self.examples + 'ci2_2.pdb'
+        infile1 = self.xyzpath + 'ci2_1.pdb'
+        infile2 = self.xyzpath + 'ci2_2.pdb'
         p_atoms, P = self.get_coordinates_pdb(infile1)
         q_atoms, Q = self.get_coordinates_pdb(infile2)
         nP = self.quaternion_rotate(P, Q)
@@ -203,8 +218,8 @@ class TestRMSD(unittest.TestCase):
                                    Wt_r[0].tolist(), places=3)
 
     def test_write_coordinates(self):
-        infile1 = self.examples + 'ci2_1.pdb'
-        infile2 = self.examples + 'ci2_2.pdb'
+        infile1 = self.xyzpath + 'ci2_1.pdb'
+        infile2 = self.xyzpath + 'ci2_2.pdb'
         p_atoms, P = self.get_coordinates_pdb(infile1)
         q_atoms, Q = self.get_coordinates_pdb(infile2)
         Pc = self.centroid(P)
@@ -222,6 +237,50 @@ class TestRMSD(unittest.TestCase):
                          ['1064', 'ci2_1.pdb',
                           'N      10.57220149     -0.21712538     12.41498910',
                           'C       9.34616675     -0.15741025     11.60646766'])
+
+
+    def test_reorder_distance(self):
+        N = 5
+        atoms = np.array(["H"]*N)
+        p_coord = np.arange(N*3)
+        p_coord = p_coord.reshape((5,3))
+        q_coord = copy.deepcopy(p_coord)
+
+        np.random.seed(6)
+        np.random.shuffle(q_coord)
+
+        review = reorder_hungarian(atoms, atoms, p_coord, q_coord)
+        self.assertEqual(p_coord.tolist(), q_coord[review].tolist())
+
+        return
+
+
+    def test_reorder_brute(self):
+        N = 5
+        atoms = np.array(["H"]*N)
+        p_coord = np.arange(N*3)
+        p_coord = p_coord.reshape((5,3))
+        q_coord = copy.deepcopy(p_coord)
+
+        np.random.seed(6)
+        np.random.shuffle(q_coord)
+
+        review = reorder_brute(atoms, atoms, p_coord, q_coord)
+        self.assertEqual(p_coord.tolist(), q_coord[review].tolist())
+
+    def test_reorder_hungarian(self):
+        N = 5
+        atoms = np.array(["H"]*N)
+        p_coord = np.arange(N*3)
+        p_coord = p_coord.reshape((5,3))
+        q_coord = copy.deepcopy(p_coord)
+
+        np.random.seed(6)
+        np.random.shuffle(q_coord)
+
+        review = reorder_distance(atoms, atoms, p_coord, q_coord)
+        self.assertEqual(p_coord.tolist(), q_coord[review].tolist())
+
 
 
 if __name__ == '__main__':

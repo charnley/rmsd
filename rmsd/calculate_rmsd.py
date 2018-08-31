@@ -358,7 +358,7 @@ def hungarian(A, B, debug=False, debug_abridged=False):
                 reflection_min = reflections[s]
                 rmsd_min = rmsd_temp
                 coords_min = coords_ordered
-                view_min = reorder_indices
+                view_min = copy.deepcopy(reorder_indices)
 
                 if debug_abridged:
                     print('--------NEW----------')
@@ -483,10 +483,9 @@ def brute_permutation(A, B, debug=False, debug_abridged=False):
                 if rmsd_temp < rmsd_min:
                     swap_min = swaps[r]
                     reflection_min = reflections[s]
-                    atoms_min = atoms_ordered
                     rmsd_min = rmsd_temp
                     coords_min = coords_ordered
-                    view_min = reorder_indices
+                    view_min = copy.deepcopy(reorder_indices)
 
                     if debug_abridged:
                         print('-------NEW-----------')
@@ -538,7 +537,7 @@ def reorder_brute(p_atoms, q_atoms, p_coord, q_coord, debug=False, debug_abridge
         view_reorder[p_atom_idx] = q_atom_idx[view]
 
 
-    return reorder_view
+    return view_reorder
 
 
 def rmsd(V, W):
@@ -894,7 +893,7 @@ Please see --help or documentation for more information.
             q_atoms = q_atoms[q_review]
 
         elif args.reorder_method == "brute":
-            q_review = reorder_brute(q_coord, q_atoms, p_coord, q_coord)
+            q_review = reorder_brute(p_atoms, q_atoms, p_coord, q_coord)
             q_coord = q_coord[q_review]
             q_atoms = q_atoms[q_review]
 
