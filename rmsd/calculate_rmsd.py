@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 __doc__ = \
 """
-Calculate Root-mean-square deviation (RMSD) of Two Molecules Using Rotation
-===========================================================================
 Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ
-or PDB format, using transformation and rotation. The order of the atoms *must*
-be the same for both structures.
+or PDB format, using transformation and rotation.
+
 For more information, usage, example and citation read more at
 https://github.com/charnley/rmsd
 """
@@ -13,16 +11,11 @@ https://github.com/charnley/rmsd
 __version__ = '1.2.7'
 
 import copy
-import numpy as np
 import re
-import scipy as scipy
 
-# Needed for creating the distance ("cost") matrix in the Hungarian method
-from scipy.spatial import distance as spatial_distance
-
-# Needed for finding the re-ordering in the Hungarian method
+import numpy as np
 from scipy.optimize import linear_sum_assignment
-
+from scipy.spatial.distance import cdist
 
 # Python 2/3 compatibility
 # Make range a iterator in Python 2
@@ -224,7 +217,7 @@ def centroid(X):
     return C
 
 
-def reorder_distance(atoms, coord, debug=False):
+def reorder_distance(p_atoms, q_atoms, p_coord, q_coord, debug=False):
     """
     Re-orders the input atom list and xyz coordinates by atom type and then by
     distance of each atom from the centroid.
@@ -244,23 +237,34 @@ def reorder_distance(atoms, coord, debug=False):
              (N,D) matrix, where N is points and D is dimension (rows re-ordered)
     """
 
-    # Calculate distance from each atom to centroid
-    norms = np.linalg.norm(coord, axis=1)
+    # Find unique atoms
+    unique_atoms = np.unique(p_atoms)
 
-    if debug:
-        # unsorted array print
-        print('------------------')
-        print('Original atoms: {}'.format(atoms))
-        print('Original norms: {}'.format(norms))
-        print('Original array: {}'.format(coord))
+    # generate full view from q shape to fill in atom view on the fly
+    view_reorder = np.zeros(q_atoms.shape, dtype=int)
+    view_reorder -= 1
 
-    # Array indices for re-ordering atoms
-    reorder_indices = np.lexsort((norms, atoms))
+    for atom in unique_atoms:
 
-    if debug:
-        print('Sorted indices of original atoms, then norms: {}'.format(reorder_indices))
+        p_atom_idx, = np.where(p_atoms == atom)
+        q_atom_idx, = np.where(q_atoms == atom)
 
-    return reorder_indices
+        A_coord = p_coord[p_atom_idx]
+        B_coord = q_coord[q_atom_idx]
+
+        # Calculate distance from each atom to centroid
+        A_norms = np.linalg.norm(A_coord, axis=1)
+        B_norms = np.linalg.norm(B_coord, axis=1)
+
+        reorder_indices_A = np.argsort(A_norms)
+        reorder_indices_B = np.argsort(B_norms)
+
+        # Project the order of P onto Q
+        translator = np.argsort(reorder_indices_A)
+        view = reorder_indices_B[translator]
+        view_reorder[p_atom_idx] = q_atom_idx[view]
+
+    return view_reorder
 
 
 def generate_permutations(elements, n):
@@ -321,7 +325,7 @@ def hungarian(A, B, debug=False, debug_abridged=False):
 
             # Create distance matrix between atoms in structure 1 and 2
 
-            distances = spatial_distance.cdist(A, coords_temp, 'euclidean')
+            distances = cdist(A, coords_temp, 'euclidean')
 
             # unsorted array print
             if debug:
@@ -745,13 +749,15 @@ def main():
     import argparse
     import sys
 
-    description = """
-Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ
-or PDB format, using transformation and rotation.
+    description = __doc__
 
-For more information, usage, example and citation read more at
-https://github.com/charnley/rmsd
+    version_msg = """
+rmsd {}
+
+See https://github.com/charnley/rmsd for citation information
+
 """
+    version_msg = version_msg.format(__version__)
 
     epilog = """output:
   Normal - RMSD calculated the straight-forward way, no translation or rotation.
@@ -765,7 +771,7 @@ https://github.com/charnley/rmsd
                     formatter_class=argparse.RawDescriptionHelpFormatter,
                     epilog=epilog)
 
-    parser.add_argument('-v', '--version', action='version', version='rmsd ' + __version__ + "\nhttps://github.com/charnley/rmsd")
+    parser.add_argument('-v', '--version', action='version', version=version_msg)
 
     parser.add_argument('-m', '--normal', action='store_true', help='Use no transformation')
     parser.add_argument('-k', '--kabsch', action='store_true', help='Use Kabsch algorithm for transformation')
@@ -892,15 +898,12 @@ Please see --help or documentation for more information.
             q_atoms = q_atoms[q_review]
 
         elif args.reorder_method == "distance":
-            p_review = reorder_distance(p_atoms, p_coord)
-            q_review = reorder_distance(q_atoms, q_coord)
-
-            # TODO project q onto p
-
-            quit()
+            q_review = reorder_distance(p_atoms, q_atoms, p_coord, q_coord)
+            q_coord = q_coord[q_review]
+            q_atoms = q_atoms[q_review]
 
         else:
-            print("Unknown reorder method:", args.reorder_method)
+            print("Error: Unknown reorder method:", args.reorder_method)
             quit()
 
 
@@ -923,11 +926,14 @@ Please see --help or documentation for more information.
         print("Quater RMSD: {0}".format(quaternion_rmsd(p_coord, q_coord)))
 
     if args.output:
-        U = kabsch(P, Q)
-        p_all -= Pc
+        # TODO Make function?
+        # TODO Check
+        # TODO hmmm, choice, p to q or q to p! Decide!
+        U = kabsch(p_coord, q_coord)
+        p_all -= p_cent
         p_all = np.dot(p_all, U)
-        p_all += Qc
-        write_coordinates(p_atoms, p_all, title="{} translated".format(args.structure_a))
+        p_all += q_cent
+        write_coordinates(p_all_atoms, p_all, title="{} translated".format(args.structure_a))
 
     return
 
