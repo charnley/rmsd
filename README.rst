@@ -68,7 +68,7 @@ bin folder.
     chmod +x calculate_rmsd
 
 
-Usage
+Example of usage
 -----
 
 Type ``calculate_rmsd --help`` for all the arguments.
@@ -87,6 +87,13 @@ visual comparison. The output will be in XYZ format.
 .. code-block:: bash
 
     calculate_rmsd --no-hydrogen --output examples/ethane.xyz examples/ethane_mini.xyz
+
+
+If the atoms are scrambled and not aligned you can use the ``--reorder`` argument which will align the atoms from structure 2 to 1.
+
+.. code-block:: bash
+
+    calculate_rmsd --reorder examples/water_16.xyz examples/water_16_idx.xyz
 
 
 It is also possible to use RMSD as a library in other scripts:
