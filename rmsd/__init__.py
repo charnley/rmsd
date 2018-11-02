@@ -4,17 +4,25 @@ from rmsd.calculate_rmsd import __version__
 from rmsd.calculate_rmsd import __doc__
 
 __all__ = [\
-    "kabsch_rmsd",
-    "kabsch_rotate",
-    "kabsch",
-    "quaternion_rmsd",
-    "quaternion_rotate",
+    "brute_permutation",
     "centroid",
-    "rmsd",
-    "write_coordinates",
+    "check_reflections",
+    "generate_permutations",
     "get_coordinates",
     "get_coordinates_pdb",
-    "get_coordinates_xyz"]
+    "get_coordinates_xyz",
+    "hungarian",
+    "kabsch",
+    "kabsch_rmsd",
+    "kabsch_rotate",
+    "quaternion_rmsd",
+    "quaternion_rotate",
+    "quaternion_transform",
+    "reorder_brute",
+    "reorder_distance",
+    "reorder_hungarian",
+    "rmsd",
+    "set_coordinates"]
 
 if __name__ == "__main__":
     main()
