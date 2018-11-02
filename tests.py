@@ -6,36 +6,20 @@ project: https://github.com/charnley/rmsd
 license: https://github.com/charnley/rmsd/blob/master/LICENSE
 """
 
+import copy
 import os
 import sys
 import unittest
-import numpy as np
-import copy
 from contextlib import contextmanager
+
+import numpy as np
+import rmsd
 
 try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
 
-from rmsd import \
-    get_coordinates_pdb, \
-    get_coordinates_xyz, \
-    get_coordinates, \
-    rmsd, \
-    centroid, \
-    kabsch_rmsd, \
-    kabsch_rotate, \
-    kabsch, \
-    quaternion_rmsd, \
-    quaternion_rotate, \
-    quaternion_transform, \
-    makeQ, \
-    makeW, \
-    write_coordinates, \
-    reorder_distance, \
-    reorder_hungarian, \
-    reorder_brute
 
 @contextmanager
 def captured_output():
@@ -54,31 +38,40 @@ class TestRMSD(unittest.TestCase):
     def setUp(self):
         """Initialize the framework for testing."""
 
-        self.centroid = centroid
-        self.rmsd = rmsd
         abs_path = os.path.abspath(os.path.dirname(__file__))
         self.xyzpath = abs_path + "/tests/"
-        self.get_coordinates = get_coordinates
-        self.get_coordinates_pdb = get_coordinates_pdb
-        self.get_coordinates_xyz = get_coordinates_xyz
 
-        self.kabsch_rmsd = kabsch_rmsd
-        self.kabsch_rotate = kabsch_rotate
-        self.kabsch_algo = kabsch
+        self.centroid = rmsd.centroid
+        self.rmsd = rmsd.rmsd
 
-        self.quaternion_rmsd = quaternion_rmsd
-        self.quaternion_rotate = quaternion_rotate
-        self.quaternion_transform = quaternion_transform
-        self.makeQ = makeQ
-        self.makeW = makeW
-        self.write_coordinates = write_coordinates
+        self.get_coordinates = rmsd.get_coordinates
+        self.get_coordinates_pdb = rmsd.get_coordinates_pdb
+        self.get_coordinates_xyz = rmsd.get_coordinates_xyz
+
+        self.kabsch_rmsd = rmsd.kabsch_rmsd
+        self.kabsch_rotate = rmsd.kabsch_rotate
+        self.kabsch_algo = rmsd.kabsch
+
+        self.quaternion_rmsd = rmsd.quaternion_rmsd
+        self.quaternion_rotate = rmsd.quaternion_rotate
+        self.quaternion_transform = rmsd.quaternion_transform
+        self.makeQ = rmsd.makeQ
+        self.makeW = rmsd.makeW
+        self.print_coordinates = rmsd.print_coordinates
+
+        self.reorder_brute = rmsd.reorder_brute
+        self.reorder_hungarian = rmsd.reorder_hungarian
+        self.reorder_distance = rmsd.reorder_distance
+
+        self.check_reflections = rmsd.check_reflections
 
     def tearDown(self):
         """Clear the testing framework."""
 
+        self.xyzpath = None
+
         self.centroid = None
         self.rmsd = None
-        self.xyzpath = None
         self.get_coordinates = None
         self.get_coordinates_pdb = None
         self.get_coordinates_xyz = None
@@ -92,7 +85,14 @@ class TestRMSD(unittest.TestCase):
         self.quaternion_transform = None
         self.makeQ = None
         self.makeW = None
-        self.write_coordinates = None
+        self.print_coordinates = None
+
+        self.reorder_brute = None
+        self.reorder_hungarian = None
+        self.reorder_distance = None
+
+        self.check_reflections = None
+
 
     def assertListAlmostEqual(self, list1, list2, places):
         self.assertEqual(len(list1), len(list2))
@@ -217,7 +217,7 @@ class TestRMSD(unittest.TestCase):
         self.assertListAlmostEqual([-0.3841,  0.6361, 0.5929, -0.3101],
                                    Wt_r[0].tolist(), places=3)
 
-    def test_write_coordinates(self):
+    def test_print_coordinates(self):
         infile1 = self.xyzpath + 'ci2_1.pdb'
         infile2 = self.xyzpath + 'ci2_2.pdb'
         p_atoms, P = self.get_coordinates_pdb(infile1)
@@ -231,7 +231,7 @@ class TestRMSD(unittest.TestCase):
         p_all = np.dot(P, U)
 
         with captured_output() as (out, err):
-            self.write_coordinates(p_atoms, p_all, title="ci2_1.pdb")
+            self.print_coordinates(p_atoms, p_all, title="ci2_1.pdb")
         output = out.getvalue().strip().split('\n')
         self.assertEqual(output[0:4],
                          ['1064', 'ci2_1.pdb',
@@ -249,7 +249,7 @@ class TestRMSD(unittest.TestCase):
         np.random.seed(6)
         np.random.shuffle(q_coord)
 
-        review = reorder_hungarian(atoms, atoms, p_coord, q_coord)
+        review = self.reorder_hungarian(atoms, atoms, p_coord, q_coord)
         self.assertEqual(p_coord.tolist(), q_coord[review].tolist())
 
         return
@@ -259,14 +259,40 @@ class TestRMSD(unittest.TestCase):
         N = 5
         atoms = np.array(["H"]*N)
         p_coord = np.arange(N*3)
-        p_coord = p_coord.reshape((5,3))
+        p_coord = p_coord.reshape((N,3))
         q_coord = copy.deepcopy(p_coord)
 
         np.random.seed(6)
         np.random.shuffle(q_coord)
 
-        review = reorder_brute(atoms, atoms, p_coord, q_coord)
+        review = self.reorder_brute(atoms, atoms, p_coord, q_coord)
         self.assertEqual(p_coord.tolist(), q_coord[review].tolist())
+
+
+    def test_reorder_brute_ch(self):
+
+        N = 6
+        p_atoms = ["C"]*3 + ["H"]*3
+        p_atoms = np.array(p_atoms)
+        p_coord = np.arange(N*3)
+        p_coord = p_coord.reshape((N,3))
+
+        # random index
+        np.random.seed(6)
+        idx = np.arange(N, dtype=int)
+        np.random.shuffle(idx)
+
+        q_coord = copy.deepcopy(p_coord)
+        q_atoms = copy.deepcopy(p_atoms)
+
+        q_coord = q_coord[idx]
+        q_atoms = q_atoms[idx]
+
+        review = self.reorder_brute(p_atoms, q_atoms, p_coord, q_coord)
+
+        self.assertEqual(p_coord.tolist(), q_coord[review].tolist())
+        self.assertEqual(p_atoms.tolist(), q_atoms[review].tolist())
+
 
     def test_reorder_hungarian(self):
         N = 5
@@ -278,9 +304,70 @@ class TestRMSD(unittest.TestCase):
         np.random.seed(6)
         np.random.shuffle(q_coord)
 
-        review = reorder_distance(atoms, atoms, p_coord, q_coord)
+        review = self.reorder_distance(atoms, atoms, p_coord, q_coord)
         self.assertEqual(p_coord.tolist(), q_coord[review].tolist())
 
+
+    def test_reflections(self):
+
+        atoms = np.array(["C", "H", "H", "H", "F"])
+
+        p_coord = np.array(
+            [[-0.000000,  -0.000000,  -0.000000],
+            [  1.109398,  -0.000000,   0.000000],
+            [ -0.3697920, -0.7362220, -0.7429600],
+            [ -0.3698020,  1.011538,  -0.2661100],
+            [ -0.3698020, -0.2753120,  1.009070]])
+        q_coord = copy.deepcopy(p_coord)
+        q_coord[:,[0, 2]] = q_coord[:,[2, 0]]
+
+        min_rmsd, min_swap, min_reflection, min_review = self.check_reflections(atoms, atoms, p_coord, q_coord, reorder_method=None)
+
+        assert np.isclose(min_rmsd, 0.0, atol=1e-6)
+
+
+    def test_reflections_norotation(self):
+
+        atoms = np.array(["C", "H", "H", "H", "F"])
+
+        p_coord = np.array(
+            [[-0.000000,  -0.000000,  -0.000000],
+            [  1.109398,  -0.000000,   0.000000],
+            [ -0.3697920, -0.7362220, -0.7429600],
+            [ -0.3698020,  1.011538,  -0.2661100],
+            [ -0.3698020, -0.2753120,  1.009070]])
+        q_coord = copy.deepcopy(p_coord)
+        q_coord[:,[0, 2]] = q_coord[:,[2, 0]]
+
+        min_rmsd, min_swap, min_reflection, min_review = self.check_reflections(atoms, atoms, p_coord, q_coord, reorder_method=None, rotation_method=None)
+
+        assert np.isclose(min_rmsd, 0.0, atol=1e-6)
+
+
+    def test_reflections_reorder(self):
+
+        p_atoms = np.array(["C", "H", "H", "H", "F"])
+
+        p_coord = np.array(
+            [[-0.000000,  -0.000000,  -0.000000],
+            [  1.109398,  -0.000000,   0.000000],
+            [ -0.3697920, -0.7362220, -0.7429600],
+            [ -0.3698020,  1.011538,  -0.2661100],
+            [ -0.3698020, -0.2753120,  1.009070]])
+
+        # random reflection
+        q_coord = copy.deepcopy(p_coord)
+        q_coord[:,[0, 2]] = q_coord[:,[2, 0]]
+
+        # random order
+        # review = list(range(len(atoms)))
+        review = [1, 4, 2, 0, 3]
+        q_coord = q_coord[review]
+        q_atoms = p_atoms[review]
+
+        min_rmsd, min_swap, min_reflection, min_review = self.check_reflections(p_atoms, q_atoms, p_coord, q_coord)
+
+        assert np.isclose(min_rmsd, 0.0, atol=1e-6)
 
 
 if __name__ == '__main__':
