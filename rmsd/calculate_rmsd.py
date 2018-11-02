@@ -963,7 +963,7 @@ Please see --help or documentation for more information.
 
     if args.use_reflections:
 
-        result_rmsd, q_swap, q_reflection, q_review = calculate_rmsd.check_reflections(
+        result_rmsd, q_swap, q_reflection, q_review = check_reflections(
             p_atoms,
             q_atoms,
             p_coord,
