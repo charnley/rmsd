@@ -271,7 +271,7 @@ def centroid(X):
     return C
 
 
-def reorder_distance(p_atoms, q_atoms, p_coord, q_coord, debug=False):
+def reorder_distance(p_atoms, q_atoms, p_coord, q_coord):
     """
     Re-orders the input atom list and xyz coordinates by atom type and then by
     distance of each atom from the centroid.
@@ -344,7 +344,7 @@ def generate_permutations(elements, n):
 
 
 
-def hungarian(A, B, debug=False):
+def hungarian(A, B):
     """
     Hungarian reordering.
 
@@ -364,7 +364,7 @@ def hungarian(A, B, debug=False):
     return reorder_indices
 
 
-def reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord, debug=False):
+def reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord):
     """
     Re-orders the input atom list and xyz coordinates using the Hungarian
     method (using optimized column results)
@@ -402,7 +402,7 @@ def reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord, debug=False):
         A_coord = p_coord[p_atom_idx]
         B_coord = q_coord[q_atom_idx]
 
-        view = hungarian(A_coord, B_coord, debug=debug)
+        view = hungarian(A_coord, B_coord)
         view_reorder[p_atom_idx] = q_atom_idx[view]
 
     return view_reorder
@@ -453,7 +453,7 @@ def brute_permutation(A, B):
     return view_min
 
 
-def reorder_brute(p_atoms, q_atoms, p_coord, q_coord, debug=False, debug_abridged=False):
+def reorder_brute(p_atoms, q_atoms, p_coord, q_coord):
     """
     Re-orders the input atom list and xyz coordinates using all permutation of
     rows (using optimized column results)
@@ -499,8 +499,7 @@ def reorder_brute(p_atoms, q_atoms, p_coord, q_coord, debug=False, debug_abridge
 
 def check_reflections(p_atoms, q_atoms, p_coord, q_coord,
         reorder_method=reorder_hungarian,
-        rotation_method=kabsch_rmsd,
-        debug=False):
+        rotation_method=kabsch_rmsd):
     """
     Minimize RMSD using reflection planes for molecule P and Q
 
