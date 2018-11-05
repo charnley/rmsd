@@ -12,7 +12,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'README.rst')) as f:
     long_description = f.read()
 
-short_description = 'Calculate root-mean-square deviation (RMSD), using Kabsch or Quaternion algorithm for rotation, between two Cartesian coordinates in .xyz or .pdb format, resulting in the minimal RMSD.'
+short_description = 'Calculate root-mean-square deviation (RMSD) between two sets of cartesian coordinates (XYZ or PDB format), using rotation (fx. Kabsch algorithm), atom reordering (fx. Hungarian algorithm), and axis reflections, resulting in the minimal RMSD.'
 
 setuptools.setup(name='rmsd',
       version=__version__,
