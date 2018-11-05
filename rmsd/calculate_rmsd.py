@@ -323,8 +323,7 @@ def reorder_distance(p_atoms, q_atoms, p_coord, q_coord, debug=False):
 def generate_permutations(elements, n):
     """
     Heap's algorithm for generating all n! permutations in a list
-
-    TODO documentations
+    https://en.wikipedia.org/wiki/Heap%27s_algorithm
 
     """
     c = [0] * n
@@ -413,8 +412,6 @@ def brute_permutation(A, B):
     """
     Re-orders the input atom list and xyz coordinates using the brute force
     method of permuting all rows of the input coordinates
-
-    TODO this is not done!
 
     Parameters
     ----------
