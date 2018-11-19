@@ -320,30 +320,6 @@ def reorder_distance(p_atoms, q_atoms, p_coord, q_coord):
     return view_reorder
 
 
-def generate_permutations(elements, n):
-    """
-    Heap's algorithm for generating all n! permutations in a list
-    https://en.wikipedia.org/wiki/Heap%27s_algorithm
-
-    """
-    c = [0] * n
-    yield elements
-    i = 0
-    while i < n:
-        if c[i] < i:
-            if i % 2 == 0:
-                elements[0], elements[i] = elements[i], elements[0]
-            else:
-                elements[c[i]], elements[i] = elements[i], elements[c[i]]
-            yield elements
-            c[i] += 1
-            i = 0
-        else:
-            c[i] = 0
-            i += 1
-
-
-
 def hungarian(A, B):
     """
     Hungarian reordering.
@@ -351,17 +327,21 @@ def hungarian(A, B):
     Assume A and B are coordinates for atoms of SAME type only
     """
 
+    # should be kabasch here i think
     distances = cdist(A, B, 'euclidean')
 
-    # Perform Hungarian analysis on distance matrix between atoms of 1st structure and trial structure
-    row_indices, reorder_indices = linear_sum_assignment(distances)
+
+    # Perform Hungarian analysis on distance matrix between atoms of 1st
+    # structure and trial structure
+    indices_a, indices_b = linear_sum_assignment(distances)
+
 
     # Re-order the atom array and coordinate matrix
     # coords_ordered = B[reorder_indices]
     #
     # view_min = copy.deepcopy(reorder_indices)
 
-    return reorder_indices
+    return indices_b
 
 
 def reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord):
@@ -406,6 +386,29 @@ def reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord):
         view_reorder[p_atom_idx] = q_atom_idx[view]
 
     return view_reorder
+
+
+def generate_permutations(elements, n):
+    """
+    Heap's algorithm for generating all n! permutations in a list
+    https://en.wikipedia.org/wiki/Heap%27s_algorithm
+
+    """
+    c = [0] * n
+    yield elements
+    i = 0
+    while i < n:
+        if c[i] < i:
+            if i % 2 == 0:
+                elements[0], elements[i] = elements[i], elements[0]
+            else:
+                elements[c[i]], elements[i] = elements[i], elements[c[i]]
+            yield elements
+            c[i] += 1
+            i = 0
+        else:
+            c[i] = 0
+            i += 1
 
 
 def brute_permutation(A, B):
@@ -1001,7 +1004,7 @@ Please see --help or documentation for more information.
         q_all += p_cent
 
         # done and done
-        xyz = set_coordinates(p_all_atoms, p_all, title="{} translated and rotated using rmsd".format(args.structure_a))
+        xyz = set_coordinates(q_all_atoms, q_all, title="{} translated and rotated using rmsd".format(args.structure_a))
         print(xyz)
 
     else:
