@@ -111,7 +111,7 @@ visual comparison. The output will be in XYZ format.
 If the atoms are scrambled and not aligned you can use the ``--reorder``
 argument which will align the atoms from structure B unto A. Use
 ``--reorder-method`` to select what method for reordering. Choose between
-Hungarian (default), distance (very approximate) and brute force (slow).
+Hungarian_ (default), distance (very approximate) and brute force (slow).
 
 .. _Hungarian: https://en.wikipedia.org/wiki/Hungarian_algorithm
 
