@@ -17,13 +17,6 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
 
-# Python 2/3 compatibility
-# Make range a iterator in Python 2
-try:
-    range = xrange
-except NameError:
-    pass
-
 
 AXIS_SWAPS = np.array([
     [0, 1, 2],
@@ -34,13 +27,13 @@ AXIS_SWAPS = np.array([
     [2, 0, 1]])
 
 AXIS_REFLECTIONS = np.array([
-    [ 1,  1,  1],
-    [-1,  1,  1],
-    [ 1, -1,  1],
-    [ 1,  1, -1],
-    [-1, -1,  1],
-    [-1,  1, -1],
-    [ 1, -1, -1],
+    [1, 1, 1],
+    [-1, 1, 1],
+    [1, -1, 1],
+    [1, 1, -1],
+    [-1, -1, 1],
+    [-1, 1, -1],
+    [1, -1, -1],
     [-1, -1, -1]])
 
 
@@ -58,17 +51,17 @@ def rmsd(V, W):
     Returns
     -------
     rmsd : float
-        Root-mean-square deviation
+        Root-mean-square deviation between the two vectors
     """
     D = len(V[0])
     N = len(V)
-    rmsd = 0.0
+    result = 0.0
     for v, w in zip(V, W):
-        rmsd += sum([(v[i] - w[i])**2.0 for i in range(D)])
-    return np.sqrt(rmsd/N)
+        result += sum([(v[i] - w[i])**2.0 for i in range(D)])
+    return np.sqrt(result/N)
 
 
-def kabsch_rmsd(P, Q):
+def kabsch_rmsd(P, Q, translate=False):
     """
     Rotate matrix P unto Q using Kabsch algorithm and calculate the RMSD.
 
@@ -78,12 +71,18 @@ def kabsch_rmsd(P, Q):
         (N,D) matrix, where N is points and D is dimension.
     Q : array
         (N,D) matrix, where N is points and D is dimension.
+    translate : bool
+        Use centroids to translate vector P and Q unto each other.
 
     Returns
     -------
     rmsd : float
         root-mean squared deviation
     """
+    if translate:
+        Q = Q - centroid(Q)
+        P = P - centroid(P)
+
     P = kabsch_rotate(P, Q)
     return rmsd(P, Q)
 
@@ -201,10 +200,10 @@ def makeW(r1, r2, r3, r4=0):
     matrix involved in quaternion rotation
     """
     W = np.asarray([
-             [r4, r3, -r2, r1],
-             [-r3, r4, r1, r2],
-             [r2, -r1, r4, r3],
-             [-r1, -r2, -r3, r4]])
+        [r4, r3, -r2, r1],
+        [-r3, r4, r1, r2],
+        [r2, -r1, r4, r3],
+        [-r1, -r2, -r3, r4]])
     return W
 
 
@@ -213,10 +212,10 @@ def makeQ(r1, r2, r3, r4=0):
     matrix involved in quaternion rotation
     """
     Q = np.asarray([
-             [r4, -r3, r2, r1],
-             [r3, r4, -r1, r2],
-             [-r2, r1, r4, r3],
-             [-r1, -r2, -r3, r4]])
+        [r4, -r3, r2, r1],
+        [r3, r4, -r1, r2],
+        [-r2, r1, r4, r3],
+        [-r1, -r2, -r3, r4]])
     return Q
 
 
@@ -286,9 +285,9 @@ def reorder_distance(p_atoms, q_atoms, p_coord, q_coord):
     Returns
     -------
     atoms_reordered : array
-             (N,1) matrix, where N is points holding the ordered atoms' names
+        (N,1) matrix, where N is points holding the ordered atoms' names
     coords_reordered : array
-             (N,D) matrix, where N is points and D is dimension (rows re-ordered)
+        (N,D) matrix, where N is points and D is dimension (rows re-ordered)
     """
 
     # Find unique atoms
@@ -330,16 +329,9 @@ def hungarian(A, B):
     # should be kabasch here i think
     distances = cdist(A, B, 'euclidean')
 
-
     # Perform Hungarian analysis on distance matrix between atoms of 1st
     # structure and trial structure
     indices_a, indices_b = linear_sum_assignment(distances)
-
-
-    # Re-order the atom array and coordinate matrix
-    # coords_ordered = B[reorder_indices]
-    #
-    # view_min = copy.deepcopy(reorder_indices)
 
     return indices_b
 
@@ -426,7 +418,7 @@ def brute_permutation(A, B):
     Returns
     -------
     view : array
-             (N,1) matrix, reordered view of B projected to A
+        (N,1) matrix, reordered view of B projected to A
     """
 
     rmsd_min = np.inf
@@ -475,8 +467,8 @@ def reorder_brute(p_atoms, q_atoms, p_coord, q_coord):
     Returns
     -------
     view_reorder : array
-             (N,1) matrix, reordered indexes of atom alignment based on the
-             coordinates of the atoms
+        (N,1) matrix, reordered indexes of atom alignment based on the
+        coordinates of the atoms
 
     """
 
@@ -501,8 +493,8 @@ def reorder_brute(p_atoms, q_atoms, p_coord, q_coord):
 
 
 def check_reflections(p_atoms, q_atoms, p_coord, q_coord,
-        reorder_method=reorder_hungarian,
-        rotation_method=kabsch_rmsd):
+                      reorder_method=reorder_hungarian,
+                      rotation_method=kabsch_rmsd):
     """
     Minimize RMSD using reflection planes for molecule P and Q
 
@@ -641,10 +633,13 @@ def get_coordinates(filename, fmt):
         (N,3) where N is number of atoms
     """
     if fmt == "xyz":
-        return get_coordinates_xyz(filename)
+        get_func = get_coordinates_xyz
     elif fmt == "pdb":
-        return get_coordinates_pdb(filename)
-    exit("Could not recognize file format: {:s}".format(fmt))
+        get_func = get_coordinates_pdb
+    else:
+        exit("Could not recognize file format: {:s}".format(fmt))
+
+    return get_func(filename)
 
 
 def get_coordinates_pdb(filename):
@@ -701,7 +696,7 @@ def get_coordinates_pdb(filename):
                         else:
                             raise Exception
                 except:
-                        exit("Error parsing atomtype for the following line: \n{0:s}".format(line))
+                    exit("Error parsing atomtype for the following line: \n{0:s}".format(line))
 
                 if x_column == None:
                     try:
@@ -728,7 +723,9 @@ def get_coordinates_pdb(filename):
 
     V = np.asarray(V)
     atoms = np.asarray(atoms)
-    assert(V.shape[0] == atoms.size)
+
+    assert V.shape[0] == atoms.size
+
     return atoms, V
 
 
@@ -808,10 +805,10 @@ See https://github.com/charnley/rmsd for citation information
 """
 
     parser = argparse.ArgumentParser(
-                    usage='calculate_rmsd [options] FILE_A FILE_B',
-                    description=description,
-                    formatter_class=argparse.RawDescriptionHelpFormatter,
-                    epilog=epilog)
+        usage='calculate_rmsd [options] FILE_A FILE_B',
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=epilog)
 
 
     # Input structures
@@ -846,7 +843,7 @@ See https://github.com/charnley/rmsd for citation information
     args = parser.parse_args()
 
     # As default, load the extension as format
-    if args.format == None:
+    if args.format is None:
         args.format = args.structure_a.split('.')[-1]
 
     p_all_atoms, p_all = get_coordinates(args.structure_a, args.format)
