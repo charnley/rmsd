@@ -494,7 +494,8 @@ def reorder_brute(p_atoms, q_atoms, p_coord, q_coord):
 
 def check_reflections(p_atoms, q_atoms, p_coord, q_coord,
                       reorder_method=reorder_hungarian,
-                      rotation_method=kabsch_rmsd):
+                      rotation_method=kabsch_rmsd,
+                      keep_stereo=False):
     """
     Minimize RMSD using reflection planes for molecule P and Q
 
@@ -525,9 +526,12 @@ def check_reflections(p_atoms, q_atoms, p_coord, q_coord,
     min_reflection = None
     min_review = None
     tmp_review = None
+    swap_mask = [1,-1,-1,1,1,-1]
+    reflection_mask = [1,-1,-1,-1,1,1,1,-1]
 
-    for swap in AXIS_SWAPS:
-        for reflection in AXIS_REFLECTIONS:
+    for swap, i in zip(AXIS_SWAPS, swap_mask):
+        for reflection, j in zip(AXIS_REFLECTIONS, reflection_mask):
+            if keep_stereo and  i * j == -1: continue # skip enantiomers
 
             tmp_atoms = copy.copy(q_atoms)
             tmp_coord = copy.deepcopy(q_coord)
@@ -825,6 +829,7 @@ See https://github.com/charnley/rmsd for citation information
     parser.add_argument('-e', '--reorder', action='store_true', help='align the atoms of molecules (default: Hungarian)')
     parser.add_argument('--reorder-method', action='store', default="hungarian", metavar="METHOD", help='select which reorder method to use; hungarian (default), brute, distance')
     parser.add_argument('--use-reflections', action='store_true', help='scan through reflections in planes (eg Y transformed to -Y -> X, -Y, Z) and axis changes, (eg X and Z coords exchanged -> Z, Y, X). This will affect stereo-chemistry.')
+    parser.add_argument('--use-reflections-keep-stereo', action='store_true', help='scan through reflections in planes (eg Y transformed to -Y -> X, -Y, Z) and axis changes, (eg X and Z coords exchanged -> Z, Y, X). Stereo-chemistry will be kept.')
 
     # Filter
     index_group = parser.add_mutually_exclusive_group()
@@ -966,6 +971,17 @@ Please see --help or documentation for more information.
             q_coord,
             reorder_method=reorder_method,
             rotation_method=rotation_method)
+
+    elif args.use_reflections_keep_stereo:
+
+        result_rmsd, q_swap, q_reflection, q_review = check_reflections(
+            p_atoms,
+            q_atoms,
+            p_coord,
+            q_coord,
+            reorder_method=reorder_method,
+            rotation_method=rotation_method,
+            keep_stereo=True)
 
     elif args.reorder:
 
