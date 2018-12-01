@@ -526,7 +526,7 @@ def check_reflections(p_atoms, q_atoms, p_coord, q_coord,
     min_reflection = None
     min_review = None
     tmp_review = None
-    swap_mask = [1,-1,-1,1,1,-1]
+    swap_mask = [1,-1,-1,1,-1,1]
     reflection_mask = [1,-1,-1,-1,1,1,1,-1]
 
     for swap, i in zip(AXIS_SWAPS, swap_mask):
