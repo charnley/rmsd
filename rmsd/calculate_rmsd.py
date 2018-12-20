@@ -1001,7 +1001,7 @@ Please see --help or documentation for more information.
         q_all += p_cent
 
         # done and done
-        xyz = set_coordinates(q_all_atoms, q_all, title="{} translated and rotated using rmsd".format(args.structure_a))
+        xyz = set_coordinates(q_all_atoms, q_all, title="{} translated and rotated using rmsd".format(args.structure_b))
         print(xyz)
 
     else:
