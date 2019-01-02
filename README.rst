@@ -128,9 +128,3 @@ Problems?
 
 Submit issues or pull requests on GitHub.
 
-
-Known Problems:
----------
-- **Performance of Hungarian Algorithm in Scipy**:
-    scipy.optimize.linear_sum_assignment is a slow implementation of hungarian algorithm. Try my implementation https://github.com/xg590/munkres or other's https://github.com/hrldcpr/hungarian.
-
