@@ -369,6 +369,28 @@ class TestRMSD(unittest.TestCase):
 
         assert np.isclose(min_rmsd, 0.0, atol=1e-6)
 
+    def test_reflections_keep_stereo(self):
+
+        atoms = np.array(["C", "H", "H", "H", "F"])
+
+        p_coord = np.array(
+            [[-0.000000,  -0.000000,  -0.000000],
+            [  1.109398,  -0.000000,   0.000000],
+            [ -0.3697920, -0.7362220, -0.7429600],
+            [ -0.3698020,  1.011538,  -0.2661100],
+            [ -0.3698020, -0.2753120,  1.009070]])
+        q_coord = copy.deepcopy(p_coord)
+        q_coord[:,[0, 2]] = q_coord[:,[2, 0]] # swap [2,1,0]: prepare enantiomer coordinates (which is named as q_coord) of p_coord
+
+        # If keep_stereo is off, enantiomer coordinates of q_coord are considered, resulting into identical coordinates of p_coord.
+        min_rmsd, min_swap, min_reflection, min_review = self.check_reflections(atoms, atoms, p_coord, q_coord,
+                                                                                reorder_method=None, keep_stereo=False)
+        assert np.isclose(min_rmsd, 0.0, atol=1e-6) # the enantiomer of the enantiomer of the original molecule has zero RMSD with the original molecule.
+
+        # No enantiomer coordinates, non-zero RMSD.
+        min_rmsd, min_swap, min_reflection, min_review = self.check_reflections(atoms, atoms, p_coord, q_coord,
+                                                                                reorder_method=None, keep_stereo=True)
+        assert np.isclose(min_rmsd, 1.1457797, atol=1e-6)
 
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestRMSD)
