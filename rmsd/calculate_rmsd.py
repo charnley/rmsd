@@ -554,7 +554,7 @@ def check_reflections(p_atoms, q_atoms, p_coord, q_coord,
                 min_review = tmp_review
 
     if not (p_atoms == q_atoms[min_review]).all():
-        print("error: not aligned properly")
+        print("error: Not aligned")
         quit()
 
     return min_rmsd, min_swap, min_reflection, min_review
@@ -696,7 +696,7 @@ def get_coordinates_pdb(filename):
                         else:
                             raise Exception
                 except:
-                    exit("Error parsing atomtype for the following line: \n{0:s}".format(line))
+                    exit("error: Parsing atomtype for the following line: \n{0:s}".format(line))
 
                 if x_column == None:
                     try:
@@ -706,7 +706,7 @@ def get_coordinates_pdb(filename):
                                 x_column = i
                                 break
                     except IndexError:
-                        exit("Error parsing coordinates for the following line: \n{0:s}".format(line))
+                        exit("error: Parsing coordinates for the following line: \n{0:s}".format(line))
                 # Try to read the coordinates
                 try:
                     V.append(np.asarray(tokens[x_column:x_column + 3], dtype=float))
@@ -718,7 +718,7 @@ def get_coordinates_pdb(filename):
                         z = line[46:54]
                         V.append(np.asarray([x, y ,z], dtype=float))
                     except:
-                        exit("Error parsing input for the following line: \n{0:s}".format(line))
+                        exit("error: Parsing input for the following line: \n{0:s}".format(line))
 
 
     V = np.asarray(V)
@@ -756,7 +756,7 @@ def get_coordinates_xyz(filename):
     try:
         n_atoms = int(f.readline())
     except ValueError:
-        exit("Could not obtain the number of atoms in the .xyz file.")
+        exit("error: Could not obtain the number of atoms in the .xyz file.")
 
     # Skip the title line
     f.readline()
@@ -853,15 +853,17 @@ See https://github.com/charnley/rmsd for citation information
     q_size = q_all.shape[0]
 
     if not p_size == q_size:
-        print("error: not same size")
+        print("error: Structures not same size")
         quit()
 
     if np.count_nonzero(p_all_atoms != q_all_atoms) and not args.reorder:
         msg = """
-error: atoms are not in the same order.
+error: Atoms are not in the same order.
 
-Use --reorder to align the atoms (can be expensive for large number of atoms).
-Please see --help or documentation for more information.
+Use --reorder to align the atoms (can be expensive for large structures).
+
+Please see --help or documentation for more information or
+https://github.com/charnley/rmsd for further examples.
 """
         print(msg)
         exit()
@@ -898,11 +900,11 @@ Please see --help or documentation for more information.
     else:
 
         if args.reorder and args.output:
-            print("error: cannot reorder atoms and print result with a view")
+            print("error: Cannot reorder atoms and print structure, when excluding atoms (such as --no-hydrogen)")
             quit()
 
         if args.use_reflections and args.output:
-            print("error: cannot use reflections on atoms and print result with a view")
+            print("error: Cannot use reflections on atoms and print, when excluding atoms (such as --no-hydrogen)")
             quit()
 
         p_coord = copy.deepcopy(p_all[p_view])
@@ -931,7 +933,7 @@ Please see --help or documentation for more information.
         rotation_method = None
 
     else:
-        print("error: unknown rotation method:", args.rotation)
+        print("error: Unknown rotation method:", args.rotation)
         quit()
 
 
@@ -949,7 +951,7 @@ Please see --help or documentation for more information.
         reorder_method = reorder_distance
 
     else:
-        print("error: unknown reorder method:", args.reorder_method)
+        print("error: Unknown reorder method:", args.reorder_method)
         quit()
 
 
@@ -974,24 +976,24 @@ Please see --help or documentation for more information.
         q_atoms = q_atoms[q_review]
 
         if not all(p_atoms == q_atoms):
-            print("error: was not aligned")
+            print("error: Structure not aligned")
             quit()
 
 
     # print result
     if args.output:
 
-        # Get rotation matrix
-        U = kabsch(q_coord, p_coord)
-
         if args.reorder:
 
             if q_review.shape[0] != q_all.shape[0]:
-                print("error: reorder length error. full atom list needed for --print")
+                print("error: Reorder length error. Full atom list needed for --print")
                 quit()
 
             q_all = q_all[q_review]
             q_all_atoms = q_all_atoms[q_review]
+
+        # Get rotation matrix
+        U = kabsch(q_coord, p_coord)
 
         # recenter all atoms and rotate all atoms
         q_all -= q_cent
@@ -1001,7 +1003,7 @@ Please see --help or documentation for more information.
         q_all += p_cent
 
         # done and done
-        xyz = set_coordinates(q_all_atoms, q_all, title="{} translated and rotated using rmsd".format(args.structure_a))
+        xyz = set_coordinates(q_all_atoms, q_all, title="{} - modified".format(args.structure_b))
         print(xyz)
 
     else:
