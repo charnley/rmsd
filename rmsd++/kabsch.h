@@ -162,7 +162,7 @@ M kabsch(M P, M Q, const T n_atoms)
     if(determinant3x3(U)*determinant3x3(V) < 0.0)
     {
         // TODO More numpy'ish way to do this?
-        U[std::slice( 2, 3, 3 )] = {-U[3*0+2], -U[3*1+2], -U[3*2+2]};
+        U[std::slice( 2, 3, 3 )] = M({-U[3*0+2], -U[3*1+2], -U[3*2+2]});
     }
 
     M rotation = multiply(U, V, 3, 3, 3);
