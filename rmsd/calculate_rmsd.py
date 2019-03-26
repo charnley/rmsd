@@ -53,17 +53,15 @@ def rmsd(V, W):
     rmsd : float
         Root-mean-square deviation between the two vectors
     """
-    D = len(V[0])
+    diff = np.array(V) - np.array(W)
     N = len(V)
-    result = 0.0
-    for v, w in zip(V, W):
-        result += sum([(v[i] - w[i])**2.0 for i in range(D)])
-    return np.sqrt(result/N)
+    return np.sqrt((diff * diff).sum() / N)
 
 
-def kabsch_rmsd(P, Q, translate=False):
+def kabsch_rmsd(P, Q, W=None, translate=False):
     """
     Rotate matrix P unto Q using Kabsch algorithm and calculate the RMSD.
+    An optional vector of weights W may be provided.
 
     Parameters
     ----------
@@ -71,6 +69,8 @@ def kabsch_rmsd(P, Q, translate=False):
         (N,D) matrix, where N is points and D is dimension.
     Q : array
         (N,D) matrix, where N is points and D is dimension.
+    W : array or None
+        (N) vector, where N is points.
     translate : bool
         Use centroids to translate vector P and Q unto each other.
 
@@ -83,13 +83,14 @@ def kabsch_rmsd(P, Q, translate=False):
         Q = Q - centroid(Q)
         P = P - centroid(P)
 
-    P = kabsch_rotate(P, Q)
+    P = kabsch_rotate(P, Q, W)
     return rmsd(P, Q)
 
 
-def kabsch_rotate(P, Q):
+def kabsch_rotate(P, Q, W=None):
     """
     Rotate matrix P unto matrix Q using Kabsch algorithm.
+    An optional vector of weights W may be provided.
 
     Parameters
     ----------
@@ -97,6 +98,8 @@ def kabsch_rotate(P, Q):
         (N,D) matrix, where N is points and D is dimension.
     Q : array
         (N,D) matrix, where N is points and D is dimension.
+    W : array or None
+        (N) vector, where N is points.
 
     Returns
     -------
@@ -105,18 +108,46 @@ def kabsch_rotate(P, Q):
         rotated
 
     """
-    U = kabsch(P, Q)
+    U = kabsch(P, Q, W)
 
     # Rotate P
     P = np.dot(P, U)
     return P
 
+def kabsch_fit(P, Q, W=None):
+    """
+    Rotate and translate matrix P unto matrix Q using Kabsch algorithm.
+    An optional vector of weights W may be provided.
 
-def kabsch(P, Q):
+    Parameters
+    ----------
+    P : array
+        (N,D) matrix, where N is points and D is dimension.
+    Q : array
+        (N,D) matrix, where N is points and D is dimension.
+    W : array or None
+        (N) vector, where N is points.
+
+    Returns
+    -------
+    P : array
+        (N,D) matrix, where N is points and D is dimension,
+        rotated and translated.
+
+    """
+    QC = centroid(Q, W)
+    Q = Q - QC
+    P = P - centroid(P, W)
+
+    P = kabsch_rotate(P, Q, W) + QC
+    return P
+
+def kabsch(P, Q, W=None):
     """
     Using the Kabsch algorithm with two sets of paired point P and Q, centered
     around the centroid. Each vector set is represented as an NxD
     matrix, where D is the the dimension of the space.
+    An optional vector of weights W may be provided.
 
     The algorithm works in three steps:
     - a centroid translation of P and Q (assumed done before this function
@@ -132,15 +163,28 @@ def kabsch(P, Q):
         (N,D) matrix, where N is points and D is dimension.
     Q : array
         (N,D) matrix, where N is points and D is dimension.
+    W : array or None
+        (N) vector, where N is points.
 
     Returns
     -------
     U : matrix
         Rotation matrix (D,D)
     """
-
-    # Computation of the covariance matrix
-    C = np.dot(np.transpose(P), Q)
+    if W is None:
+        C = np.dot(P.T, Q)
+    else:
+        # Computation of the weighted covariance matrix
+        v = np.sum(W)
+        try:
+            P -= np.sum((P.T * W).T, axis=1, keepdims=True) / v
+        except TypeError:
+            P -= np.sum((P.T * W).T, axis=1, keepdims=True) // v
+        try:
+            Q -= np.sum((Q.T * W).T, axis=1, keepdims=True) / v
+        except TypeError:
+            Q -= np.sum((Q.T * W).T, axis=1, keepdims=True) // v
+        C = np.dot(P.T * W, Q)
 
     # Computation of the optimal rotation matrix
     # This can be done using singular value decomposition (SVD)
@@ -247,10 +291,11 @@ def quaternion_rotate(X, Y):
     return rot
 
 
-def centroid(X):
+def centroid(X, W=None):
     """
     Centroid is the mean position of all the points in all of the coordinate
     directions, from a vectorset X.
+    An optional vector of weights W may be provided.
 
     https://en.wikipedia.org/wiki/Centroid
 
@@ -260,13 +305,19 @@ def centroid(X):
     ----------
     X : array
         (N,D) matrix, where N is points and D is dimension.
+    W : array or None
+        (N) vector, where N is points.
 
     Returns
     -------
     C : float
         centroid
     """
-    C = X.mean(axis=0)
+    if W is None:
+        W = np.ones(len(X), dtype=X.dtype)
+    v = np.sum(W)
+    X = (X.T * W).T
+    C = X.sum(axis=0) / v
     return C
 
 
