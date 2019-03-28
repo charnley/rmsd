@@ -1019,8 +1019,26 @@ https://github.com/charnley/rmsd for further examples.
         q_all += p_cent
 
         # done and done
-        xyz = set_coordinates(q_all_atoms, q_all, title="{} - modified".format(args.structure_b))
-        print(xyz)
+        # original output section, start
+        # xyz = set_coordinates(q_all_atoms, q_all, title="{} - modified".format(args.structure_b))
+        # print(xyz)
+        # original output section, end
+
+        # new output section for -p --use-reflections, start
+        # model data files read
+        fileA = sys.argv[1]
+        fileB = sys.argv[2]
+
+        fileNew = str(fileA)[:-4] + str("-testedWith-") + str(fileB)
+        titleNew = str(fileNew) + str(", new alignment of model B")
+        xyz = set_coordinates(q_all_atoms, q_all, titleNew)
+        with open(fileNew, mode="w") as newfile:
+            newfile.write(xyz)
+        print(str(fileA) + str(" was compared with ") + str(fileB))
+        print("reflection-based RMSD: {0}".format(result_rmsd))
+        print("Coordinates of newly aligned modelB:\n")
+        print(xyz, "\n")
+        # new output section for -p --use-reflections, end
 
     else:
 
@@ -1035,8 +1053,8 @@ https://github.com/charnley/rmsd for further examples.
 
         print("{0}".format(result_rmsd))
 
-
     return
+
 
 if __name__ == "__main__":
     main()
