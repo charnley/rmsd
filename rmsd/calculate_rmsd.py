@@ -8,7 +8,7 @@ For more information, usage, example and citation read more at
 https://github.com/charnley/rmsd
 """
 
-__version__ = '1.3.0'
+__version__ = '1.3.2'
 
 import copy
 import re
@@ -778,8 +778,8 @@ def get_coordinates_xyz(filename):
         numbers = [float(number) for number in numbers]
 
         # The numbers are not valid unless we obtain exacly three
-        if len(numbers) == 3:
-            V.append(np.array(numbers))
+        if len(numbers) >= 3:
+            V.append(np.array(numbers)[:3])
             atoms.append(atom)
         else:
             exit("Reading the .xyz file failed in line {0}. Please check the format.".format(lines_read + 2))
