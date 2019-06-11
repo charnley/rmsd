@@ -683,9 +683,9 @@ def get_coordinates_pdb(filename):
     with open(filename, 'r') as f:
         lines = f.readlines()
         for line in lines:
-            if line.startswith("TER") or line.startswith("END"):
+            if line.startswith("CONECT" or "MASTER" or "TER" or "END"):
                 break
-            if line.startswith("ATOM" or "HETATM"):
+            if line.startswith("ATOM") or line.startswith("HETATM"):
                 tokens = line.split()
                 # Try to get the atomtype
                 try:
