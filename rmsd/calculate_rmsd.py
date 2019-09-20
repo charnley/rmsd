@@ -12,6 +12,7 @@ __version__ = '1.3.2'
 
 import copy
 import re
+import gzip
 
 import numpy as np
 from scipy.optimize import linear_sum_assignment
@@ -636,9 +637,9 @@ def get_coordinates(filename, fmt):
     V : array
         (N,3) where N is number of atoms
     """
-    if fmt == "xyz":
+    if fmt == "xyz" or fmt == "xyzgz" or fmt == "xyz.gz":
         get_func = get_coordinates_xyz
-    elif fmt == "pdb":
+    elif fmt == "pdb" or fmt == "pdbgz" or fmt == "pdb.gz":
         get_func = get_coordinates_pdb
     else:
         exit("Could not recognize file format: {:s}".format(fmt))
@@ -680,7 +681,14 @@ def get_coordinates_pdb(filename):
 
     atoms = list()
 
-    with open(filename, 'r') as f:
+    if filename[-2:] =="gz":
+        openfunc = gzip.open
+        openarg = 'rt'
+    else:
+        openfunc = open
+        openarg = 'r'
+
+    with openfunc(filename, openarg) as f:
         lines = f.readlines()
         for line in lines:
             if line.startswith("TER") or line.startswith("END"):
@@ -751,7 +759,14 @@ def get_coordinates_xyz(filename):
         (N,3) where N is number of atoms
     """
 
-    f = open(filename, 'r')
+    if filename[-2:] =="gz":
+        openfunc = gzip.open
+        openarg = 'rt'
+    else:
+        openfunc = open
+        openarg = 'r'
+
+    f = openfunc(filename, openarg)
     V = list()
     atoms = list()
     n_atoms = 0
@@ -848,8 +863,18 @@ See https://github.com/charnley/rmsd for citation information
     args = parser.parse_args()
 
     # As default, load the extension as format
+    # Parse pdb.gz and xyz.gz as pdb and xyz formats
     if args.format is None:
-        args.format = args.structure_a.split('.')[-1]
+        filename_split = args.structure_a.split('.')
+        filename_suffix = filename_split[-1]
+        if filename_suffix != "gz":
+            args.format == filename_suffix
+        elif len(filename_split)>=3:
+            filename_suffix2 = filename_split[-2]
+            args.format = filename_suffix2 + "." + filename_suffix
+        else:
+            args.format == filename_suffix
+
 
     p_all_atoms, p_all = get_coordinates(args.structure_a, args.format)
     q_all_atoms, q_all = get_coordinates(args.structure_b, args.format)
