@@ -868,12 +868,12 @@ See https://github.com/charnley/rmsd for citation information
         filename_split = args.structure_a.split('.')
         filename_suffix = filename_split[-1]
         if filename_suffix != "gz":
-            args.format == filename_suffix
+            args.format = filename_suffix
         elif len(filename_split)>=3:
             filename_suffix2 = filename_split[-2]
             args.format = filename_suffix2 + "." + filename_suffix
         else:
-            args.format == filename_suffix
+            args.format = filename_suffix
 
 
     p_all_atoms, p_all = get_coordinates(args.structure_a, args.format)
