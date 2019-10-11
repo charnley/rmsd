@@ -18,6 +18,10 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
 
+try:
+    import qml
+except:
+    qml = None
 
 AXIS_SWAPS = np.array([
     [0, 1, 2],
@@ -36,6 +40,53 @@ AXIS_REFLECTIONS = np.array([
     [-1, 1, -1],
     [1, -1, -1],
     [-1, -1, -1]])
+
+ATOM_LIST = [
+    'h',  'he', \
+    'li', 'be', 'b',  'c',  'n',  'o',  'f',  'ne', \
+    'na', 'mg', 'al', 'si', 'p',  's',  'cl', 'ar', \
+    'k',  'ca', 'sc', 'ti', 'v',  'cr', 'mn', 'fe', 'co', 'ni', 'cu', \
+    'zn', 'ga', 'ge', 'as', 'se', 'br', 'kr',  \
+    'rb', 'sr', 'y',  'zr', 'nb', 'mo', 'tc', 'ru', 'rh', 'pd', 'ag', \
+    'cd', 'in', 'sn', 'sb', 'te', 'i',  'xe',  \
+    'cs', 'ba', 'la', 'ce', 'pr', 'nd', 'pm', 'sm', 'eu', 'gd', 'tb', 'dy', \
+    'ho', 'er', 'tm', 'yb', 'lu', 'hf', 'ta', 'w', 're', 'os', 'ir', 'pt', \
+    'au', 'hg', 'tl', 'pb', 'bi', 'po', 'at', 'rn', \
+    'fr', 'ra', 'ac', 'th', 'pa', 'u',  'np', 'pu']
+
+
+def str_atom(atom):
+    """
+    Convert atom type from integer to string
+
+    Parameters
+    ----------
+    atoms : string
+
+    Returns
+    -------
+    atoms : integer
+
+    """
+    atom = ATOM_LIST[atom - 1]
+    return atom
+
+
+def int_atom(atom):
+    """
+    Convert atom type from string to integer
+
+    Parameters
+    ----------
+    atoms : string
+
+    Returns
+    -------
+    atoms : integer
+
+    """
+    atom = atom.lower()
+    return ATOM_LIST.index(atom) + 1
 
 
 def rmsd(V, W):
@@ -269,6 +320,117 @@ def centroid(X):
     """
     C = X.mean(axis=0)
     return C
+
+
+def kernel_assignment(p_vecs, q_vecs, p_atoms, q_atoms, sigma=1e-0):
+    """
+
+    Hungarian cost assignment of a similiarty molecule kernel.
+
+    Note: Assumes p and q are atoms of same type
+
+    Parameters
+    ----------
+    p_vecs : array
+        (N,L) matrix, where N is no. of atoms and L is representation length
+    q_vecs : array
+        (N,L) matrix, where N is no. of atoms and L is representation length
+
+    Returns
+    -------
+    indices_b : array
+        (N) view vector of reordered assignment
+
+    """
+
+    # Calculate cost matrix from similarity kernel
+    K = qml.kernels.laplacian_kernel(p_vecs, q_vecs, sigma)
+    K *= -1.0
+    K += 1.0
+
+    # Perform Hungarian analysis on distance matrix between atoms of 1st
+    # structure and trial structure
+    indices_a, indices_b = linear_sum_assignment(K)
+
+    return indices_b
+
+
+def reorder_similarity(p_atoms, q_atoms, p_coord, q_coord):
+    """
+    Re-orders the input atom list and xyz coordinates using QML similarity
+    the Hungarian method for assignment.
+
+    Parameters
+    ----------
+    p_atoms : array
+        (N,1) matrix, where N is points holding the atoms' names
+    p_atoms : array
+        (N,1) matrix, where N is points holding the atoms' names
+    p_coord : array
+        (N,D) matrix, where N is points and D is dimension
+    q_coord : array
+        (N,D) matrix, where N is points and D is dimension
+
+    Returns
+    -------
+    view_reorder : array
+             (N,1) matrix, reordered indexes of atom alignment based on the
+             coordinates of the atoms
+    """
+
+    try:
+        assert qml is not None
+    except:
+        print("QML is not installed. Package is avaliable from"
+            "\n github.com/qmlcode/qml"
+            "\n pip install qml")
+
+    view_order = []
+
+    # TODO i think all of rmsd should be int based
+    p_atoms = [int_atom(atom) for atom in p_atoms]
+    q_atoms = [int_atom(atom) for atom in q_atoms]
+    p_atoms = np.array(p_atoms)
+    q_atoms = np.array(q_atoms)
+
+    elements = np.unique(p_atoms)
+    n_atoms = p_atoms.shape[0]
+    distance_cut = 20.0
+
+    parameters = {
+        'elements': elements,
+        "pad": n_atoms,
+        "rcut": distance_cut,
+        "acut": distance_cut,
+    }
+
+    p_vecs = qml.representations.generate_fchl_acsf(
+            p_atoms,
+            p_coord,
+            **parameters)
+
+    q_vecs = qml.representations.generate_fchl_acsf(
+            q_atoms,
+            q_coord,
+            **parameters)
+
+    # generate full view from q shape to fill in atom view on the fly
+    view_reorder = np.zeros(q_atoms.shape, dtype=int)
+
+    for atom in elements:
+
+        p_atom_idx, = np.where(p_atoms == atom)
+        q_atom_idx, = np.where(q_atoms == atom)
+
+        N = p_atom_idx.shape[0]
+
+        p_vecs_atom = p_vecs[p_atom_idx]
+        q_vecs_atom = q_vecs[p_atom_idx]
+
+        view = kernel_assignment(p_vecs_atom, q_vecs_atom, [p_atoms], [q_atoms])
+        view_reorder[p_atom_idx] = q_atom_idx[view]
+
+    return view_reorder
 
 
 def reorder_distance(p_atoms, q_atoms, p_coord, q_coord):
@@ -971,7 +1133,10 @@ https://github.com/charnley/rmsd for further examples.
     if not args.reorder:
         reorder_method = None
 
-    if args.reorder_method == "hungarian":
+    elif args.reorder_method == "qml":
+        reorder_method = reorder_similarity
+
+    elif args.reorder_method == "hungarian":
         reorder_method = reorder_hungarian
 
     elif args.reorder_method == "brute":
