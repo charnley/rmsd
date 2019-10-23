@@ -133,16 +133,6 @@ class TestRMSD(unittest.TestCase):
         self.assertListAlmostEqual([-20.7496, 17.5966, 25.6810],
                                    centroid, places=3)
 
-    def test_weighted_centroid(self):
-        a1 = np.array([-19.658, 17.18, 25.163], dtype=float)
-        a2 = np.array([-20.573, 18.059, 25.88], dtype=float)
-        a3 = np.array([-22.018, 17.551, 26.0], dtype=float)
-        atms = np.asarray([a1, a2, a3])
-        weights = [0.0, 1.0, 0.0]
-        centroid = self.centroid(atms, weights)
-        self.assertListAlmostEqual([-20.573, 18.059, 25.880],
-                                   centroid, places=3)
-
     def test_rmsd_pdb(self):
         infile1 = self.xyzpath + 'ci2_1.pdb'
         infile2 = self.xyzpath + 'ci2_2.pdb'
