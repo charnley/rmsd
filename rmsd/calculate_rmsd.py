@@ -406,11 +406,10 @@ def quaternion_rotate(X, Y):
     return rot
 
 
-def centroid(X, W=None):
+def centroid(X):
     """
     Centroid is the mean position of all the points in all of the coordinate
     directions, from a vectorset X.
-    An optional vector of weights W may be provided.
 
     https://en.wikipedia.org/wiki/Centroid
 
@@ -420,19 +419,13 @@ def centroid(X, W=None):
     ----------
     X : array
         (N,D) matrix, where N is points and D is dimension.
-    W : array or None
-        (N) vector, where N is points.
 
     Returns
     -------
     C : float
         centroid
     """
-    if W is None:
-        W = np.ones(len(X), dtype=X.dtype)
-    v = np.sum(W)
-    X = (X.T * W).T
-    C = X.sum(axis=0) / v
+    C = X.mean(axis=0)
     return C
 
 
