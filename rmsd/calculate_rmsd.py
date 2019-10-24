@@ -38,6 +38,37 @@ AXIS_REFLECTIONS = np.array([
     [-1, -1, -1]])
 
 
+# Dictionary of all elements matched with their atomic masses. Thanks to https://gist.github.com/lukasrichters14/c862644d4cbcf2d67252a484b7c6049c
+elements_dict = {'h' : 1.008,'he' : 4.003, 'li' : 6.941, 'be' : 9.012,\
+                 'b' : 10.811, 'c' : 12.011, 'n' : 14.007, 'o' : 15.999,\
+                 'f' : 18.998, 'ne' : 20.180, 'na' : 22.990, 'mg' : 24.305,\
+                 'al' : 26.982, 'si' : 28.086, 'p' : 30.974, 's' : 32.066,\
+                 'cl' : 35.453, 'ar' : 39.948, 'k' : 39.098, 'ca' : 40.078,\
+                 'sc' : 44.956, 'ti' : 47.867, 'v' : 50.942, 'cr' : 51.996,\
+                 'mn' : 54.938, 'fe' : 55.845, 'co' : 58.933, 'ni' : 58.693,\
+                 'cu' : 63.546, 'zn' : 65.38, 'ga' : 69.723, 'ge' : 72.631,\
+                 'as' : 74.922, 'se' : 78.971, 'br' : 79.904, 'kr' : 84.798,\
+                 'rb' : 84.468, 'sr' : 87.62, 'y' : 88.906, 'zr' : 91.224,\
+                 'nb' : 92.906, 'mo' : 95.95, 'tc' : 98.907, 'ru' : 101.07,\
+                 'rh' : 102.906, 'pd' : 106.42, 'ag' : 107.868, 'cd' : 112.414,\
+                 'in' : 114.818, 'sn' : 118.711, 'sb' : 121.760, 'te' : 126.7,\
+                 'i' : 126.904, 'xe' : 131.294, 'cs' : 132.905, 'ba' : 137.328,\
+                 'la' : 138.905, 'ce' : 140.116, 'pr' : 140.908, 'nd' : 144.243,\
+                 'pm' : 144.913, 'sm' : 150.36, 'eu' : 151.964, 'gd' : 157.25,\
+                 'tb' : 158.925, 'dy': 162.500, 'ho' : 164.930, 'er' : 167.259,\
+                 'tm' : 168.934, 'yb' : 173.055, 'lu' : 174.967, 'hf' : 178.49,\
+                 'ta' : 180.948, 'w' : 183.84, 're' : 186.207, 'os' : 190.23,\
+                 'ir' : 192.217, 'pt' : 195.085, 'au' : 196.967, 'hg' : 200.592,\
+                 'tl' : 204.383, 'pb' : 207.2, 'bi' : 208.980, 'po' : 208.982,\
+                 'at' : 209.987, 'rn' : 222.081, 'fr' : 223.020, 'ra' : 226.025,\
+                 'ac' : 227.028, 'th' : 232.038, 'pa' : 231.036, 'u' : 238.029,\
+                 'np' : 237, 'pu' : 244, 'am' : 243, 'cm' : 247, 'bk' : 247,\
+                 'ct' : 251, 'es' : 252, 'fm' : 257, 'md' : 258, 'no' : 259,\
+                 'lr' : 262, 'rf' : 261, 'db' : 262, 'sg' : 266, 'bh' : 264,\
+                 'hs' : 269, 'mt' : 268, 'ds' : 271, 'rg' : 272, 'cn' : 285,\
+                 'nh' : 284, 'fl' : 289, 'mc' : 288, 'lv' : 292, 'ts' : 294,\
+                 'og' : 294}
+
 def rmsd(V, W):
     """
     Calculate Root-mean-square deviation from two sets of vectors V and W.
@@ -565,6 +596,110 @@ def check_reflections(p_atoms, q_atoms, p_coord, q_coord,
     return min_rmsd, min_swap, min_reflection, min_review
 
 
+def rotation_matrix_vectors(v1, v2):
+    """
+    Returns the rotation matrix that rotates v1 onto v2
+    using Rodrigues' rotation formula.
+    (see https://math.stackexchange.com/a/476311)
+    ----------
+    v1 : array
+        Dim 3 float array
+    v2 : array
+        Dim 3 float array
+
+    Return
+    ------
+    output : 3x3 matrix
+        Rotation matrix
+    """
+
+    if (v1 == v2).all():
+        return np.eye(3)
+    elif (v1 == -v2).all():
+        # return a rotation of pi around the y-axis
+        return np.array([[-1.,0.,0.],[0.,1.,0.],[0.,0.,-1.]])
+    else:
+        v = np.cross(v1, v2)
+        s = np.linalg.norm(v)
+        c = np.vdot(v1, v2)
+
+        vx = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+
+        return np.eye(3) + vx + np.dot(vx,vx)*((1.-c)/(s*s))
+
+def get_cm(atoms, V):
+    """
+    Get the center of mass of V.
+    ----------
+    atoms : list
+        List of atomic types
+    V : array
+        (N,3) matrix of atomic coordinates
+
+    Return
+    ------
+    output : (3) array
+        The CM vector
+    """
+    return np.average(V, axis=0, weights=[elements_dict[x.lower()] for x in atoms])
+
+
+def get_inertia_tensor(atoms, V):
+    """
+    Get the tensor of intertia of V.
+    ----------
+    atoms : list
+        List of atomic types
+    V : array
+        (N,3) matrix of atomic coordinates
+
+    Return
+    ------
+    output : 3x3 float matrix
+        The tensor of inertia
+    """
+    CV = V - get_cm(atoms, V)
+
+    Ixx = 0.
+    Iyy = 0.
+    Izz = 0.
+    Ixy = 0.
+    Ixz = 0.
+    Iyz = 0.
+
+    for sp, acoord in zip(atoms, CV):
+        amass = elements_dict[sp.lower()]
+        Ixx += amass * (acoord[1]*acoord[1] + acoord[2]*acoord[2])
+        Iyy += amass * (acoord[0]*acoord[0] + acoord[2]*acoord[2])
+        Izz += amass * (acoord[0]*acoord[0] + acoord[1]*acoord[1])
+        Ixy += -amass * acoord[0] * acoord[1]
+        Ixz += -amass * acoord[0] * acoord[2]
+        Iyz += -amass * acoord[1] * acoord[2]
+
+    return np.array([[Ixx, Ixy, Ixz], [Ixy, Iyy, Iyz], [Ixz, Iyz, Izz]])
+
+
+def get_principal_axis(atoms, V):
+    """
+    Get the molecule's principal axis.
+    ----------
+    atoms : list
+        List of atomic types
+    V : array
+        (N,3) matrix of atomic coordinates
+
+    Return
+    ------
+    output : array
+        Array of dim 3 containing the principal axis
+    """
+    I = get_inertia_tensor(atoms, V)
+
+    eigval, eigvec = np.linalg.eig(I)
+
+    return eigvec[np.argmax(eigval)]
+
+
 def set_coordinates(atoms, V, title="", decimals=8):
     """
     Print coordinates V with corresponding atoms to stdout in XYZ format.
@@ -1012,9 +1147,35 @@ https://github.com/charnley/rmsd for further examples.
 
     elif args.reorder:
 
-        q_review = reorder_method(p_atoms, q_atoms, p_coord, q_coord)
-        q_coord = q_coord[q_review]
-        q_atoms = q_atoms[q_review]
+        # get the principal axis of P and Q
+        p_axis = get_principal_axis(p_atoms, p_coord)
+        q_axis = get_principal_axis(q_atoms, q_coord)
+
+        # rotate Q onto P considering that the axis are parallel and antiparallel
+        U1 = rotation_matrix_vectors(p_axis, q_axis)
+        U2 = rotation_matrix_vectors(p_axis, -q_axis)
+        q_coord1 = np.dot(q_coord, U1)
+        q_coord2 = np.dot(q_coord, U2)
+
+        q_review1 = reorder_method(p_atoms, q_atoms, p_coord, q_coord1)
+        q_review2 = reorder_method(p_atoms, q_atoms, p_coord, q_coord2)
+        q_coord1 = q_coord1[q_review1]
+        q_coord2 = q_coord2[q_review2]
+        
+        rmsd1 = rotation_method(p_coord, q_coord1)
+        rmsd2 = rotation_method(p_coord, q_coord2)
+
+        # consider the best case
+        if rmsd1 < rmsd2:
+            q_review = q_review1
+            q_atoms = q_atoms[q_review]
+            q_coord = q_coord1
+            q_all = np.dot(q_all-q_cent, U1)+q_cent
+        else:
+            q_review = q_review2
+            q_atoms = q_atoms[q_review]
+            q_coord = q_coord2
+            q_all = np.dot(q_all-q_cent, U2)+q_cent
 
         if not all(p_atoms == q_atoms):
             print("error: Structure not aligned")
