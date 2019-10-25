@@ -412,6 +412,54 @@ def reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord):
     return view_reorder
 
 
+def reorder_inertia_hungarian(p_atoms, q_atoms, p_coord, q_coord):
+    """
+    Align the principal intertia axis and then re-orders the input atom 
+    list and xyz coordinates using the Hungarian method 
+    (using optimized column results)
+
+    Parameters
+    ----------
+    p_atoms : array
+        (N,1) matrix, where N is points holding the atoms' names
+    p_atoms : array
+        (N,1) matrix, where N is points holding the atoms' names
+    p_coord : array
+        (N,D) matrix, where N is points and D is dimension
+    q_coord : array
+        (N,D) matrix, where N is points and D is dimension
+
+    Returns
+    -------
+    view_reorder : array
+             (N,1) matrix, reordered indexes of atom alignment based on the
+             coordinates of the atoms
+
+    """
+    # get the principal axis of P and Q
+    p_axis = get_principal_axis(p_atoms, p_coord)
+    q_axis = get_principal_axis(q_atoms, q_coord)
+
+    # rotate Q onto P considering that the axis are parallel and antiparallel
+    U1 = rotation_matrix_vectors(p_axis, q_axis)
+    U2 = rotation_matrix_vectors(p_axis, -q_axis)
+    q_coord1 = np.dot(q_coord, U1)
+    q_coord2 = np.dot(q_coord, U2)
+
+    q_review1 = reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord1)
+    q_review2 = reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord2)
+    q_coord1 = q_coord1[q_review1]
+    q_coord2 = q_coord2[q_review2]
+    
+    rmsd1 = kabsch_rmsd(p_coord, q_coord1)
+    rmsd2 = kabsch_rmsd(p_coord, q_coord2)
+
+    if rmsd1 < rmsd2:
+        return q_review1
+    else:
+        return q_review2
+
+
 def generate_permutations(elements, n):
     """
     Heap's algorithm for generating all n! permutations in a list
@@ -623,7 +671,7 @@ def rotation_matrix_vectors(v1, v2):
         s = np.linalg.norm(v)
         c = np.vdot(v1, v2)
 
-        vx = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+        vx = np.array([[0., -v[2], v[1]], [v[2], 0., -v[0]], [-v[1], v[0], 0.]])
 
         return np.eye(3) + vx + np.dot(vx,vx)*((1.-c)/(s*s))
 
@@ -977,7 +1025,7 @@ See https://github.com/charnley/rmsd for citation information
 
     # Reorder arguments
     parser.add_argument('-e', '--reorder', action='store_true', help='align the atoms of molecules (default: Hungarian)')
-    parser.add_argument('--reorder-method', action='store', default="hungarian", metavar="METHOD", help='select which reorder method to use; hungarian (default), brute, distance')
+    parser.add_argument('--reorder-method', action='store', default="hungarian", metavar="METHOD", help='select which reorder method to use; hungarian (default), inertia-hungarian, brute, distance')
     parser.add_argument('--use-reflections', action='store_true', help='scan through reflections in planes (eg Y transformed to -Y -> X, -Y, Z) and axis changes, (eg X and Z coords exchanged -> Z, Y, X). This will affect stereo-chemistry.')
     parser.add_argument('--use-reflections-keep-stereo', action='store_true', help='scan through reflections in planes (eg Y transformed to -Y -> X, -Y, Z) and axis changes, (eg X and Z coords exchanged -> Z, Y, X). Stereo-chemistry will be kept.')
 
@@ -1109,6 +1157,9 @@ https://github.com/charnley/rmsd for further examples.
     if args.reorder_method == "hungarian":
         reorder_method = reorder_hungarian
 
+    elif args.reorder_method == "inertia-hungarian":
+        reorder_method = reorder_inertia_hungarian
+
     elif args.reorder_method == "brute":
         reorder_method = reorder_brute
 
@@ -1147,40 +1198,13 @@ https://github.com/charnley/rmsd for further examples.
 
     elif args.reorder:
 
-        # get the principal axis of P and Q
-        p_axis = get_principal_axis(p_atoms, p_coord)
-        q_axis = get_principal_axis(q_atoms, q_coord)
-
-        # rotate Q onto P considering that the axis are parallel and antiparallel
-        U1 = rotation_matrix_vectors(p_axis, q_axis)
-        U2 = rotation_matrix_vectors(p_axis, -q_axis)
-        q_coord1 = np.dot(q_coord, U1)
-        q_coord2 = np.dot(q_coord, U2)
-
-        q_review1 = reorder_method(p_atoms, q_atoms, p_coord, q_coord1)
-        q_review2 = reorder_method(p_atoms, q_atoms, p_coord, q_coord2)
-        q_coord1 = q_coord1[q_review1]
-        q_coord2 = q_coord2[q_review2]
-        
-        rmsd1 = rotation_method(p_coord, q_coord1)
-        rmsd2 = rotation_method(p_coord, q_coord2)
-
-        # consider the best case
-        if rmsd1 < rmsd2:
-            q_review = q_review1
-            q_atoms = q_atoms[q_review]
-            q_coord = q_coord1
-            q_all = np.dot(q_all-q_cent, U1)+q_cent
-        else:
-            q_review = q_review2
-            q_atoms = q_atoms[q_review]
-            q_coord = q_coord2
-            q_all = np.dot(q_all-q_cent, U2)+q_cent
+        q_review = reorder_method(p_atoms, q_atoms, p_coord, q_coord)
+        q_coord = q_coord[q_review]
+        q_atoms = q_atoms[q_review]
 
         if not all(p_atoms == q_atoms):
             print("error: Structure not aligned")
             quit()
-
 
     # print result
     if args.output:
