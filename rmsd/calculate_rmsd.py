@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-__doc__ = \
-"""
+__doc__ = """
 Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ
 or PDB format, using transformation and rotation.
 
@@ -69,6 +68,7 @@ ELEMENTS_WEIGHTS = {'h' : 1.008,'he' : 4.003, 'li' : 6.941, 'be' : 9.012,
                  'hs' : 269, 'mt' : 268, 'ds' : 271, 'rg' : 272, 'cn' : 285,
                  'nh' : 284, 'fl' : 289, 'mc' : 288, 'lv' : 292, 'ts' : 294,
                  'og' : 294}
+
 
 def rmsd(V, W):
     """
@@ -148,6 +148,7 @@ def kabsch_rotate(P, Q):
     P = np.dot(P, U)
     return P
 
+
 def kabsch_fit(P, Q, W=None):
     """
     Rotate and translate matrix P unto matrix Q using Kabsch algorithm.
@@ -177,6 +178,7 @@ def kabsch_fit(P, Q, W=None):
         P = P - centroid(P)
         P = kabsch_rotate(P, Q) + QC
     return P
+
 
 def kabsch(P, Q):
     """
@@ -223,6 +225,7 @@ def kabsch(P, Q):
 
     return U
 
+
 def kabsch_weighted(P, Q, W=None):
     """
     Using the Kabsch algorithm with two sets of paired point P and Q.
@@ -265,8 +268,8 @@ def kabsch_weighted(P, Q, W=None):
     if W is None:
         W  = np.ones(len(P)) / len(P)
     W = np.array([W, W, W]).T
-    psq = 0.0
-    qsq = 0.0
+    # NOTE UNUSED psq = 0.0
+    # NOTE UNUSED qsq = 0.0
     iw = 3.0 / W.sum()
     n = len(P)
     for i in range(3):
@@ -306,6 +309,7 @@ def kabsch_weighted(P, Q, W=None):
     V = V * iw
     return U, V, rmsd
 
+
 def kabsch_weighted_fit(P, Q, W=None, rmsd=False):
     """
     Fit P to Q with optional weights W.
@@ -336,6 +340,7 @@ def kabsch_weighted_fit(P, Q, W=None, rmsd=False):
     else:
         return PNEW
 
+
 def kabsch_weighted_rmsd(P, Q, W=None):
     """
     Calculate the RMSD between P and Q with optional weighhts W
@@ -355,6 +360,7 @@ def kabsch_weighted_rmsd(P, Q, W=None):
     """
     R, T, w_rmsd = kabsch_weighted(P, Q, W)
     return w_rmsd
+
 
 def quaternion_rmsd(P, Q):
     """
@@ -433,7 +439,7 @@ def quaternion_rotate(X, Y):
     W = np.asarray([makeW(*Y[k]) for k in range(N)])
     Q = np.asarray([makeQ(*X[k]) for k in range(N)])
     Qt_dot_W = np.asarray([np.dot(Q[k].T, W[k]) for k in range(N)])
-    W_minus_Q = np.asarray([W[k] - Q[k] for k in range(N)])
+    # NOTE UNUSED W_minus_Q = np.asarray([W[k] - Q[k] for k in range(N)])
     A = np.sum(Qt_dot_W, axis=0)
     eigen = np.linalg.eigh(A)
     r = eigen[1][:, eigen[0].argmax()]
@@ -773,7 +779,7 @@ def check_reflections(p_atoms, q_atoms, p_coord, q_coord,
 
     for swap, i in zip(AXIS_SWAPS, swap_mask):
         for reflection, j in zip(AXIS_REFLECTIONS, reflection_mask):
-            if keep_stereo and  i * j == -1: continue # skip enantiomers
+            if keep_stereo and i * j == -1: continue # skip enantiomers
 
             tmp_atoms = copy.copy(q_atoms)
             tmp_coord = copy.deepcopy(q_coord)
@@ -836,6 +842,7 @@ def rotation_matrix_vectors(v1, v2):
         vx = np.array([[0., -v[2], v[1]], [v[2], 0., -v[0]], [-v[1], v[0], 0.]])
 
         return np.eye(3) + vx + np.dot(vx,vx)*((1.-c)/(s*s))
+
 
 def get_cm(atoms, V):
     """
@@ -1055,7 +1062,7 @@ def get_coordinates_pdb(filename):
                 except:
                     exit("error: Parsing atomtype for the following line: \n{0:s}".format(line))
 
-                if x_column == None:
+                if x_column is None:
                     try:
                         # look for x column
                         for i, x in enumerate(tokens):
