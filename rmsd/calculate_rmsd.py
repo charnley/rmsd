@@ -112,11 +112,13 @@ def kabsch_rmsd(P, Q, W=None, translate=False):
     rmsd : float
         root-mean squared deviation
     """
-    if W is not None:
-        return kabsch_weighted_rmsd(P, Q, W)
+
     if translate:
         Q = Q - centroid(Q)
         P = P - centroid(P)
+
+    if W is not None:
+        return kabsch_weighted_rmsd(P, Q, W)
 
     P = kabsch_rotate(P, Q)
     return rmsd(P, Q)
@@ -334,7 +336,7 @@ def kabsch_weighted_fit(P, Q, W=None, rmsd=False):
     else:
         return PNEW
 
-def kabsh_weighted_rmsd(P, Q, W=None):
+def kabsch_weighted_rmsd(P, Q, W=None):
     """
     Calculate the RMSD between P and Q with optional weighhts W
 
@@ -351,8 +353,8 @@ def kabsh_weighted_rmsd(P, Q, W=None):
     -------
     RMSD : float
     """
-    R, T, RMSD = kabsch_weighted(P, Q, W)
-    return RMSD
+    R, T, w_rmsd = kabsch_weighted(P, Q, W)
+    return w_rmsd
 
 def quaternion_rmsd(P, Q):
     """
@@ -610,7 +612,7 @@ def reorder_inertia_hungarian(p_atoms, q_atoms, p_coord, q_coord):
     q_review2 = reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord2)
     q_coord1 = q_coord1[q_review1]
     q_coord2 = q_coord2[q_review2]
-    
+
     rmsd1 = kabsch_rmsd(p_coord, q_coord1)
     rmsd2 = kabsch_rmsd(p_coord, q_coord2)
 
