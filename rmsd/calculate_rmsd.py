@@ -85,17 +85,15 @@ def rmsd(V, W):
     rmsd : float
         Root-mean-square deviation between the two vectors
     """
-    D = len(V[0])
+    diff = np.array(V) - np.array(W)
     N = len(V)
-    result = 0.0
-    for v, w in zip(V, W):
-        result += sum([(v[i] - w[i])**2.0 for i in range(D)])
-    return np.sqrt(result/N)
+    return np.sqrt((diff * diff).sum() / N)
 
 
-def kabsch_rmsd(P, Q, translate=False):
+def kabsch_rmsd(P, Q, W=None, translate=False):
     """
     Rotate matrix P unto Q using Kabsch algorithm and calculate the RMSD.
+    An optional vector of weights W may be provided.
 
     Parameters
     ----------
@@ -103,6 +101,8 @@ def kabsch_rmsd(P, Q, translate=False):
         (N,D) matrix, where N is points and D is dimension.
     Q : array
         (N,D) matrix, where N is points and D is dimension.
+    W : array or None
+        (N) vector, where N is points.
     translate : bool
         Use centroids to translate vector P and Q unto each other.
 
@@ -111,6 +111,8 @@ def kabsch_rmsd(P, Q, translate=False):
     rmsd : float
         root-mean squared deviation
     """
+    if W is not None:
+        return kabsch_weighted_rmsd(P, Q, W)
     if translate:
         Q = Q - centroid(Q)
         P = P - centroid(P)
@@ -143,20 +145,10 @@ def kabsch_rotate(P, Q):
     P = np.dot(P, U)
     return P
 
-
-def kabsch(P, Q):
+def kabsch_fit(P, Q, W=None):
     """
-    Using the Kabsch algorithm with two sets of paired point P and Q, centered
-    around the centroid. Each vector set is represented as an NxD
-    matrix, where D is the the dimension of the space.
-
-    The algorithm works in three steps:
-    - a centroid translation of P and Q (assumed done before this function
-      call)
-    - the computation of a covariance matrix C
-    - computation of the optimal rotation matrix U
-
-    For more info see http://en.wikipedia.org/wiki/Kabsch_algorithm
+    Rotate and translate matrix P unto matrix Q using Kabsch algorithm.
+    An optional vector of weights W may be provided.
 
     Parameters
     ----------
@@ -164,7 +156,42 @@ def kabsch(P, Q):
         (N,D) matrix, where N is points and D is dimension.
     Q : array
         (N,D) matrix, where N is points and D is dimension.
+    W : array or None
+        (N) vector, where N is points.
 
+    Returns
+    -------
+    P : array
+        (N,D) matrix, where N is points and D is dimension,
+        rotated and translated.
+
+    """
+    if W is not None:
+        P = kabsch_weighted_fit(P, Q, W, rmsd=False)
+    else:
+        QC = centroid(Q)
+        Q = Q - QC
+        P = P - centroid(P)
+        P = kabsch_rotate(P, Q) + QC
+    return P
+
+def kabsch(P, Q):
+    """
+    Using the Kabsch algorithm with two sets of paired point P and Q, centered
+    around the centroid. Each vector set is represented as an NxD
+    matrix, where D is the the dimension of the space.
+    The algorithm works in three steps:
+    - a centroid translation of P and Q (assumed done before this function
+      call)
+    - the computation of a covariance matrix C
+    - computation of the optimal rotation matrix U
+    For more info see http://en.wikipedia.org/wiki/Kabsch_algorithm
+    Parameters
+    ----------
+    P : array
+        (N,D) matrix, where N is points and D is dimension.
+    Q : array
+        (N,D) matrix, where N is points and D is dimension.
     Returns
     -------
     U : matrix
@@ -193,6 +220,138 @@ def kabsch(P, Q):
 
     return U
 
+def kabsch_weighted(P, Q, W=None):
+    """
+    Using the Kabsch algorithm with two sets of paired point P and Q.
+    Each vector set is represented as an NxD matrix, where D is the 
+    dimension of the space.
+    An optional vector of weights W may be provided.
+
+    Note that this algorithm does not require that P and Q have already
+    been overlayed by a centroid translation.
+
+    The function returns the rotation matrix U, translation vector V,
+    and RMS deviation between Q and P', where P' is:
+
+        P' = P * U + V
+
+    For more info see http://en.wikipedia.org/wiki/Kabsch_algorithm
+
+    Parameters
+    ----------
+    P : array
+        (N,D) matrix, where N is points and D is dimension.
+    Q : array
+        (N,D) matrix, where N is points and D is dimension.
+    W : array or None
+        (N) vector, where N is points.
+
+    Returns
+    -------
+    U    : matrix
+           Rotation matrix (D,D)
+    V    : vector
+           Translation vector (D)
+    RMSD : float
+           Root mean squared deviation between P and Q
+    """
+    # Computation of the weighted covariance matrix
+    CMP = np.zeros(3)
+    CMQ = np.zeros(3)
+    C = np.zeros((3, 3))
+    if W is None:
+        W  = np.ones(len(P)) / len(P)
+    W = np.array([W, W, W]).T
+    psq = 0.0
+    qsq = 0.0
+    iw = 3.0 / W.sum()
+    n = len(P)
+    for i in range(3):
+        for j in range(n):
+            for k in range(3):
+                C[i, k] += P[j, i] * Q[j, k] * W[j, i]
+    CMP = (P * W).sum(axis=0)
+    CMQ = (Q * W).sum(axis=0)
+    PSQ = (P * P * W).sum() - (CMP * CMP).sum() * iw
+    QSQ = (Q * Q * W).sum() - (CMQ * CMQ).sum() * iw
+    C = (C - np.outer(CMP, CMQ) * iw)  * iw
+
+    # Computation of the optimal rotation matrix
+    # This can be done using singular value decomposition (SVD)
+    # Getting the sign of the det(V)*(W) to decide
+    # whether we need to correct our rotation matrix to ensure a
+    # right-handed coordinate system.
+    # And finally calculating the optimal rotation matrix U
+    # see http://en.wikipedia.org/wiki/Kabsch_algorithm
+    V, S, W = np.linalg.svd(C)
+    d = (np.linalg.det(V) * np.linalg.det(W)) < 0.0
+
+    if d:
+        S[-1] = -S[-1]
+        V[:, -1] = -V[:, -1]
+
+    # Create Rotation matrix U, translation vector V, and calculate RMSD:
+    U = np.dot(V, W)
+    msd = (PSQ + QSQ) * iw - 2.0 * S.sum()
+    if msd < 0.0:
+        msd = 0.0
+    rmsd = np.sqrt(msd)
+    V = np.zeros(3)
+    for i in range(3):
+        t = (U[i, :] * CMQ).sum()
+        V[i] = CMP[i] - t
+    V = V * iw
+    return U, V, rmsd
+
+def kabsch_weighted_fit(P, Q, W=None, rmsd=False):
+    """
+    Fit P to Q with optional weights W.
+    Also returns the RMSD of the fit if rmsd=True.
+
+    Parameters
+    ----------
+    P    : array
+           (N,D) matrix, where N is points and D is dimension.
+    Q    : array
+           (N,D) matrix, where N is points and D is dimension.
+    W    : vector
+           (N) vector, where N is points
+    rmsd : Bool
+           If True, rmsd is returned as well as the fitted coordinates.
+
+    Returns
+    -------
+    P'   : array
+           (N,D) matrix, where N is points and D is dimension.
+    RMSD : float
+           if the function is called with rmsd=True
+    """
+    R, T, RMSD = kabsch_weighted(Q, P, W)
+    PNEW = np.dot(P, R.T) + T
+    if rmsd:
+        return PNEW, RMSD
+    else:
+        return PNEW
+
+def kabsh_weighted_rmsd(P, Q, W=None):
+    """
+    Calculate the RMSD between P and Q with optional weighhts W
+
+    Parameters
+    ----------
+    P : array
+        (N,D) matrix, where N is points and D is dimension.
+    Q : array
+        (N,D) matrix, where N is points and D is dimension.
+    W : vector
+        (N) vector, where N is points
+
+    Returns
+    -------
+    RMSD : float
+    """
+    R, T, RMSD = kabsch_weighted(P, Q, W)
+    return RMSD
 
 def quaternion_rmsd(P, Q):
     """

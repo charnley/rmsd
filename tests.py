@@ -50,6 +50,7 @@ class TestRMSD(unittest.TestCase):
 
         self.kabsch_rmsd = rmsd.kabsch_rmsd
         self.kabsch_rotate = rmsd.kabsch_rotate
+        self.kabsch_fit = rmsd.kabsch_fit
         self.kabsch_algo = rmsd.kabsch
 
         self.quaternion_rmsd = rmsd.quaternion_rmsd
@@ -166,6 +167,28 @@ class TestRMSD(unittest.TestCase):
         nP = self.kabsch_rotate(P, Q)
         self.assertListAlmostEqual([10.6822, -2.8867, 12.6977],
                                    nP[0].tolist(), places=3)
+
+    def test_kabash_fit_pdb(self):
+        infile1 = self.xyzpath + 'ci2_1r+t.pdb'
+        infile2 = self.xyzpath + 'ci2_1.pdb'
+        p_atoms, P = self.get_coordinates_pdb(infile1)
+        q_atoms, Q = self.get_coordinates_pdb(infile2)
+        nP = self.kabsch_fit(P, Q)
+        self.assertListAlmostEqual(Q[0].tolist(),
+                                   nP[0].tolist(), places=2)
+
+    def test_kabash_weighted_fit_pdb(self):
+        infile1 = self.xyzpath + 'ci2_12.pdb'
+        infile2 = self.xyzpath + 'ci2_2.pdb'
+        p_atoms, P = self.get_coordinates_pdb(infile1)
+        q_atoms, Q = self.get_coordinates_pdb(infile2)
+        weights = np.zeros(len(P))
+        residue13_start = 200 
+        residue24_start = 383
+        weights[residue13_start:residue24_start] = 1.0
+        nP = self.kabsch_fit(P, Q, weights)
+        self.assertListAlmostEqual(Q[300].tolist(),
+                                   nP[300].tolist(), places=2)
 
     def test_kabash_rmsd_pdb(self):
         infile1 = self.xyzpath + 'ci2_1.pdb'
