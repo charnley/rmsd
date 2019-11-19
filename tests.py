@@ -62,6 +62,7 @@ class TestRMSD(unittest.TestCase):
         self.reorder_brute = rmsd.reorder_brute
         self.reorder_hungarian = rmsd.reorder_hungarian
         self.reorder_distance = rmsd.reorder_distance
+        self.reorder_inertia_hungarian = rmsd.reorder_inertia_hungarian
 
         self.check_reflections = rmsd.check_reflections
 
@@ -306,6 +307,50 @@ class TestRMSD(unittest.TestCase):
 
         review = self.reorder_distance(atoms, atoms, p_coord, q_coord)
         self.assertEqual(p_coord.tolist(), q_coord[review].tolist())
+
+
+    def test_reorder_inertia_hungarian(self):
+        # coordinates of scrambled and rotated butane
+        atoms = np.array(["C","C","C","C","H","H","H","H","H","H","H","H","H","H"])
+        
+        p_coord = np.array(
+            [[2.142e+00,  1.395e+00, -8.932e+00],
+            [ 3.631e+00,  1.416e+00, -8.537e+00],
+            [ 4.203e+00, -1.200e-02, -8.612e+00],
+            [ 5.691e+00,  9.000e-03, -8.218e+00],
+            [ 1.604e+00,  7.600e-01, -8.260e+00],
+            [ 1.745e+00,  2.388e+00, -8.880e+00],
+            [ 2.043e+00,  1.024e+00, -9.930e+00],
+            [ 4.169e+00,  2.051e+00, -9.210e+00],
+            [ 3.731e+00,  1.788e+00, -7.539e+00],
+            [ 3.665e+00, -6.470e-01, -7.940e+00],
+            [ 4.104e+00, -3.840e-01, -9.610e+00],
+            [ 6.088e+00, -9.830e-01, -8.270e+00],
+            [ 5.791e+00,  3.810e-01, -7.220e+00],
+            [ 6.230e+00,  6.440e-01, -8.890e+00]])
+        
+        q_coord = np.array(
+            [[6.71454, -5.53848, -3.50851],
+            [ 6.95865, -6.22697, -2.15264],
+            [ 8.16747, -5.57632, -1.45606],
+            [ 5.50518, -6.19016, -4.20589],
+            [ 5.33617, -5.71137, -5.14853],
+            [ 7.58263, -5.64795, -4.12498],
+            [ 6.51851, -4.49883, -3.35011],
+            [ 6.09092, -6.11832, -1.53660],
+            [ 5.70232, -7.22908, -4.36475],
+            [ 7.15558, -7.26640, -2.31068],
+            [ 8.33668, -6.05459, -0.51425],
+            [ 7.97144, -4.53667, -1.29765],
+            [ 4.63745, -6.08152, -3.58986],
+            [ 9.03610, -5.68475, -2.07173]])
+
+        p_coord -= self.centroid(p_coord)
+        q_coord -= self.centroid(q_coord)
+
+        review = self.reorder_inertia_hungarian(atoms, atoms, p_coord, q_coord)
+        rmsd = self.kabsch_rmsd(p_coord, q_coord[review])
+        self.assertAlmostEqual(0., rmsd, places=1)
 
 
     def test_reflections(self):
