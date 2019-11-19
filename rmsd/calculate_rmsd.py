@@ -39,7 +39,8 @@ AXIS_REFLECTIONS = np.array([
 
 
 # Dictionary of all elements matched with their atomic masses. Thanks to https://gist.github.com/lukasrichters14/c862644d4cbcf2d67252a484b7c6049c
-elements_dict = {'h' : 1.008,'he' : 4.003, 'li' : 6.941, 'be' : 9.012,\
+
+ELEMENTS_WEIGHTS = {'h' : 1.008,'he' : 4.003, 'li' : 6.941, 'be' : 9.012,\
                  'b' : 10.811, 'c' : 12.011, 'n' : 14.007, 'o' : 15.999,\
                  'f' : 18.998, 'ne' : 20.180, 'na' : 22.990, 'mg' : 24.305,\
                  'al' : 26.982, 'si' : 28.086, 'p' : 30.974, 's' : 32.066,\
@@ -848,7 +849,7 @@ def get_cm(atoms, V):
     output : (3) array
         The CM vector
     """
-    return np.average(V, axis=0, weights=[elements_dict[x.lower()] for x in atoms])
+    return np.average(V, axis=0, weights=[ELEMENTS_WEIGHTS[x.lower()] for x in atoms])
 
 
 def get_inertia_tensor(atoms, V):
@@ -875,7 +876,7 @@ def get_inertia_tensor(atoms, V):
     Iyz = 0.
 
     for sp, acoord in zip(atoms, CV):
-        amass = elements_dict[sp.lower()]
+        amass = ELEMENTS_WEIGHTS[sp.lower()]
         Ixx += amass * (acoord[1]*acoord[1] + acoord[2]*acoord[2])
         Iyy += amass * (acoord[0]*acoord[0] + acoord[2]*acoord[2])
         Izz += amass * (acoord[0]*acoord[0] + acoord[1]*acoord[1])
