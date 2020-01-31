@@ -1138,11 +1138,16 @@ def get_coordinates_xyz(filename):
         if lines_read == n_atoms:
             break
 
-        atom = re.findall(r'[a-zA-Z]+', line)[0]
-        atom = atom.upper()
+        values = line.split()
 
-        numbers = re.findall(r'[-]?\d+\.\d*(?:[Ee][-\+]\d+)?', line)
-        numbers = [float(number) for number in numbers]
+        if len(values) < 4:
+            atom = re.findall(r'[a-zA-Z]+', line)[0]
+            atom = atom.upper()
+            numbers = re.findall(r'[-]?\d+\.\d*(?:[Ee][-\+]\d+)?', line)
+            numbers = [float(number) for number in numbers]
+        else:
+            atom = values[0].upper()
+            numbers = [float(number) for number in values[1:]]
 
         # The numbers are not valid unless we obtain exacly three
         if len(numbers) >= 3:
