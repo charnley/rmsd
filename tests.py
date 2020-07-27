@@ -202,6 +202,50 @@ class TestRMSD(unittest.TestCase):
         rmsd = self.kabsch_rmsd(P, Q)
         self.assertAlmostEqual(11.7768, rmsd, places=3)
 
+    def test_kabash_rmsd_xyz_lower_case(self):
+        """Test capitalization of the first letter of the elements in the .xyz."""
+        infile1 = self.xyzpath + 'lower_case_conformer_1.xyz'
+        infile2 = self.xyzpath + 'lower_case_conformer_2.xyz'
+        p_atoms, P = self.get_coordinates_xyz(infile1)
+        q_atoms, Q = self.get_coordinates_xyz(infile2)
+        Pc = self.centroid(P)
+        Qc = self.centroid(Q)
+        P -= Pc
+        Q -= Qc
+        rmsd = self.kabsch_rmsd(P, Q)
+        self.assertAlmostEqual(2.1065, rmsd, places=3)
+
+        U = self.kabsch_algo(P, Q)
+        P -= Pc
+        p_all = np.dot(P, U)
+
+        with captured_output() as (out, err):
+            self.print_coordinates(p_atoms, p_all, title="lower_case_conformer_1")
+        output = out.getvalue().strip().split('\n')
+        self.assertEqual(output[0:23],
+                         ['21', 'lower_case_conformer_1',
+                         'I      -1.38657986      2.39998120     -1.49939989',
+                         'C      -0.98489618      1.53212019      0.38288255',
+                         'C      -0.21428551      0.35944796      0.53203207',
+                         'C      -1.53951234      2.18417939      1.49424119',
+                         'C       0.37910374     -0.33668973     -0.61734070',
+                         'C      -0.02298526     -0.12591089      1.84271696',
+                         'C      -1.33498601      1.68115509      2.77593535',
+                         'N       1.61296599      0.12226074     -0.96672215',
+                         'C      -0.24832993     -1.38362432     -1.30101976',
+                         'Cl      0.89562806     -1.56225120      2.16224578',
+                         'C      -0.57784757      0.52718976      2.95019942',
+                         'C       2.22824023     -0.47240505     -2.01154061',
+                         'Br     -1.96729600     -2.03297392     -0.83513577',
+                         'C       0.41504991     -1.97420771     -2.37599920',
+                         'C       1.67604628     -1.51197881     -2.73899834',
+                         'H      -2.13297589      3.08797399      1.37343959',
+                         'H      -1.76400231      2.18817109      3.63678661',
+                         'H      -0.41963291      0.13730923      3.95320530',
+                         'H       3.21042774     -0.07689795     -2.25558754',
+                         'H      -0.03959747     -2.78954454     -2.93191134',
+                         'H       2.21568976     -1.95310058     -3.56993995'])
+
     def test_quaternion_rmsd_pdb(self):
         infile1 = self.xyzpath + 'ci2_1.pdb'
         infile2 = self.xyzpath + 'ci2_2.pdb'
