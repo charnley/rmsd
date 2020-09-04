@@ -1009,10 +1009,20 @@ def get_coordinates(filename, fmt):
     V : array
         (N,3) where N is number of atoms
     """
-    if fmt == "xyz" or fmt == "xyzgz" or fmt == "xyz.gz":
+    if (
+        fmt == "xyz" or
+        fmt == "xyzgz" or
+        fmt == "xyz.gz"
+    ):
         get_func = get_coordinates_xyz
-    elif fmt == "pdb" or fmt == "pdbgz" or fmt == "pdb.gz":
+
+    elif (
+        fmt == "pdb" or
+        fmt == "pdbgz" or
+        fmt == "pdb.gz"
+    ):
         get_func = get_coordinates_pdb
+
     else:
         exit("Could not recognize file format: {:s}".format(fmt))
 
