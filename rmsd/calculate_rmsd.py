@@ -9,6 +9,7 @@ https://github.com/charnley/rmsd
 
 __version__ = '1.3.2'
 
+import pathlib
 import argparse
 import copy
 import gzip
@@ -1184,7 +1185,7 @@ def print_coordinates(atoms, V, title=""):
     return
 
 
-def get_coordinates(filename, fmt):
+def get_coordinates(filename, fmt, is_gzip=False):
     """
     Get coordinates from filename in format fmt. Supports XYZ and PDB.
     Parameters
@@ -1200,27 +1201,19 @@ def get_coordinates(filename, fmt):
     V : array
         (N,3) where N is number of atoms
     """
-    if (
-        fmt == "xyz" or
-        fmt == "xyzgz" or
-        fmt == "xyz.gz"
-    ):
+    if fmt == "xyz":
         get_func = get_coordinates_xyz
 
-    elif (
-        fmt == "pdb" or
-        fmt == "pdbgz" or
-        fmt == "pdb.gz"
-    ):
+    elif fmt == "pdb":
         get_func = get_coordinates_pdb
 
     else:
         exit("Could not recognize file format: {:s}".format(fmt))
 
-    return get_func(filename)
+    return get_func(filename, is_gzip=is_gzip)
 
 
-def get_coordinates_pdb(filename):
+def get_coordinates_pdb(filename, is_gzip=False):
     """
     Get coordinates from the first chain in a pdb file
     and return a vectorset with all the coordinates.
@@ -1254,7 +1247,7 @@ def get_coordinates_pdb(filename):
 
     atoms = list()
 
-    if filename[-2:] == "gz":
+    if is_gzip:
         openfunc = gzip.open
         openarg = 'rt'
     else:
@@ -1337,7 +1330,7 @@ def get_coordinates_pdb(filename):
     return atoms, V
 
 
-def get_coordinates_xyz(filename):
+def get_coordinates_xyz(filename, is_gzip=False):
     """
     Get coordinates from filename and return a vectorset with all the
     coordinates, in XYZ format.
@@ -1528,6 +1521,12 @@ See https://github.com/charnley/rmsd for citation information
         help='format of input files. valid format are xyz and pdb',
         metavar='FMT'
     )
+    parser.add_argument(
+        '--format-is-gzip',
+        action="store_true",
+        default=False,
+        usage=argparse.SUPPRESS
+    )
 
     parser.add_argument(
         '-p',
@@ -1585,6 +1584,17 @@ See https://github.com/charnley/rmsd for citation information
         )
         sys.exit()
 
+    # Check fileformat
+    if args.format is None:
+        filename = args.structure_a
+        suffixes = pathlib.Path(filename).suffixes
+        if suffixes[-1] == ".gz":
+            args.format_is_gzip = True
+            ext = suffixes[-2].strip(".")
+        else:
+            ext = suffixes[-1].strip(".")
+        args.format = ext
+
     return args
 
 
@@ -1595,26 +1605,24 @@ def main(args=None):
 
     # As default, load the extension as format
     # Parse pdb.gz and xyz.gz as pdb and xyz formats
-    if args.format is None:
-        filename_split = args.structure_a.split('.')
-        filename_suffix = filename_split[-1]
-        if filename_suffix != "gz":
-            args.format = filename_suffix
-        elif len(filename_split) >= 3:
-            filename_suffix2 = filename_split[-2]
-            args.format = filename_suffix2 + "." + filename_suffix
-        else:
-            args.format = filename_suffix
+    p_all_atoms, p_all = get_coordinates(
+        args.structure_a,
+        args.format,
+        is_gzip=args.format_is_gzip
+    )
 
-    p_all_atoms, p_all = get_coordinates(args.structure_a, args.format)
-    q_all_atoms, q_all = get_coordinates(args.structure_b, args.format)
+    q_all_atoms, q_all = get_coordinates(
+        args.structure_b,
+        args.format,
+        is_gzip=args.format_is_gzip
+    )
 
     p_size = p_all.shape[0]
     q_size = q_all.shape[0]
 
     if not p_size == q_size:
         print("error: Structures not same size")
-        quit()
+        sys.exit()
 
     if np.count_nonzero(p_all_atoms != q_all_atoms) and not args.reorder:
         msg = """
@@ -1626,7 +1634,7 @@ Please see --help or documentation for more information or
 https://github.com/charnley/rmsd for further examples.
 """
         print(msg)
-        exit()
+        sys.exit()
 
     # Set local view
     p_view = None
@@ -1655,70 +1663,38 @@ https://github.com/charnley/rmsd for further examples.
         q_atoms = copy.deepcopy(q_all_atoms)
 
     else:
-
-        if args.reorder and args.output:
-            print(
-                "error: Cannot reorder atoms and print structure, "
-                "when excluding atoms (such as --ignore-hydrogen)"
-            )
-            quit()
-
-        if args.use_reflections and args.output:
-            print(
-                "error: Cannot use reflections on atoms and print, "
-                "when excluding atoms (such as --ignore-hydrogen)"
-            )
-            quit()
-
         p_coord = copy.deepcopy(p_all[p_view])
         q_coord = copy.deepcopy(q_all[q_view])
         p_atoms = copy.deepcopy(p_all_atoms[p_view])
         q_atoms = copy.deepcopy(q_all_atoms[q_view])
 
-    # Create the centroid of P and Q which is the geometric center of a
-    # N-dimensional region and translate P and Q onto that center.
-    # http://en.wikipedia.org/wiki/Centroid
+    # Recenter to centroid
     p_cent = centroid(p_coord)
     q_cent = centroid(q_coord)
     p_coord -= p_cent
     q_coord -= q_cent
 
     # set rotation method
-    if args.rotation.lower() == "kabsch":
+    if args.rotation.lower() == METHOD_KABSCH:
         rotation_method = kabsch_rmsd
-
-    elif args.rotation.lower() == "quaternion":
+    elif args.rotation.lower() == METHOD_QUATERNION:
         rotation_method = quaternion_rmsd
-
-    elif args.rotation.lower() == "none":
-        rotation_method = None
-
     else:
-        print("error: Unknown rotation method:", args.rotation)
-        quit()
+        rotation_method = None
 
     # set reorder method
     if not args.reorder:
         reorder_method = None
-
-    elif args.reorder_method == "qml":
+    elif args.reorder_method == REORDER_QML:
         reorder_method = reorder_similarity
-
-    elif args.reorder_method == "hungarian":
+    elif args.reorder_method == REORDER_HUNGARIAN:
         reorder_method = reorder_hungarian
-
-    elif args.reorder_method == "inertia-hungarian":
+    elif args.reorder_method == REORDER_INERTIA_HUNGARIAN:
         reorder_method = reorder_inertia_hungarian
-
-    elif args.reorder_method == "brute":
+    elif args.reorder_method == REORDER_BRUTE:
         reorder_method = reorder_brute
-
-    elif args.reorder_method == "distance":
+    elif args.reorder_method == REORDER_DISTANCE:
         reorder_method = reorder_distance
-
-    else:
-        print("error: Unknown reorder method:", args.reorder_method)
-        quit()
 
     # Save the resulting RMSD
     result_rmsd = None
@@ -1742,7 +1718,8 @@ https://github.com/charnley/rmsd for further examples.
             q_coord,
             reorder_method=reorder_method,
             rotation_method=rotation_method,
-            keep_stereo=True)
+            keep_stereo=True
+        )
 
     elif args.reorder:
 
