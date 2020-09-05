@@ -9,9 +9,11 @@ https://github.com/charnley/rmsd
 
 __version__ = '1.3.2'
 
+import argparse
 import copy
 import gzip
 import re
+import sys
 
 import numpy as np
 from scipy.optimize import linear_sum_assignment
@@ -21,6 +23,27 @@ try:
     import qml
 except ImportError:
     qml = None
+
+
+METHOD_KABSCH = "kabsch"
+METHOD_QUATERNION = "quaternion"
+METHOD_NOROTATION = "none"
+ROTATION_METHODS = [
+    METHOD_KABSCH, METHOD_QUATERNION, METHOD_NOROTATION
+]
+
+
+REORDER_NONE = "none"
+REORDER_QML = "qml"
+REORDER_HUNGARIAN = "hungarian"
+REORDER_INERTIA_HUNGARIAN = "inertia-hungarian"
+REORDER_BRUTE = "brute"
+REORDER_DISTANCE = "distance"
+REORDER_METHODS = [
+    REORDER_NONE, REORDER_QML, REORDER_HUNGARIAN, REORDER_INERTIA_HUNGARIAN,
+    REORDER_BRUTE, REORDER_DISTANCE
+]
+
 
 AXIS_SWAPS = np.array([
     [0, 1, 2],
@@ -1387,10 +1410,7 @@ def get_coordinates_xyz(filename):
     return atoms, V
 
 
-def main():
-
-    import argparse
-    import sys
+def parse_arguments(args=None):
 
     description = __doc__
 
@@ -1482,8 +1502,8 @@ See https://github.com/charnley/rmsd for citation information
     index_group = parser.add_mutually_exclusive_group()
     index_group.add_argument(
         '-nh',
-        '--no-hydrogen',
         '--ignore-hydrogen',
+        '--no-hydrogen',
         action='store_true',
         help='ignore hydrogens when calculating RMSD'
     )
@@ -1502,13 +1522,13 @@ See https://github.com/charnley/rmsd for citation information
         metavar='IDX'
     )
 
-    # format and print
     parser.add_argument(
         '--format',
         action='store',
         help='format of input files. valid format are xyz and pdb',
         metavar='FMT'
     )
+
     parser.add_argument(
         '-p',
         '--output',
@@ -1521,11 +1541,57 @@ See https://github.com/charnley/rmsd for citation information
         )
     )
 
-    if len(sys.argv) == 1:
-        parser.print_help()
-        sys.exit(1)
+    if args is None:
+        args = parser.parse_args()
+    else:
+        args = parser.parse_args(args)
 
-    args = parser.parse_args()
+    # Check illegal combinations
+    if args.output and args.reorder and (
+        args.ignore_hydrogen or args.add_idx or args.remove_idx
+    ):
+        print(
+            "error: Cannot reorder atoms and print structure, "
+            "when excluding atoms (such as --ignore-hydrogen)"
+        )
+        sys.exit()
+
+    if args.use_reflections and args.output and (
+        args.ignore_hydrogen or args.add_idx or args.remove_idx
+    ):
+        print(
+            "error: Cannot use reflections on atoms and print, "
+            "when excluding atoms (such as --ignore-hydrogen)"
+        )
+        sys.exit()
+
+    # Check methods
+    args.rotation = args.rotation.lower()
+    if args.rotation not in ROTATION_METHODS:
+        valid_methods = ", ".join(ROTATION_METHODS)
+        print(
+            f'error: Unknown rotation method: "{args.rotation}". '
+            f'Please use {valid_methods}'
+        )
+        sys.exit()
+
+    # Check reorder methods
+    args.reorder_method = args.reorder_method.lower()
+    if args.reorder_method not in REORDER_METHODS:
+        valid_methods = ", ".join(REORDER_METHODS)
+        print(
+            f'error: Unknown reorder method: "{args.reorder_method}". '
+            f'Please use {valid_methods}'
+        )
+        sys.exit()
+
+    return args
+
+
+def main(args=None):
+
+    # Parse arguments
+    args = parse_arguments(args)
 
     # As default, load the extension as format
     # Parse pdb.gz and xyz.gz as pdb and xyz formats
