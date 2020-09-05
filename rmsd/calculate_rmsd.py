@@ -542,6 +542,9 @@ def kernel_assignment(p_vecs, q_vecs, p_atoms, q_atoms, sigma=1e-0):
 
     """
 
+    if qml is None:
+        raise ImportError("QML not installed")
+
     # Calculate cost matrix from similarity kernel
     K = qml.kernels.laplacian_kernel(p_vecs, q_vecs, sigma)
     K *= -1.0
@@ -578,14 +581,11 @@ def reorder_similarity(p_atoms, q_atoms, p_coord, q_coord):
     """
 
     if qml is None:
-        print(
+        raise ImportError(
             "QML is not installed. Package is avaliable from"
             "\n github.com/qmlcode/qml"
             "\n pip install qml"
         )
-        quit()
-
-    view_order = []
 
     # TODO i think all of rmsd should be int based
     p_atoms = [int_atom(atom) for atom in p_atoms]
@@ -622,12 +622,15 @@ def reorder_similarity(p_atoms, q_atoms, p_coord, q_coord):
         p_atom_idx, = np.where(p_atoms == atom)
         q_atom_idx, = np.where(q_atoms == atom)
 
-        N = p_atom_idx.shape[0]
-
         p_vecs_atom = p_vecs[p_atom_idx]
         q_vecs_atom = q_vecs[p_atom_idx]
 
-        view = kernel_assignment(p_vecs_atom, q_vecs_atom, [p_atoms], [q_atoms])
+        view = kernel_assignment(
+            p_vecs_atom,
+            q_vecs_atom,
+            [p_atoms],
+            [q_atoms]
+        )
         view_reorder[p_atom_idx] = q_atom_idx[view]
 
     return view_reorder
@@ -1481,6 +1484,7 @@ See https://github.com/charnley/rmsd for citation information
     index_group.add_argument(
         '-nh',
         '--no-hydrogen',
+        '--ignore-hydrogen',
         action='store_true',
         help='ignore hydrogens when calculating RMSD'
     )
@@ -1590,14 +1594,14 @@ https://github.com/charnley/rmsd for further examples.
         if args.reorder and args.output:
             print(
                 "error: Cannot reorder atoms and print structure, "
-                "when excluding atoms (such as --no-hydrogen)"
+                "when excluding atoms (such as --ignore-hydrogen)"
             )
             quit()
 
         if args.use_reflections and args.output:
             print(
                 "error: Cannot use reflections on atoms and print, "
-                "when excluding atoms (such as --no-hydrogen)"
+                "when excluding atoms (such as --ignore-hydrogen)"
             )
             quit()
 
