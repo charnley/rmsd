@@ -1,3 +1,6 @@
+# dev
+.vim
+
 *.py[cod]
 
 # setup.py output
