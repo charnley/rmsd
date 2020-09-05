@@ -245,10 +245,13 @@ def kabsch_fit(P, Q, W=None):
         rotated and translated.
 
     """
+    print("GO")
     if W is not None:
         P = kabsch_weighted_fit(P, Q, W, rmsd=False)
     else:
         QC = centroid(Q)
+        print(Q)
+        print(QC)
         Q = Q - QC
         P = P - centroid(P)
         P = kabsch_rotate(P, Q) + QC
@@ -1348,7 +1351,7 @@ def get_coordinates_xyz(filename, is_gzip=False):
         (N,3) where N is number of atoms
     """
 
-    if filename[-2:] == "gz":
+    if is_gzip:
         openfunc = gzip.open
         openarg = 'rt'
     else:
@@ -1525,7 +1528,7 @@ See https://github.com/charnley/rmsd for citation information
         '--format-is-gzip',
         action="store_true",
         default=False,
-        usage=argparse.SUPPRESS
+        help=argparse.SUPPRESS
     )
 
     parser.add_argument(
@@ -1588,11 +1591,17 @@ See https://github.com/charnley/rmsd for citation information
     if args.format is None:
         filename = args.structure_a
         suffixes = pathlib.Path(filename).suffixes
-        if suffixes[-1] == ".gz":
+
+        if len(suffixes) == 0:
+            ext = None
+
+        elif suffixes[-1] == ".gz":
             args.format_is_gzip = True
             ext = suffixes[-2].strip(".")
+
         else:
             ext = suffixes[-1].strip(".")
+
         args.format = ext
 
     return args
@@ -1701,7 +1710,7 @@ https://github.com/charnley/rmsd for further examples.
 
     if args.use_reflections:
 
-        result_rmsd, q_swap, q_reflection, q_review = check_reflections(
+        result_rmsd, _, _, q_review = check_reflections(
             p_atoms,
             q_atoms,
             p_coord,
@@ -1711,7 +1720,7 @@ https://github.com/charnley/rmsd for further examples.
 
     elif args.use_reflections_keep_stereo:
 
-        result_rmsd, q_swap, q_reflection, q_review = check_reflections(
+        result_rmsd, _, _, q_review = check_reflections(
             p_atoms,
             q_atoms,
             p_coord,

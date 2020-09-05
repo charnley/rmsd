@@ -7,7 +7,6 @@ def test_legal_arguments():
 
     args = "--rotation kabsch --ignore-hydrogen FILE_A FILE_B"
     args = args.split()
-
     args = rmsd.parse_arguments(args)
 
     assert args.reorder is False
@@ -52,7 +51,7 @@ def test_illegal_reflection():
 def test_illegal_rotation_method():
 
     args = [
-        "--rotation SuperKabsch",
+        "--rotation NeverHeardOfThisMethod",
         "FILE_A",
         "FILE_B"
     ]
