@@ -1394,13 +1394,12 @@ def main():
 
     description = __doc__
 
-    version_msg = """
-rmsd {}
+    version_msg = f"""
+rmsd {__version__}
 
 See https://github.com/charnley/rmsd for citation information
 
 """
-    version_msg = version_msg.format(__version__)
 
     epilog = """
 """
