@@ -1422,6 +1422,9 @@ See https://github.com/charnley/rmsd for citation information
     epilog = """
 """
 
+    valid_reorder_methods = ", ".join(REORDER_METHODS)
+    valid_rotation_methods = ", ".join(ROTATION_METHODS)
+
     parser = argparse.ArgumentParser(
         usage='calculate_rmsd [options] FILE_A FILE_B',
         description=description,
@@ -1452,8 +1455,9 @@ See https://github.com/charnley/rmsd for citation information
         action='store',
         default="kabsch",
         help=(
-            'select rotation method. '
-            '"kabsch" (default), "quaternion" or "none"'
+            'select rotation method. Valid methods are '
+            f'{valid_rotation_methods}. '
+            'Default is Kabsch.'
         ),
         metavar="METHOD"
     )
@@ -1463,7 +1467,7 @@ See https://github.com/charnley/rmsd for citation information
         '-e',
         '--reorder',
         action='store_true',
-        help='align the atoms of molecules (default: Hungarian)'
+        help='align the atoms of molecules'
     )
     parser.add_argument(
         '--reorder-method',
@@ -1471,8 +1475,9 @@ See https://github.com/charnley/rmsd for citation information
         default="hungarian",
         metavar="METHOD",
         help=(
-            'select which reorder method to use; '
-            'hungarian (default), inertia-hungarian, brute, distance'
+            'select reorder method. Valid method are '
+            f'{valid_reorder_methods}. '
+            'Default is Hungarian.'
         )
     )
     parser.add_argument(
@@ -1572,20 +1577,18 @@ See https://github.com/charnley/rmsd for citation information
     # Check methods
     args.rotation = args.rotation.lower()
     if args.rotation not in ROTATION_METHODS:
-        valid_methods = ", ".join(ROTATION_METHODS)
         print(
             f'error: Unknown rotation method: "{args.rotation}". '
-            f'Please use {valid_methods}'
+            f'Please use {valid_rotation_methods}'
         )
         sys.exit()
 
     # Check reorder methods
     args.reorder_method = args.reorder_method.lower()
     if args.reorder_method not in REORDER_METHODS:
-        valid_methods = ", ".join(REORDER_METHODS)
         print(
             f'error: Unknown reorder method: "{args.reorder_method}". '
-            f'Please use {valid_methods}'
+            f'Please use {valid_reorder_methods}'
         )
         sys.exit()
 
@@ -1739,8 +1742,12 @@ https://github.com/charnley/rmsd for further examples.
         q_atoms = q_atoms[q_review]
 
         if not all(p_atoms == q_atoms):
-            print("error: Structure not aligned")
-            quit()
+            print(
+                "error: Structure not aligned. "
+                "Please submit bug report at "
+                "http://github.com/charnley/rmsd"
+            )
+            sys.exit()
 
     # print result
     if args.output:
