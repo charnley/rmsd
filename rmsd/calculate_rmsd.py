@@ -66,49 +66,239 @@ AXIS_REFLECTIONS = np.array([
     [-1, -1, -1]]
 )
 
-
-# Dictionary of all elements matched with their atomic masses. Thanks to
-# https://gist.github.com/lukasrichters14/c862644d4cbcf2d67252a484b7c6049c
-ELEMENTS_WEIGHTS = {
-    'h': 1.008, 'he': 4.003, 'li': 6.941, 'be': 9.012, 'b': 10.811,
-    'c': 12.011, 'n': 14.007, 'o': 15.999, 'f': 18.998, 'ne': 20.180,
-    'na': 22.990, 'mg': 24.305, 'al': 26.982, 'si': 28.086, 'p': 30.974,
-    's': 32.066, 'cl': 35.453, 'ar': 39.948, 'k': 39.098, 'ca': 40.078,
-    'sc': 44.956, 'ti': 47.867, 'v': 50.942, 'cr': 51.996, 'mn': 54.938,
-    'fe': 55.845, 'co': 58.933, 'ni': 58.693, 'cu': 63.546, 'zn': 65.38,
-    'ga': 69.723, 'ge': 72.631, 'as': 74.922, 'se': 78.971, 'br': 79.904,
-    'kr': 84.798, 'rb': 84.468, 'sr': 87.62, 'y': 88.906, 'zr': 91.224,
-    'nb': 92.906, 'mo': 95.95, 'tc': 98.907, 'ru': 101.07, 'rh': 102.906,
-    'pd': 106.42, 'ag': 107.868, 'cd': 112.414, 'in': 114.818, 'sn': 118.711,
-    'sb': 121.760, 'te': 126.7, 'i': 126.904, 'xe': 131.294, 'cs': 132.905,
-    'ba': 137.328, 'la': 138.905, 'ce': 140.116, 'pr': 140.908, 'nd': 144.243,
-    'pm': 144.913, 'sm': 150.36, 'eu': 151.964, 'gd': 157.25, 'tb': 158.925,
-    'dy': 162.500, 'ho': 164.930, 'er': 167.259, 'tm': 168.934, 'yb': 173.055,
-    'lu': 174.967, 'hf': 178.49, 'ta': 180.948, 'w': 183.84, 're': 186.207,
-    'os': 190.23, 'ir': 192.217, 'pt': 195.085, 'au': 196.967, 'hg': 200.592,
-    'tl': 204.383, 'pb': 207.2, 'bi': 208.980, 'po': 208.982, 'at': 209.987,
-    'rn': 222.081, 'fr': 223.020, 'ra': 226.025, 'ac': 227.028, 'th': 232.038,
-    'pa': 231.036, 'u': 238.029, 'np': 237, 'pu': 244, 'am': 243, 'cm': 247,
-    'bk': 247, 'ct': 251, 'es': 252, 'fm': 257, 'md': 258, 'no': 259,
-    'lr': 262, 'rf': 261, 'db': 262, 'sg': 266, 'bh': 264,
-    'hs': 269, 'mt': 268, 'ds': 271, 'rg': 272, 'cn': 285,
-    'nh': 284, 'fl': 289, 'mc': 288, 'lv': 292, 'ts': 294,
-    'og': 294
+ELEMENT_WEIGHTS = {
+    1: 1.00797,
+    2: 4.00260,
+    3: 6.941,
+    4: 9.01218,
+    5: 10.81,
+    6: 12.011,
+    7: 14.0067,
+    8: 15.9994,
+    9: 18.998403,
+    10: 20.179,
+    11: 22.98977,
+    12: 24.305,
+    13: 26.98154,
+    14: 28.0855,
+    15: 30.97376,
+    16: 32.06,
+    17: 35.453,
+    19: 39.0983,
+    18: 39.948,
+    20: 40.08,
+    21: 44.9559,
+    22: 47.90,
+    23: 50.9415,
+    24: 51.996,
+    25: 54.9380,
+    26: 55.847,
+    28: 58.70,
+    27: 58.9332,
+    29: 63.546,
+    30: 65.38,
+    31: 69.72,
+    32: 72.59,
+    33: 74.9216,
+    34: 78.96,
+    35: 79.904,
+    36: 83.80,
+    37: 85.4678,
+    38: 87.62,
+    39: 88.9059,
+    40: 91.22,
+    41: 92.9064,
+    42: 95.94,
+    43: 98,
+    44: 101.07,
+    45: 102.9055,
+    46: 106.4,
+    47: 107.868,
+    48: 112.41,
+    49: 114.82,
+    50: 118.69,
+    51: 121.75,
+    53: 126.9045,
+    52: 127.60,
+    54: 131.30,
+    55: 132.9054,
+    56: 137.33,
+    57: 138.9055,
+    58: 140.12,
+    59: 140.9077,
+    60: 144.24,
+    61: 145,
+    62: 150.4,
+    63: 151.96,
+    64: 157.25,
+    65: 158.9254,
+    66: 162.50,
+    67: 164.9304,
+    68: 167.26,
+    69: 168.9342,
+    70: 173.04,
+    71: 174.967,
+    72: 178.49,
+    73: 180.9479,
+    74: 183.85,
+    75: 186.207,
+    76: 190.2,
+    77: 192.22,
+    78: 195.09,
+    79: 196.9665,
+    80: 200.59,
+    81: 204.37,
+    82: 207.2,
+    83: 208.9804,
+    84: 209,
+    85: 210,
+    86: 222,
+    87: 223,
+    88: 226.0254,
+    89: 227.0278,
+    91: 231.0359,
+    90: 232.0381,
+    93: 237.0482,
+    92: 238.029,
+    94: 242,
+    95: 243,
+    97: 247,
+    96: 247,
+    102: 250,
+    98: 251,
+    99: 252,
+    108: 255,
+    109: 256,
+    100: 257,
+    101: 258,
+    103: 260,
+    104: 261,
+    107: 262,
+    105: 262,
+    106: 263,
+    110: 269,
+    111: 272,
+    112: 277
 }
 
-ATOM_LIST = [
-    'h',  'he',
-    'li', 'be', 'b',  'c',  'n',  'o',  'f',  'ne',
-    'na', 'mg', 'al', 'si', 'p',  's',  'cl', 'ar',
-    'k',  'ca', 'sc', 'ti', 'v',  'cr', 'mn', 'fe', 'co', 'ni', 'cu',
-    'zn', 'ga', 'ge', 'as', 'se', 'br', 'kr',
-    'rb', 'sr', 'y',  'zr', 'nb', 'mo', 'tc', 'ru', 'rh', 'pd', 'ag',
-    'cd', 'in', 'sn', 'sb', 'te', 'i',  'xe',
-    'cs', 'ba', 'la', 'ce', 'pr', 'nd', 'pm', 'sm', 'eu', 'gd', 'tb', 'dy',
-    'ho', 'er', 'tm', 'yb', 'lu', 'hf', 'ta', 'w', 're', 'os', 'ir', 'pt',
-    'au', 'hg', 'tl', 'pb', 'bi', 'po', 'at', 'rn',
-    'fr', 'ra', 'ac', 'th', 'pa', 'u',  'np', 'pu'
-]
+ELEMENT_NAMES = {
+    1: 'H',
+    2: 'He',
+    3: 'Li',
+    4: 'Be',
+    5: 'B',
+    6: 'C',
+    7: 'N',
+    8: 'O',
+    9: 'F',
+    10: 'Ne',
+    11: 'Na',
+    12: 'Mg',
+    13: 'Al',
+    14: 'Si',
+    15: 'P',
+    16: 'S',
+    17: 'Cl',
+    18: 'Ar',
+    19: 'K',
+    20: 'Ca',
+    21: 'Sc',
+    22: 'Ti',
+    23: 'V',
+    24: 'Cr',
+    25: 'Mn',
+    26: 'Fe',
+    27: 'Co',
+    28: 'Ni',
+    29: 'Cu',
+    30: 'Zn',
+    31: 'Ga',
+    32: 'Ge',
+    33: 'As',
+    34: 'Se',
+    35: 'Br',
+    36: 'Kr',
+    37: 'Rb',
+    38: 'Sr',
+    39: 'Y',
+    40: 'Zr',
+    41: 'Nb',
+    42: 'Mo',
+    43: 'Tc',
+    44: 'Ru',
+    45: 'Rh',
+    46: 'Pd',
+    47: 'Ag',
+    48: 'Cd',
+    49: 'In',
+    50: 'Sn',
+    51: 'Sb',
+    52: 'Te',
+    53: 'I',
+    54: 'Xe',
+    55: 'Cs',
+    56: 'Ba',
+    57: 'La',
+    58: 'Ce',
+    59: 'Pr',
+    60: 'Nd',
+    61: 'Pm',
+    62: 'Sm',
+    63: 'Eu',
+    64: 'Gd',
+    65: 'Tb',
+    66: 'Dy',
+    67: 'Ho',
+    68: 'Er',
+    69: 'Tm',
+    70: 'Yb',
+    71: 'Lu',
+    72: 'Hf',
+    73: 'Ta',
+    74: 'W',
+    75: 'Re',
+    76: 'Os',
+    77: 'Ir',
+    78: 'Pt',
+    79: 'Au',
+    80: 'Hg',
+    81: 'Tl',
+    82: 'Pb',
+    83: 'Bi',
+    84: 'Po',
+    85: 'At',
+    86: 'Rn',
+    87: 'Fr',
+    88: 'Ra',
+    89: 'Ac',
+    90: 'Th',
+    91: 'Pa',
+    92: 'U',
+    93: 'Np',
+    94: 'Pu',
+    95: 'Am',
+    96: 'Cm',
+    97: 'Bk',
+    98: 'Cf',
+    99: 'Es',
+    100: 'Fm',
+    101: 'Md',
+    102: 'No',
+    103: 'Lr',
+    104: 'Rf',
+    105: 'Db',
+    106: 'Sg',
+    107: 'Bh',
+    108: 'Hs',
+    109: 'Mt',
+    110: 'Ds',
+    111: 'Rg',
+    112: 'Cn',
+    114: 'Uuq',
+    116: 'Uuh'
+}
+
+NAMES_ELEMENT = {value: key for key, value in ELEMENT_NAMES.items()}
 
 
 def str_atom(atom):
@@ -124,7 +314,7 @@ def str_atom(atom):
     atoms : integer
 
     """
-    atom = ATOM_LIST[atom - 1]
+    atom = ELEMENT_NAMES[atom]
     return atom
 
 
@@ -141,8 +331,9 @@ def int_atom(atom):
     atoms : integer
 
     """
-    atom = atom.lower()
-    return ATOM_LIST.index(atom) + 1
+
+    atom = atom.capitalize()
+    return NAMES_ELEMENT[atom]
 
 
 def rmsd(V, W):
@@ -614,11 +805,11 @@ def reorder_similarity(p_atoms, q_atoms, p_coord, q_coord):
             "\n pip install qml"
         )
 
-    # TODO i think all of rmsd should be int based
-    p_atoms = [int_atom(atom) for atom in p_atoms]
-    q_atoms = [int_atom(atom) for atom in q_atoms]
-    p_atoms = np.array(p_atoms)
-    q_atoms = np.array(q_atoms)
+    if isinstance(p_atoms[0], str):
+        p_atoms = [int_atom(atom) for atom in p_atoms]
+        q_atoms = [int_atom(atom) for atom in q_atoms]
+        p_atoms = np.array(p_atoms)
+        q_atoms = np.array(q_atoms)
 
     elements = np.unique(p_atoms)
     n_atoms = p_atoms.shape[0]
@@ -1071,7 +1262,10 @@ def get_cm(atoms, V):
         The CM vector
     """
 
-    weights = [ELEMENTS_WEIGHTS[x.lower()] for x in atoms]
+    if isinstance(atoms[0], str):
+        atoms = [int_atom(atom) for atom in atoms]
+
+    weights = [ELEMENT_WEIGHTS[x] for x in atoms]
 
     center_of_mass = np.average(V, axis=0, weights=weights)
 
@@ -1092,6 +1286,10 @@ def get_inertia_tensor(atoms, V):
     output : 3x3 float matrix
         The tensor of inertia
     """
+
+    if isinstance(atoms[0], str):
+        atoms = [int_atom(atom) for atom in atoms]
+
     CV = V - get_cm(atoms, V)
 
     Ixx = 0.
@@ -1102,7 +1300,7 @@ def get_inertia_tensor(atoms, V):
     Iyz = 0.
 
     for sp, acoord in zip(atoms, CV):
-        amass = ELEMENTS_WEIGHTS[sp.lower()]
+        amass = ELEMENT_WEIGHTS[sp]
         Ixx += amass * (acoord[1]*acoord[1] + acoord[2]*acoord[2])
         Iyy += amass * (acoord[0]*acoord[0] + acoord[2]*acoord[2])
         Izz += amass * (acoord[0]*acoord[0] + acoord[1]*acoord[1])
@@ -1156,7 +1354,10 @@ def set_coordinates(atoms, V, title="", decimals=8):
     """
     N, D = V.shape
 
-    fmt = "{:2s}" + (" {:15."+str(decimals)+"f}")*3
+    if not isinstance(atoms[0], str):
+        atoms = [str_atom(atom) for atom in atoms]
+
+    fmt = "{:<2}" + (" {:15."+str(decimals)+"f}")*3
 
     out = list()
     out += [str(N)]
@@ -1164,7 +1365,6 @@ def set_coordinates(atoms, V, title="", decimals=8):
 
     for i in range(N):
         atom = atoms[i]
-        atom = atom[0].upper() + atom[1:]
         out += [fmt.format(atom, V[i, 0], V[i, 1], V[i, 2])]
 
     return "\n".join(out)
@@ -1190,7 +1390,12 @@ def print_coordinates(atoms, V, title=""):
     return
 
 
-def get_coordinates(filename, fmt, is_gzip=False):
+def get_coordinates(
+    filename,
+    fmt,
+    is_gzip=False,
+    return_atoms_as_int=False
+):
     """
     Get coordinates from filename in format fmt. Supports XYZ and PDB.
     Parameters
@@ -1215,10 +1420,20 @@ def get_coordinates(filename, fmt, is_gzip=False):
     else:
         exit("Could not recognize file format: {:s}".format(fmt))
 
-    return get_func(filename, is_gzip=is_gzip)
+    val = get_func(
+        filename,
+        is_gzip=is_gzip,
+        return_atoms_as_int=return_atoms_as_int
+    )
+
+    return val
 
 
-def get_coordinates_pdb(filename, is_gzip=False):
+def get_coordinates_pdb(
+    filename,
+    is_gzip=False,
+    return_atoms_as_int=False
+):
     """
     Get coordinates from the first chain in a pdb file
     and return a vectorset with all the coordinates.
@@ -1327,6 +1542,9 @@ def get_coordinates_pdb(filename, is_gzip=False):
                         )
                         exit(msg)
 
+    if return_atoms_as_int:
+        atoms = [int_atom(atom) for atom in atoms]
+
     V = np.asarray(V)
     atoms = np.asarray(atoms)
 
@@ -1335,7 +1553,11 @@ def get_coordinates_pdb(filename, is_gzip=False):
     return atoms, V
 
 
-def get_coordinates_xyz(filename, is_gzip=False):
+def get_coordinates_xyz(
+    filename,
+    is_gzip=False,
+    return_atoms_as_int=False
+):
     """
     Get coordinates from filename and return a vectorset with all the
     coordinates, in XYZ format.
@@ -1388,7 +1610,7 @@ def get_coordinates_xyz(filename, is_gzip=False):
             numbers = re.findall(r'[-]?\d+\.\d*(?:[Ee][-\+]\d+)?', line)
             numbers = [float(number) for number in numbers]
         else:
-            atom = values[0].upper()
+            atom = values[0]
             numbers = [float(number) for number in values[1:]]
 
         # The numbers are not valid unless we obtain exacly three
@@ -1403,6 +1625,19 @@ def get_coordinates_xyz(filename, is_gzip=False):
             exit(msg)
 
     f.close()
+
+    try:
+        # I've seen examples where XYZ are written with integer atoms types
+        atoms = [int(atom) for atom in atoms]
+        atoms = [str_atom(atom) for atom in atoms]
+
+    except ValueError:
+        # Correct atom spelling
+        atoms = [atom.capitalize() for atom in atoms]
+
+    if return_atoms_as_int:
+        atoms = [int_atom(atom) for atom in atoms]
+
     atoms = np.array(atoms)
     V = np.array(V)
     return atoms, V
@@ -1622,13 +1857,15 @@ def main(args=None):
     p_all_atoms, p_all = get_coordinates(
         args.structure_a,
         args.format,
-        is_gzip=args.format_is_gzip
+        is_gzip=args.format_is_gzip,
+        return_atoms_as_int=True
     )
 
     q_all_atoms, q_all = get_coordinates(
         args.structure_b,
         args.format,
-        is_gzip=args.format_is_gzip
+        is_gzip=args.format_is_gzip,
+        return_atoms_as_int=True
     )
 
     p_size = p_all.shape[0]
@@ -1654,7 +1891,7 @@ https://github.com/charnley/rmsd for further examples.
     p_view = None
     q_view = None
 
-    if args.no_hydrogen:
+    if args.ignore_hydrogen:
         p_view = np.where(p_all_atoms != 'H')
         q_view = np.where(q_all_atoms != 'H')
 
@@ -1721,7 +1958,8 @@ https://github.com/charnley/rmsd for further examples.
             p_coord,
             q_coord,
             reorder_method=reorder_method,
-            rotation_method=rotation_method)
+            rotation_method=rotation_method
+        )
 
     elif args.use_reflections_keep_stereo:
 
