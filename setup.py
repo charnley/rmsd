@@ -30,6 +30,7 @@ setuptools.setup(
     long_description=long_description,
     url='https://github.com/charnley/rmsd',
     license='BSD-2-Clause',
+    python_requires='>=3.6',
     install_requires=[
         'numpy',
         'scipy',
