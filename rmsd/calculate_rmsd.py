@@ -436,13 +436,10 @@ def kabsch_fit(P, Q, W=None):
         rotated and translated.
 
     """
-    print("GO")
     if W is not None:
         P = kabsch_weighted_fit(P, Q, W, rmsd=False)
     else:
         QC = centroid(Q)
-        print(Q)
-        print(QC)
         Q = Q - QC
         P = P - centroid(P)
         P = kabsch_rotate(P, Q) + QC
@@ -1384,10 +1381,7 @@ def print_coordinates(atoms, V, title=""):
         Title of molecule
 
     """
-
     print(set_coordinates(atoms, V, title=title))
-
-    return
 
 
 def get_coordinates(
@@ -2032,8 +2026,6 @@ https://github.com/charnley/rmsd for further examples.
             result_rmsd = rotation_method(p_coord, q_coord)
 
         print("{0}".format(result_rmsd))
-
-    return
 
 
 if __name__ == "__main__":
