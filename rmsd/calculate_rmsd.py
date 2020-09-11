@@ -632,14 +632,16 @@ def reorder_similarity(p_atoms, q_atoms, p_coord, q_coord):
     }
 
     p_vecs = qml.representations.generate_fchl_acsf(
-            p_atoms,
-            p_coord,
-            **parameters)
+        p_atoms,
+        p_coord,
+        **parameters
+    )
 
     q_vecs = qml.representations.generate_fchl_acsf(
-            q_atoms,
-            q_coord,
-            **parameters)
+        q_atoms,
+        q_coord,
+        **parameters
+    )
 
     # generate full view from q shape to fill in atom view on the fly
     view_reorder = np.zeros(q_atoms.shape, dtype=int)
@@ -650,7 +652,7 @@ def reorder_similarity(p_atoms, q_atoms, p_coord, q_coord):
         q_atom_idx, = np.where(q_atoms == atom)
 
         p_vecs_atom = p_vecs[p_atom_idx]
-        q_vecs_atom = q_vecs[p_atom_idx]
+        q_vecs_atom = q_vecs[q_atom_idx]
 
         view = kernel_assignment(
             p_vecs_atom,
