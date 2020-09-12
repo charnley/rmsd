@@ -1,2 +1,2 @@
 scipy
-rmsd
+numpy
