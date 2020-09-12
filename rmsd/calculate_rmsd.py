@@ -19,6 +19,7 @@ import sys
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
+from scipy.spatial import distance_matrix
 
 try:
     import qml
@@ -736,7 +737,7 @@ def centroid(X):
     return C
 
 
-def kernel_assignment(p_vecs, q_vecs, p_atoms, q_atoms, sigma=1e-0):
+def hungarian_vectors(p_vecs, q_vecs, sigma=1e-0, use_kernel=True):
     """
 
     Hungarian cost assignment of a similiarty molecule kernel.
@@ -757,13 +758,14 @@ def kernel_assignment(p_vecs, q_vecs, p_atoms, q_atoms, sigma=1e-0):
 
     """
 
-    if qml is None:
-        raise ImportError("QML not installed")
+    if use_kernel:
+        # Calculate cost matrix from similarity kernel
+        K = qml.kernels.laplacian_kernel(p_vecs, q_vecs, sigma)
+        K *= -1.0
+        K += 1.0
 
-    # Calculate cost matrix from similarity kernel
-    K = qml.kernels.laplacian_kernel(p_vecs, q_vecs, sigma)
-    K *= -1.0
-    K += 1.0
+    else:
+        K = distance_matrix(p_vecs, q_vecs)
 
     # Perform Hungarian analysis on distance matrix between atoms of 1st
     # structure and trial structure
@@ -772,7 +774,13 @@ def kernel_assignment(p_vecs, q_vecs, p_atoms, q_atoms, sigma=1e-0):
     return indices_b
 
 
-def reorder_similarity(p_atoms, q_atoms, p_coord, q_coord):
+def reorder_similarity(
+    p_atoms,
+    q_atoms,
+    p_coord,
+    q_coord,
+    use_kernel=True
+):
     """
     Re-orders the input atom list and xyz coordinates using QML similarity
     the Hungarian method for assignment.
@@ -842,11 +850,10 @@ def reorder_similarity(p_atoms, q_atoms, p_coord, q_coord):
         p_vecs_atom = p_vecs[p_atom_idx]
         q_vecs_atom = q_vecs[q_atom_idx]
 
-        view = kernel_assignment(
+        view = hungarian_vectors(
             p_vecs_atom,
             q_vecs_atom,
-            [p_atoms],
-            [q_atoms]
+            use_kernel=use_kernel
         )
         view_reorder[p_atom_idx] = q_atom_idx[view]
 
