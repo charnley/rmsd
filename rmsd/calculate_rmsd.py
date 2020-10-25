@@ -1717,6 +1717,7 @@ See https://github.com/charnley/rmsd for citation information
         )
     )
     parser.add_argument(
+        '-ur',
         '--use-reflections',
         action='store_true',
         help=(
@@ -1727,6 +1728,7 @@ See https://github.com/charnley/rmsd for citation information
         )
     )
     parser.add_argument(
+        '-urks',
         '--use-reflections-keep-stereo',
         action='store_true',
         help=(
@@ -1893,8 +1895,10 @@ https://github.com/charnley/rmsd for further examples.
     q_view = None
 
     if args.ignore_hydrogen:
-        p_view = np.where(p_all_atoms != 'H')
-        q_view = np.where(q_all_atoms != 'H')
+        assert type(p_all_atoms[0]) != str
+        assert type(q_all_atoms[0]) != str
+        p_view = np.where(p_all_atoms != 1)
+        q_view = np.where(q_all_atoms != 1)
 
     elif args.remove_idx:
         index = range(p_size)
