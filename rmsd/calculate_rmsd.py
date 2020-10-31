@@ -9,17 +9,17 @@ https://github.com/charnley/rmsd
 
 __version__ = '1.3.2'
 
-import pathlib
 import argparse
 import copy
 import gzip
+import pathlib
 import re
 import sys
 
 import numpy as np
 from scipy.optimize import linear_sum_assignment
-from scipy.spatial.distance import cdist
 from scipy.spatial import distance_matrix
+from scipy.spatial.distance import cdist
 
 try:
     import qml
