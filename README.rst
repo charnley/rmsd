@@ -128,3 +128,23 @@ Problems?
 
 Submit issues or pull requests on GitHub.
 
+
+Contributions
+-------------
+
+Please note that we are using ``black`` with line length of 79. Easiest way to
+abide to the code standard is to install the following packages.
+
+.. code-block:: bash
+
+    pip install black flake8 autoflake isort pytest
+
+and
+
+.. code-block:: bash
+
+    make format test lint
+
+to auto-format and test the code.
+
+

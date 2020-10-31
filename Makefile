@@ -1,4 +1,3 @@
-
 python = python
 LINE_LENGTH=79
 BLACKARGS=--line-length ${LINE_LENGTH}
@@ -17,5 +16,4 @@ format:
 	${python} -m black ${BLACKARGS} ${src}
 
 test:
-	${python} -m pytest -v tests
-
+	${python} -m pytest -vrs tests
