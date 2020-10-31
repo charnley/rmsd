@@ -1,4 +1,3 @@
-
 from . import calculate_rmsd
 from .calculate_rmsd import *
 from .calculate_rmsd import __doc__, __version__
@@ -22,7 +21,7 @@ __all__ = [
     "reorder_distance",
     "reorder_hungarian",
     "rmsd",
-    "set_coordinates"
+    "set_coordinates",
 ]
 
 if __name__ == "__main__":
