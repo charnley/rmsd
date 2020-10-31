@@ -3,9 +3,9 @@ import pathlib
 
 import numpy as np
 import pytest
+from constants import RESOURCE_PATH
 
 import rmsd
-from constants import RESOURCE_PATH
 
 qml = pytest.importorskip("qml")
 

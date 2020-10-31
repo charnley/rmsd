@@ -2,9 +2,9 @@ import gzip
 import pathlib
 
 import numpy as np
+from constants import RESOURCE_PATH
 
 import rmsd
-from constants import RESOURCE_PATH
 
 
 def test_get_coordinates_pdb():
