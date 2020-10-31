@@ -1,4 +1,3 @@
-
 import pytest
 
 import rmsd
@@ -12,7 +11,7 @@ def test_legal_arguments():
 
     assert args.reorder is False
     assert args.ignore_hydrogen is True
-    assert args.rotation == 'kabsch'
+    assert args.rotation == "kabsch"
 
 
 def test_illegal_arguments():
@@ -23,7 +22,7 @@ def test_illegal_arguments():
         "--print",
         "--ignore-hydrogen",
         "FILE_A",
-        "FILE_B"
+        "FILE_B",
     ]
 
     with pytest.raises(SystemExit) as exception:
@@ -40,7 +39,7 @@ def test_illegal_reflection():
         "--print",
         "--ignore-hydrogen",
         "FILE_A",
-        "FILE_B"
+        "FILE_B",
     ]
 
     with pytest.raises(SystemExit) as exception:
@@ -51,11 +50,7 @@ def test_illegal_reflection():
 
 def test_illegal_rotation_method():
 
-    args = [
-        "--rotation NeverHeardOfThisMethod",
-        "FILE_A",
-        "FILE_B"
-    ]
+    args = ["--rotation NeverHeardOfThisMethod", "FILE_A", "FILE_B"]
 
     with pytest.raises(SystemExit) as exception:
         args = rmsd.parse_arguments(args)
@@ -65,11 +60,7 @@ def test_illegal_rotation_method():
 
 def test_illegal_reorder_method():
 
-    args = [
-        "--reorder-method NotImplementedYet",
-        "FILE_A",
-        "FILE_B"
-    ]
+    args = ["--reorder-method NotImplementedYet", "FILE_A", "FILE_B"]
 
     with pytest.raises(SystemExit) as exception:
         args = rmsd.parse_arguments(args)

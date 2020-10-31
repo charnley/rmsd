@@ -1,4 +1,3 @@
-
 import pathlib
 
 import numpy as np
@@ -9,8 +8,8 @@ from constants import RESOURCE_PATH
 
 def test_quaternion_rmsd_pdb():
 
-    filename_p = 'ci2_1.pdb'
-    filename_q = 'ci2_2.pdb'
+    filename_p = "ci2_1.pdb"
+    filename_q = "ci2_2.pdb"
     filename_p = pathlib.PurePath(RESOURCE_PATH, filename_p)
     filename_q = pathlib.PurePath(RESOURCE_PATH, filename_q)
 
@@ -29,8 +28,8 @@ def test_quaternion_rmsd_pdb():
 
 def test_quaternion_rotate_pdb():
 
-    filename_p = 'ci2_1.pdb'
-    filename_q = 'ci2_2.pdb'
+    filename_p = "ci2_1.pdb"
+    filename_q = "ci2_2.pdb"
     filename_p = pathlib.PurePath(RESOURCE_PATH, filename_p)
     filename_q = pathlib.PurePath(RESOURCE_PATH, filename_q)
 
@@ -40,9 +39,7 @@ def test_quaternion_rotate_pdb():
     new_p_coord = rmsd.quaternion_rotate(p_coord, q_coord)
 
     np.testing.assert_array_almost_equal(
-        [-0.5124, 0.8565, 0.0608],
-        new_p_coord[0],
-        decimal=3
+        [-0.5124, 0.8565, 0.0608], new_p_coord[0], decimal=3
     )
 
 
@@ -52,9 +49,7 @@ def test_quaternion_transform():
     U = rmsd.quaternion_transform(r)
 
     np.testing.assert_array_almost_equal(
-        [-0.5124, 0.8565, 0.0608],
-        U[0],
-        decimal=3
+        [-0.5124, 0.8565, 0.0608], U[0], decimal=3
     )
 
 
@@ -64,9 +59,7 @@ def test_makeQ():
     Q_r = rmsd.makeQ(*r)
 
     np.testing.assert_array_almost_equal(
-        [-0.3841, -0.6361, -0.5929, -0.3101],
-        Q_r[0],
-        decimal=3
+        [-0.3841, -0.6361, -0.5929, -0.3101], Q_r[0], decimal=3
     )
 
 
@@ -75,7 +68,5 @@ def test_makeW():
     Wt_r = rmsd.makeW(*r)
 
     np.testing.assert_array_almost_equal(
-        [-0.3841,  0.6361, 0.5929, -0.3101],
-        Wt_r[0],
-        decimal=3
+        [-0.3841, 0.6361, 0.5929, -0.3101], Wt_r[0], decimal=3
     )

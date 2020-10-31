@@ -1,4 +1,3 @@
-
 import copy
 import pathlib
 
@@ -11,13 +10,9 @@ from constants import RESOURCE_PATH
 qml = pytest.importorskip("qml")
 
 
-
 def test_reorder_qml():
 
-    filename_1 = pathlib.PurePath(
-        RESOURCE_PATH,
-        'CHEMBL3039407.xyz'
-    )
+    filename_1 = pathlib.PurePath(RESOURCE_PATH, "CHEMBL3039407.xyz")
 
     p_atoms, p_coord = rmsd.get_coordinates_xyz(filename_1)
 
@@ -34,22 +29,19 @@ def test_reorder_qml():
 
     # Mess up the distance matrix by rotating the molecule
     theta = 180.0
-    rotation_y = np.array([
-        [np.cos(theta), 0, np.sin(theta)],
-        [0, 1, 0],
-        [-np.sin(theta), 0, np.cos(theta)]
-    ])
+    rotation_y = np.array(
+        [
+            [np.cos(theta), 0, np.sin(theta)],
+            [0, 1, 0],
+            [-np.sin(theta), 0, np.cos(theta)],
+        ]
+    )
 
     q_coord = np.dot(q_coord, rotation_y)
 
     # Reorder with standard hungarian, this will fail reorder and give large
     # RMSD
-    view_dist = rmsd.reorder_hungarian(
-        p_atoms,
-        q_atoms,
-        p_coord,
-        q_coord
-    )
+    view_dist = rmsd.reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord)
     q_atoms_dist = q_atoms[view_dist]
     q_coord_dist = q_coord[view_dist]
     _rmsd_dist = rmsd.kabsch_rmsd(p_coord, q_coord_dist)
@@ -57,12 +49,7 @@ def test_reorder_qml():
     assert _rmsd_dist > 3.0
 
     # Reorder based in chemical similarity
-    view = rmsd.reorder_similarity(
-        p_atoms,
-        q_atoms,
-        p_coord,
-        q_coord
-    )
+    view = rmsd.reorder_similarity(p_atoms, q_atoms, p_coord, q_coord)
     q_atoms = q_atoms[view]
     q_coord = q_coord[view]
 
@@ -78,10 +65,7 @@ def test_reorder_qml():
 
 def test_reorder_qml_distmat():
 
-    filename_1 = pathlib.PurePath(
-        RESOURCE_PATH,
-        'CHEMBL3039407.xyz'
-    )
+    filename_1 = pathlib.PurePath(RESOURCE_PATH, "CHEMBL3039407.xyz")
 
     p_atoms, p_coord = rmsd.get_coordinates_xyz(filename_1)
 
@@ -98,21 +82,19 @@ def test_reorder_qml_distmat():
 
     # Mess up the distance matrix by rotating the molecule
     theta = 180.0
-    rotation_y = np.array([
-        [np.cos(theta), 0, np.sin(theta)],
-        [0, 1, 0],
-        [-np.sin(theta), 0, np.cos(theta)]
-    ])
+    rotation_y = np.array(
+        [
+            [np.cos(theta), 0, np.sin(theta)],
+            [0, 1, 0],
+            [-np.sin(theta), 0, np.cos(theta)],
+        ]
+    )
 
     q_coord = np.dot(q_coord, rotation_y)
 
     # Reorder based in chemical similarity
     view = rmsd.reorder_similarity(
-        p_atoms,
-        q_atoms,
-        p_coord,
-        q_coord,
-        use_kernel=False
+        p_atoms, q_atoms, p_coord, q_coord, use_kernel=False
     )
     q_atoms = q_atoms[view]
     q_coord = q_coord[view]
