@@ -2,6 +2,8 @@ name: Deploy PyPi Python Package
 
 on:
   push:
+    branches:
+      - master
     tags:
       - 'rmsd-*'
 
