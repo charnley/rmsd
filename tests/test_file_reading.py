@@ -1,11 +1,11 @@
 
-import numpy as np
 import gzip
 import pathlib
 
-from constants import RESOURCE_PATH
+import numpy as np
 
 import rmsd
+from constants import RESOURCE_PATH
 
 
 def test_get_coordinates_pdb():

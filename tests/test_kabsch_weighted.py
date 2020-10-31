@@ -1,10 +1,10 @@
 
-import numpy as np
 import pathlib
 
-from constants import RESOURCE_PATH
+import numpy as np
 
 import rmsd
+from constants import RESOURCE_PATH
 
 
 def test_kabash_fit_pdb():

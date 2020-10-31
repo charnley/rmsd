@@ -1,14 +1,15 @@
 
-import pathlib
 import copy
+import pathlib
+
 import numpy as np
 import pytest
 
+import rmsd
 from constants import RESOURCE_PATH
 
 qml = pytest.importorskip("qml")
 
-import rmsd
 
 
 def test_reorder_qml():
