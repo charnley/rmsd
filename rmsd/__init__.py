@@ -1,9 +1,8 @@
+from . import calculate_rmsd
+from .calculate_rmsd import *
+from .calculate_rmsd import __doc__, __version__
 
-from rmsd.calculate_rmsd import *
-from rmsd.calculate_rmsd import __version__
-from rmsd.calculate_rmsd import __doc__
-
-__all__ = [\
+__all__ = [
     "brute_permutation",
     "centroid",
     "check_reflections",
@@ -22,8 +21,8 @@ __all__ = [\
     "reorder_distance",
     "reorder_hungarian",
     "rmsd",
-    "set_coordinates"]
+    "set_coordinates",
+]
 
 if __name__ == "__main__":
-    main()
-
+    calculate_rmsd.main()

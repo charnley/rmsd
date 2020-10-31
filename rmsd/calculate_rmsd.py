@@ -7,67 +7,333 @@ For more information, usage, example and citation read more at
 https://github.com/charnley/rmsd
 """
 
-__version__ = '1.3.2'
+__version__ = "1.3.2"
 
+import argparse
 import copy
 import gzip
+import pathlib
 import re
+import sys
 
 import numpy as np
 from scipy.optimize import linear_sum_assignment
+from scipy.spatial import distance_matrix
 from scipy.spatial.distance import cdist
 
-AXIS_SWAPS = np.array([
-    [0, 1, 2],
-    [0, 2, 1],
-    [1, 0, 2],
-    [1, 2, 0],
-    [2, 1, 0],
-    [2, 0, 1]])
-
-AXIS_REFLECTIONS = np.array([
-    [1, 1, 1],
-    [-1, 1, 1],
-    [1, -1, 1],
-    [1, 1, -1],
-    [-1, -1, 1],
-    [-1, 1, -1],
-    [1, -1, -1],
-    [-1, -1, -1]])
+try:
+    import qml
+except ImportError:
+    qml = None
 
 
-# Dictionary of all elements matched with their atomic masses. Thanks to
-# https://gist.github.com/lukasrichters14/c862644d4cbcf2d67252a484b7c6049c
+METHOD_KABSCH = "kabsch"
+METHOD_QUATERNION = "quaternion"
+METHOD_NOROTATION = "none"
+ROTATION_METHODS = [METHOD_KABSCH, METHOD_QUATERNION, METHOD_NOROTATION]
 
-ELEMENTS_WEIGHTS = {'h' : 1.008,'he' : 4.003, 'li' : 6.941, 'be' : 9.012,
-                 'b' : 10.811, 'c' : 12.011, 'n' : 14.007, 'o' : 15.999,
-                 'f' : 18.998, 'ne' : 20.180, 'na' : 22.990, 'mg' : 24.305,
-                 'al' : 26.982, 'si' : 28.086, 'p' : 30.974, 's' : 32.066,
-                 'cl' : 35.453, 'ar' : 39.948, 'k' : 39.098, 'ca' : 40.078,
-                 'sc' : 44.956, 'ti' : 47.867, 'v' : 50.942, 'cr' : 51.996,
-                 'mn' : 54.938, 'fe' : 55.845, 'co' : 58.933, 'ni' : 58.693,
-                 'cu' : 63.546, 'zn' : 65.38, 'ga' : 69.723, 'ge' : 72.631,
-                 'as' : 74.922, 'se' : 78.971, 'br' : 79.904, 'kr' : 84.798,
-                 'rb' : 84.468, 'sr' : 87.62, 'y' : 88.906, 'zr' : 91.224,
-                 'nb' : 92.906, 'mo' : 95.95, 'tc' : 98.907, 'ru' : 101.07,
-                 'rh' : 102.906, 'pd' : 106.42, 'ag' : 107.868, 'cd' : 112.414,
-                 'in' : 114.818, 'sn' : 118.711, 'sb' : 121.760, 'te' : 126.7,
-                 'i' : 126.904, 'xe' : 131.294, 'cs' : 132.905, 'ba' : 137.328,
-                 'la' : 138.905, 'ce' : 140.116, 'pr' : 140.908, 'nd' : 144.243,
-                 'pm' : 144.913, 'sm' : 150.36, 'eu' : 151.964, 'gd' : 157.25,
-                 'tb' : 158.925, 'dy': 162.500, 'ho' : 164.930, 'er' : 167.259,
-                 'tm' : 168.934, 'yb' : 173.055, 'lu' : 174.967, 'hf' : 178.49,
-                 'ta' : 180.948, 'w' : 183.84, 're' : 186.207, 'os' : 190.23,
-                 'ir' : 192.217, 'pt' : 195.085, 'au' : 196.967, 'hg' : 200.592,
-                 'tl' : 204.383, 'pb' : 207.2, 'bi' : 208.980, 'po' : 208.982,
-                 'at' : 209.987, 'rn' : 222.081, 'fr' : 223.020, 'ra' : 226.025,
-                 'ac' : 227.028, 'th' : 232.038, 'pa' : 231.036, 'u' : 238.029,
-                 'np' : 237, 'pu' : 244, 'am' : 243, 'cm' : 247, 'bk' : 247,
-                 'ct' : 251, 'es' : 252, 'fm' : 257, 'md' : 258, 'no' : 259,
-                 'lr' : 262, 'rf' : 261, 'db' : 262, 'sg' : 266, 'bh' : 264,
-                 'hs' : 269, 'mt' : 268, 'ds' : 271, 'rg' : 272, 'cn' : 285,
-                 'nh' : 284, 'fl' : 289, 'mc' : 288, 'lv' : 292, 'ts' : 294,
-                 'og' : 294}
+
+REORDER_NONE = "none"
+REORDER_QML = "qml"
+REORDER_HUNGARIAN = "hungarian"
+REORDER_INERTIA_HUNGARIAN = "inertia-hungarian"
+REORDER_BRUTE = "brute"
+REORDER_DISTANCE = "distance"
+REORDER_METHODS = [
+    REORDER_NONE,
+    REORDER_QML,
+    REORDER_HUNGARIAN,
+    REORDER_INERTIA_HUNGARIAN,
+    REORDER_BRUTE,
+    REORDER_DISTANCE,
+]
+
+
+AXIS_SWAPS = np.array(
+    [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 1, 0], [2, 0, 1]]
+)
+
+AXIS_REFLECTIONS = np.array(
+    [
+        [1, 1, 1],
+        [-1, 1, 1],
+        [1, -1, 1],
+        [1, 1, -1],
+        [-1, -1, 1],
+        [-1, 1, -1],
+        [1, -1, -1],
+        [-1, -1, -1],
+    ]
+)
+
+ELEMENT_WEIGHTS = {
+    1: 1.00797,
+    2: 4.00260,
+    3: 6.941,
+    4: 9.01218,
+    5: 10.81,
+    6: 12.011,
+    7: 14.0067,
+    8: 15.9994,
+    9: 18.998403,
+    10: 20.179,
+    11: 22.98977,
+    12: 24.305,
+    13: 26.98154,
+    14: 28.0855,
+    15: 30.97376,
+    16: 32.06,
+    17: 35.453,
+    19: 39.0983,
+    18: 39.948,
+    20: 40.08,
+    21: 44.9559,
+    22: 47.90,
+    23: 50.9415,
+    24: 51.996,
+    25: 54.9380,
+    26: 55.847,
+    28: 58.70,
+    27: 58.9332,
+    29: 63.546,
+    30: 65.38,
+    31: 69.72,
+    32: 72.59,
+    33: 74.9216,
+    34: 78.96,
+    35: 79.904,
+    36: 83.80,
+    37: 85.4678,
+    38: 87.62,
+    39: 88.9059,
+    40: 91.22,
+    41: 92.9064,
+    42: 95.94,
+    43: 98,
+    44: 101.07,
+    45: 102.9055,
+    46: 106.4,
+    47: 107.868,
+    48: 112.41,
+    49: 114.82,
+    50: 118.69,
+    51: 121.75,
+    53: 126.9045,
+    52: 127.60,
+    54: 131.30,
+    55: 132.9054,
+    56: 137.33,
+    57: 138.9055,
+    58: 140.12,
+    59: 140.9077,
+    60: 144.24,
+    61: 145,
+    62: 150.4,
+    63: 151.96,
+    64: 157.25,
+    65: 158.9254,
+    66: 162.50,
+    67: 164.9304,
+    68: 167.26,
+    69: 168.9342,
+    70: 173.04,
+    71: 174.967,
+    72: 178.49,
+    73: 180.9479,
+    74: 183.85,
+    75: 186.207,
+    76: 190.2,
+    77: 192.22,
+    78: 195.09,
+    79: 196.9665,
+    80: 200.59,
+    81: 204.37,
+    82: 207.2,
+    83: 208.9804,
+    84: 209,
+    85: 210,
+    86: 222,
+    87: 223,
+    88: 226.0254,
+    89: 227.0278,
+    91: 231.0359,
+    90: 232.0381,
+    93: 237.0482,
+    92: 238.029,
+    94: 242,
+    95: 243,
+    97: 247,
+    96: 247,
+    102: 250,
+    98: 251,
+    99: 252,
+    108: 255,
+    109: 256,
+    100: 257,
+    101: 258,
+    103: 260,
+    104: 261,
+    107: 262,
+    105: 262,
+    106: 263,
+    110: 269,
+    111: 272,
+    112: 277,
+}
+
+ELEMENT_NAMES = {
+    1: "H",
+    2: "He",
+    3: "Li",
+    4: "Be",
+    5: "B",
+    6: "C",
+    7: "N",
+    8: "O",
+    9: "F",
+    10: "Ne",
+    11: "Na",
+    12: "Mg",
+    13: "Al",
+    14: "Si",
+    15: "P",
+    16: "S",
+    17: "Cl",
+    18: "Ar",
+    19: "K",
+    20: "Ca",
+    21: "Sc",
+    22: "Ti",
+    23: "V",
+    24: "Cr",
+    25: "Mn",
+    26: "Fe",
+    27: "Co",
+    28: "Ni",
+    29: "Cu",
+    30: "Zn",
+    31: "Ga",
+    32: "Ge",
+    33: "As",
+    34: "Se",
+    35: "Br",
+    36: "Kr",
+    37: "Rb",
+    38: "Sr",
+    39: "Y",
+    40: "Zr",
+    41: "Nb",
+    42: "Mo",
+    43: "Tc",
+    44: "Ru",
+    45: "Rh",
+    46: "Pd",
+    47: "Ag",
+    48: "Cd",
+    49: "In",
+    50: "Sn",
+    51: "Sb",
+    52: "Te",
+    53: "I",
+    54: "Xe",
+    55: "Cs",
+    56: "Ba",
+    57: "La",
+    58: "Ce",
+    59: "Pr",
+    60: "Nd",
+    61: "Pm",
+    62: "Sm",
+    63: "Eu",
+    64: "Gd",
+    65: "Tb",
+    66: "Dy",
+    67: "Ho",
+    68: "Er",
+    69: "Tm",
+    70: "Yb",
+    71: "Lu",
+    72: "Hf",
+    73: "Ta",
+    74: "W",
+    75: "Re",
+    76: "Os",
+    77: "Ir",
+    78: "Pt",
+    79: "Au",
+    80: "Hg",
+    81: "Tl",
+    82: "Pb",
+    83: "Bi",
+    84: "Po",
+    85: "At",
+    86: "Rn",
+    87: "Fr",
+    88: "Ra",
+    89: "Ac",
+    90: "Th",
+    91: "Pa",
+    92: "U",
+    93: "Np",
+    94: "Pu",
+    95: "Am",
+    96: "Cm",
+    97: "Bk",
+    98: "Cf",
+    99: "Es",
+    100: "Fm",
+    101: "Md",
+    102: "No",
+    103: "Lr",
+    104: "Rf",
+    105: "Db",
+    106: "Sg",
+    107: "Bh",
+    108: "Hs",
+    109: "Mt",
+    110: "Ds",
+    111: "Rg",
+    112: "Cn",
+    114: "Uuq",
+    116: "Uuh",
+}
+
+NAMES_ELEMENT = {value: key for key, value in ELEMENT_NAMES.items()}
+
+
+def str_atom(atom):
+    """
+    Convert atom type from integer to string
+
+    Parameters
+    ----------
+    atoms : string
+
+    Returns
+    -------
+    atoms : integer
+
+    """
+    atom = ELEMENT_NAMES[atom]
+    return atom
+
+
+def int_atom(atom):
+    """
+    Convert atom type from string to integer
+
+    Parameters
+    ----------
+    atoms : string
+
+    Returns
+    -------
+    atoms : integer
+
+    """
+
+    atom = atom.capitalize()
+    return NAMES_ELEMENT[atom]
 
 
 def rmsd(V, W):
@@ -229,7 +495,7 @@ def kabsch(P, Q):
 def kabsch_weighted(P, Q, W=None):
     """
     Using the Kabsch algorithm with two sets of paired point P and Q.
-    Each vector set is represented as an NxD matrix, where D is the 
+    Each vector set is represented as an NxD matrix, where D is the
     dimension of the space.
     An optional vector of weights W may be provided.
 
@@ -266,7 +532,7 @@ def kabsch_weighted(P, Q, W=None):
     CMQ = np.zeros(3)
     C = np.zeros((3, 3))
     if W is None:
-        W  = np.ones(len(P)) / len(P)
+        W = np.ones(len(P)) / len(P)
     W = np.array([W, W, W]).T
     # NOTE UNUSED psq = 0.0
     # NOTE UNUSED qsq = 0.0
@@ -280,7 +546,7 @@ def kabsch_weighted(P, Q, W=None):
     CMQ = (Q * W).sum(axis=0)
     PSQ = (P * P * W).sum() - (CMP * CMP).sum() * iw
     QSQ = (Q * Q * W).sum() - (CMQ * CMQ).sum() * iw
-    C = (C - np.outer(CMP, CMQ) * iw)  * iw
+    C = (C - np.outer(CMP, CMQ) * iw) * iw
 
     # Computation of the optimal rotation matrix
     # This can be done using singular value decomposition (SVD)
@@ -399,11 +665,14 @@ def makeW(r1, r2, r3, r4=0):
     """
     matrix involved in quaternion rotation
     """
-    W = np.asarray([
-        [r4, r3, -r2, r1],
-        [-r3, r4, r1, r2],
-        [r2, -r1, r4, r3],
-        [-r1, -r2, -r3, r4]])
+    W = np.asarray(
+        [
+            [r4, r3, -r2, r1],
+            [-r3, r4, r1, r2],
+            [r2, -r1, r4, r3],
+            [-r1, -r2, -r3, r4],
+        ]
+    )
     return W
 
 
@@ -411,11 +680,14 @@ def makeQ(r1, r2, r3, r4=0):
     """
     matrix involved in quaternion rotation
     """
-    Q = np.asarray([
-        [r4, -r3, r2, r1],
-        [r3, r4, -r1, r2],
-        [-r2, r1, r4, r3],
-        [-r1, -r2, -r3, r4]])
+    Q = np.asarray(
+        [
+            [r4, -r3, r2, r1],
+            [r3, r4, -r1, r2],
+            [-r2, r1, r4, r3],
+            [-r1, -r2, -r3, r4],
+        ]
+    )
     return Q
 
 
@@ -470,6 +742,117 @@ def centroid(X):
     return C
 
 
+def hungarian_vectors(p_vecs, q_vecs, sigma=1e-0, use_kernel=True):
+    """
+
+    Hungarian cost assignment of a similiarty molecule kernel.
+
+    Note: Assumes p and q are atoms of same type
+
+    Parameters
+    ----------
+    p_vecs : array
+        (N,L) matrix, where N is no. of atoms and L is representation length
+    q_vecs : array
+        (N,L) matrix, where N is no. of atoms and L is representation length
+
+    Returns
+    -------
+    indices_b : array
+        (N) view vector of reordered assignment
+
+    """
+
+    if use_kernel:
+        # Calculate cost matrix from similarity kernel
+        K = qml.kernels.laplacian_kernel(p_vecs, q_vecs, sigma)
+        K *= -1.0
+        K += 1.0
+
+    else:
+        K = distance_matrix(p_vecs, q_vecs)
+
+    # Perform Hungarian analysis on distance matrix between atoms of 1st
+    # structure and trial structure
+    indices_a, indices_b = linear_sum_assignment(K)
+
+    return indices_b
+
+
+def reorder_similarity(p_atoms, q_atoms, p_coord, q_coord, use_kernel=True):
+    """
+    Re-orders the input atom list and xyz coordinates using QML similarity
+    the Hungarian method for assignment.
+
+    Parameters
+    ----------
+    p_atoms : array
+        (N,1) matrix, where N is points holding the atoms' names
+    p_atoms : array
+        (N,1) matrix, where N is points holding the atoms' names
+    p_coord : array
+        (N,D) matrix, where N is points and D is dimension
+    q_coord : array
+        (N,D) matrix, where N is points and D is dimension
+
+    Returns
+    -------
+    view_reorder : array
+             (N,1) matrix, reordered indexes of atom alignment based on the
+             coordinates of the atoms
+    """
+
+    if qml is None:
+        raise ImportError(
+            "QML is not installed. Package is avaliable from"
+            "\n github.com/qmlcode/qml"
+            "\n pip install qml"
+        )
+
+    if isinstance(p_atoms[0], str):
+        p_atoms = [int_atom(atom) for atom in p_atoms]
+        q_atoms = [int_atom(atom) for atom in q_atoms]
+        p_atoms = np.array(p_atoms)
+        q_atoms = np.array(q_atoms)
+
+    elements = np.unique(p_atoms)
+    n_atoms = p_atoms.shape[0]
+    distance_cut = 20.0
+
+    parameters = {
+        "elements": elements,
+        "pad": n_atoms,
+        "rcut": distance_cut,
+        "acut": distance_cut,
+    }
+
+    p_vecs = qml.representations.generate_fchl_acsf(
+        p_atoms, p_coord, **parameters
+    )
+
+    q_vecs = qml.representations.generate_fchl_acsf(
+        q_atoms, q_coord, **parameters
+    )
+
+    # generate full view from q shape to fill in atom view on the fly
+    view_reorder = np.zeros(q_atoms.shape, dtype=int)
+
+    for atom in elements:
+
+        (p_atom_idx,) = np.where(p_atoms == atom)
+        (q_atom_idx,) = np.where(q_atoms == atom)
+
+        p_vecs_atom = p_vecs[p_atom_idx]
+        q_vecs_atom = q_vecs[q_atom_idx]
+
+        view = hungarian_vectors(
+            p_vecs_atom, q_vecs_atom, use_kernel=use_kernel
+        )
+        view_reorder[p_atom_idx] = q_atom_idx[view]
+
+    return view_reorder
+
+
 def reorder_distance(p_atoms, q_atoms, p_coord, q_coord):
     """
     Re-orders the input atom list and xyz coordinates by atom type and then by
@@ -498,8 +881,8 @@ def reorder_distance(p_atoms, q_atoms, p_coord, q_coord):
 
     for atom in unique_atoms:
 
-        p_atom_idx, = np.where(p_atoms == atom)
-        q_atom_idx, = np.where(q_atoms == atom)
+        (p_atom_idx,) = np.where(p_atoms == atom)
+        (q_atom_idx,) = np.where(q_atoms == atom)
 
         A_coord = p_coord[p_atom_idx]
         B_coord = q_coord[q_atom_idx]
@@ -527,7 +910,7 @@ def hungarian(A, B):
     """
 
     # should be kabasch here i think
-    distances = cdist(A, B, 'euclidean')
+    distances = cdist(A, B, "euclidean")
 
     # Perform Hungarian analysis on distance matrix between atoms of 1st
     # structure and trial structure
@@ -568,8 +951,8 @@ def reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord):
     view_reorder -= 1
 
     for atom in unique_atoms:
-        p_atom_idx, = np.where(p_atoms == atom)
-        q_atom_idx, = np.where(q_atoms == atom)
+        (p_atom_idx,) = np.where(p_atoms == atom)
+        (q_atom_idx,) = np.where(q_atoms == atom)
 
         A_coord = p_coord[p_atom_idx]
         B_coord = q_coord[q_atom_idx]
@@ -582,9 +965,9 @@ def reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord):
 
 def reorder_inertia_hungarian(p_atoms, q_atoms, p_coord, q_coord):
     """
-    Align the principal intertia axis and then re-orders the input atom 
-    list and xyz coordinates using the Hungarian method 
-    (using optimized column results)
+    Align the principal intertia axis and then re-orders the input atom list
+    and xyz coordinates using the Hungarian method (using optimized column
+    results)
 
     Parameters
     ----------
@@ -728,8 +1111,8 @@ def reorder_brute(p_atoms, q_atoms, p_coord, q_coord):
     view_reorder -= 1
 
     for atom in unique_atoms:
-        p_atom_idx, = np.where(p_atoms == atom)
-        q_atom_idx, = np.where(q_atoms == atom)
+        (p_atom_idx,) = np.where(p_atoms == atom)
+        (q_atom_idx,) = np.where(q_atoms == atom)
 
         A_coord = p_coord[p_atom_idx]
         B_coord = q_coord[q_atom_idx]
@@ -740,10 +1123,15 @@ def reorder_brute(p_atoms, q_atoms, p_coord, q_coord):
     return view_reorder
 
 
-def check_reflections(p_atoms, q_atoms, p_coord, q_coord,
-                      reorder_method=reorder_hungarian,
-                      rotation_method=kabsch_rmsd,
-                      keep_stereo=False):
+def check_reflections(
+    p_atoms,
+    q_atoms,
+    p_coord,
+    q_coord,
+    reorder_method=reorder_hungarian,
+    rotation_method=kabsch_rmsd,
+    keep_stereo=False,
+):
     """
     Minimize RMSD using reflection planes for molecule P and Q
 
@@ -774,12 +1162,15 @@ def check_reflections(p_atoms, q_atoms, p_coord, q_coord,
     min_reflection = None
     min_review = None
     tmp_review = None
-    swap_mask = [1,-1,-1,1,-1,1]
-    reflection_mask = [1,-1,-1,-1,1,1,1,-1]
+    swap_mask = [1, -1, -1, 1, -1, 1]
+    reflection_mask = [1, -1, -1, -1, 1, 1, 1, -1]
 
     for swap, i in zip(AXIS_SWAPS, swap_mask):
         for reflection, j in zip(AXIS_REFLECTIONS, reflection_mask):
-            if keep_stereo and i * j == -1: continue # skip enantiomers
+
+            # skip enantiomers
+            if keep_stereo and i * j == -1:
+                continue
 
             tmp_atoms = copy.copy(q_atoms)
             tmp_coord = copy.deepcopy(q_coord)
@@ -789,7 +1180,10 @@ def check_reflections(p_atoms, q_atoms, p_coord, q_coord,
 
             # Reorder
             if reorder_method is not None:
-                tmp_review = reorder_method(p_atoms, tmp_atoms, p_coord, tmp_coord)
+                tmp_review = reorder_method(
+                    p_atoms, tmp_atoms, p_coord, tmp_coord
+                )
+
                 tmp_coord = tmp_coord[tmp_review]
                 tmp_atoms = tmp_atoms[tmp_review]
 
@@ -830,18 +1224,24 @@ def rotation_matrix_vectors(v1, v2):
     """
 
     if (v1 == v2).all():
-        return np.eye(3)
+        rot = np.eye(3)
+
+    # return a rotation of pi around the y-axis
     elif (v1 == -v2).all():
-        # return a rotation of pi around the y-axis
-        return np.array([[-1.,0.,0.],[0.,1.,0.],[0.,0.,-1.]])
+        rot = np.array([[-1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, -1.0]])
+
     else:
         v = np.cross(v1, v2)
         s = np.linalg.norm(v)
         c = np.vdot(v1, v2)
 
-        vx = np.array([[0., -v[2], v[1]], [v[2], 0., -v[0]], [-v[1], v[0], 0.]])
+        vx = np.array(
+            [[0.0, -v[2], v[1]], [v[2], 0.0, -v[0]], [-v[1], v[0], 0.0]]
+        )
 
-        return np.eye(3) + vx + np.dot(vx,vx)*((1.-c)/(s*s))
+        rot = np.eye(3) + vx + np.dot(vx, vx) * ((1.0 - c) / (s * s))
+
+    return rot
 
 
 def get_cm(atoms, V):
@@ -858,7 +1258,15 @@ def get_cm(atoms, V):
     output : (3) array
         The CM vector
     """
-    return np.average(V, axis=0, weights=[ELEMENTS_WEIGHTS[x.lower()] for x in atoms])
+
+    if isinstance(atoms[0], str):
+        atoms = [int_atom(atom) for atom in atoms]
+
+    weights = [ELEMENT_WEIGHTS[x] for x in atoms]
+
+    center_of_mass = np.average(V, axis=0, weights=weights)
+
+    return center_of_mass
 
 
 def get_inertia_tensor(atoms, V):
@@ -875,20 +1283,24 @@ def get_inertia_tensor(atoms, V):
     output : 3x3 float matrix
         The tensor of inertia
     """
+
+    if isinstance(atoms[0], str):
+        atoms = [int_atom(atom) for atom in atoms]
+
     CV = V - get_cm(atoms, V)
 
-    Ixx = 0.
-    Iyy = 0.
-    Izz = 0.
-    Ixy = 0.
-    Ixz = 0.
-    Iyz = 0.
+    Ixx = 0.0
+    Iyy = 0.0
+    Izz = 0.0
+    Ixy = 0.0
+    Ixz = 0.0
+    Iyz = 0.0
 
     for sp, acoord in zip(atoms, CV):
-        amass = ELEMENTS_WEIGHTS[sp.lower()]
-        Ixx += amass * (acoord[1]*acoord[1] + acoord[2]*acoord[2])
-        Iyy += amass * (acoord[0]*acoord[0] + acoord[2]*acoord[2])
-        Izz += amass * (acoord[0]*acoord[0] + acoord[1]*acoord[1])
+        amass = ELEMENT_WEIGHTS[sp]
+        Ixx += amass * (acoord[1] * acoord[1] + acoord[2] * acoord[2])
+        Iyy += amass * (acoord[0] * acoord[0] + acoord[2] * acoord[2])
+        Izz += amass * (acoord[0] * acoord[0] + acoord[1] * acoord[1])
         Ixy += -amass * acoord[0] * acoord[1]
         Ixz += -amass * acoord[0] * acoord[2]
         Iyz += -amass * acoord[1] * acoord[2]
@@ -910,9 +1322,9 @@ def get_principal_axis(atoms, V):
     output : array
         Array of dim 3 containing the principal axis
     """
-    I = get_inertia_tensor(atoms, V)
+    inertia = get_inertia_tensor(atoms, V)
 
-    eigval, eigvec = np.linalg.eig(I)
+    eigval, eigvec = np.linalg.eig(inertia)
 
     return eigvec[np.argmax(eigval)]
 
@@ -939,7 +1351,10 @@ def set_coordinates(atoms, V, title="", decimals=8):
     """
     N, D = V.shape
 
-    fmt = "{:2s}" + (" {:15."+str(decimals)+"f}")*3
+    if not isinstance(atoms[0], str):
+        atoms = [str_atom(atom) for atom in atoms]
+
+    fmt = "{:<2}" + (" {:15." + str(decimals) + "f}") * 3
 
     out = list()
     out += [str(N)]
@@ -947,7 +1362,6 @@ def set_coordinates(atoms, V, title="", decimals=8):
 
     for i in range(N):
         atom = atoms[i]
-        atom = atom[0].upper() + atom[1:]
         out += [fmt.format(atom, V[i, 0], V[i, 1], V[i, 2])]
 
     return "\n".join(out)
@@ -967,13 +1381,10 @@ def print_coordinates(atoms, V, title=""):
         Title of molecule
 
     """
-
     print(set_coordinates(atoms, V, title=title))
 
-    return
 
-
-def get_coordinates(filename, fmt):
+def get_coordinates(filename, fmt, is_gzip=False, return_atoms_as_int=False):
     """
     Get coordinates from filename in format fmt. Supports XYZ and PDB.
     Parameters
@@ -989,17 +1400,23 @@ def get_coordinates(filename, fmt):
     V : array
         (N,3) where N is number of atoms
     """
-    if fmt == "xyz" or fmt == "xyzgz" or fmt == "xyz.gz":
+    if fmt == "xyz":
         get_func = get_coordinates_xyz
-    elif fmt == "pdb" or fmt == "pdbgz" or fmt == "pdb.gz":
+
+    elif fmt == "pdb":
         get_func = get_coordinates_pdb
+
     else:
         exit("Could not recognize file format: {:s}".format(fmt))
 
-    return get_func(filename)
+    val = get_func(
+        filename, is_gzip=is_gzip, return_atoms_as_int=return_atoms_as_int
+    )
+
+    return val
 
 
-def get_coordinates_pdb(filename):
+def get_coordinates_pdb(filename, is_gzip=False, return_atoms_as_int=False):
     """
     Get coordinates from the first chain in a pdb file
     and return a vectorset with all the coordinates.
@@ -1033,12 +1450,12 @@ def get_coordinates_pdb(filename):
 
     atoms = list()
 
-    if filename[-2:] =="gz":
+    if is_gzip:
         openfunc = gzip.open
-        openarg = 'rt'
+        openarg = "rt"
     else:
         openfunc = open
-        openarg = 'r'
+        openarg = "r"
 
     with openfunc(filename, openarg) as f:
         lines = f.readlines()
@@ -1059,31 +1476,59 @@ def get_coordinates_pdb(filename):
                             atoms.append(atom)
                         else:
                             raise Exception
-                except:
-                    exit("error: Parsing atomtype for the following line: \n{0:s}".format(line))
+
+                except ValueError:
+                    msg = (
+                        f"error: Parsing atomtype for the following line:"
+                        f" \n{line}"
+                    )
+                    exit(msg)
 
                 if x_column is None:
                     try:
                         # look for x column
                         for i, x in enumerate(tokens):
-                            if "." in x and "." in tokens[i + 1] and "." in tokens[i + 2]:
+                            if (
+                                "." in x
+                                and "." in tokens[i + 1]
+                                and "." in tokens[i + 2]
+                            ):
                                 x_column = i
                                 break
+
                     except IndexError:
-                        exit("error: Parsing coordinates for the following line: \n{0:s}".format(line))
+                        msg = (
+                            "error: Parsing coordinates "
+                            "for the following line:"
+                            f"\n{line}"
+                        )
+                        exit(msg)
+
                 # Try to read the coordinates
                 try:
-                    V.append(np.asarray(tokens[x_column:x_column + 3], dtype=float))
-                except:
+                    V.append(
+                        np.asarray(
+                            tokens[x_column : x_column + 3], dtype=float
+                        )
+                    )
+
+                except ValueError:
                     # If that doesn't work, use hardcoded indices
                     try:
                         x = line[30:38]
                         y = line[38:46]
                         z = line[46:54]
-                        V.append(np.asarray([x, y ,z], dtype=float))
-                    except:
-                        exit("error: Parsing input for the following line: \n{0:s}".format(line))
+                        V.append(np.asarray([x, y, z], dtype=float))
+                    except ValueError:
+                        msg = (
+                            "error: Parsing input "
+                            "for the following line:"
+                            f"\n{line}"
+                        )
+                        exit(msg)
 
+    if return_atoms_as_int:
+        atoms = [int_atom(atom) for atom in atoms]
 
     V = np.asarray(V)
     atoms = np.asarray(atoms)
@@ -1093,7 +1538,7 @@ def get_coordinates_pdb(filename):
     return atoms, V
 
 
-def get_coordinates_xyz(filename):
+def get_coordinates_xyz(filename, is_gzip=False, return_atoms_as_int=False):
     """
     Get coordinates from filename and return a vectorset with all the
     coordinates, in XYZ format.
@@ -1111,12 +1556,12 @@ def get_coordinates_xyz(filename):
         (N,3) where N is number of atoms
     """
 
-    if filename[-2:] =="gz":
+    if is_gzip:
         openfunc = gzip.open
-        openarg = 'rt'
+        openarg = "rt"
     else:
         openfunc = open
-        openarg = 'r'
+        openarg = "r"
 
     f = openfunc(filename, openarg)
     V = list()
@@ -1141,12 +1586,12 @@ def get_coordinates_xyz(filename):
         values = line.split()
 
         if len(values) < 4:
-            atom = re.findall(r'[a-zA-Z]+', line)[0]
+            atom = re.findall(r"[a-zA-Z]+", line)[0]
             atom = atom.upper()
-            numbers = re.findall(r'[-]?\d+\.\d*(?:[Ee][-\+]\d+)?', line)
+            numbers = re.findall(r"[-]?\d+\.\d*(?:[Ee][-\+]\d+)?", line)
             numbers = [float(number) for number in numbers]
         else:
-            atom = values[0].upper()
+            atom = values[0]
             numbers = [float(number) for number in values[1:]]
 
         # The numbers are not valid unless we obtain exacly three
@@ -1154,94 +1599,266 @@ def get_coordinates_xyz(filename):
             V.append(np.array(numbers)[:3])
             atoms.append(atom)
         else:
-            exit("Reading the .xyz file failed in line {0}. Please check the format.".format(lines_read + 2))
+            msg = (
+                f"Reading the .xyz file failed in line {lines_read + 2}."
+                "Please check the format."
+            )
+            exit(msg)
 
     f.close()
+
+    try:
+        # I've seen examples where XYZ are written with integer atoms types
+        atoms = [int(atom) for atom in atoms]
+        atoms = [str_atom(atom) for atom in atoms]
+
+    except ValueError:
+        # Correct atom spelling
+        atoms = [atom.capitalize() for atom in atoms]
+
+    if return_atoms_as_int:
+        atoms = [int_atom(atom) for atom in atoms]
+
     atoms = np.array(atoms)
     V = np.array(V)
     return atoms, V
 
 
-def main():
-
-    import argparse
-    import sys
+def parse_arguments(args=None):
 
     description = __doc__
 
-    version_msg = """
-rmsd {}
+    version_msg = f"""
+rmsd {__version__}
 
 See https://github.com/charnley/rmsd for citation information
 
 """
-    version_msg = version_msg.format(__version__)
 
     epilog = """
 """
 
+    valid_reorder_methods = ", ".join(REORDER_METHODS)
+    valid_rotation_methods = ", ".join(ROTATION_METHODS)
+
     parser = argparse.ArgumentParser(
-        usage='calculate_rmsd [options] FILE_A FILE_B',
+        usage="calculate_rmsd [options] FILE_A FILE_B",
         description=description,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=epilog)
-
+        epilog=epilog,
+    )
 
     # Input structures
-    parser.add_argument('structure_a', metavar='FILE_A', type=str, help='structures in .xyz or .pdb format')
-    parser.add_argument('structure_b', metavar='FILE_B', type=str)
+    parser.add_argument(
+        "structure_a",
+        metavar="FILE_A",
+        type=str,
+        help="structures in .xyz or .pdb format",
+    )
+    parser.add_argument("structure_b", metavar="FILE_B", type=str)
 
     # Admin
-    parser.add_argument('-v', '--version', action='version', version=version_msg)
+    parser.add_argument(
+        "-v", "--version", action="version", version=version_msg
+    )
 
     # Rotation
-    parser.add_argument('-r', '--rotation', action='store', default="kabsch", help='select rotation method. "kabsch" (default), "quaternion" or "none"', metavar="METHOD")
+    parser.add_argument(
+        "-r",
+        "--rotation",
+        action="store",
+        default="kabsch",
+        help=(
+            "select rotation method. Valid methods are "
+            f"{valid_rotation_methods}. "
+            "Default is Kabsch."
+        ),
+        metavar="METHOD",
+    )
 
     # Reorder arguments
-    parser.add_argument('-e', '--reorder', action='store_true', help='align the atoms of molecules (default: Hungarian)')
-    parser.add_argument('--reorder-method', action='store', default="hungarian", metavar="METHOD", help='select which reorder method to use; hungarian (default), inertia-hungarian, brute, distance')
-    parser.add_argument('--use-reflections', action='store_true', help='scan through reflections in planes (eg Y transformed to -Y -> X, -Y, Z) and axis changes, (eg X and Z coords exchanged -> Z, Y, X). This will affect stereo-chemistry.')
-    parser.add_argument('--use-reflections-keep-stereo', action='store_true', help='scan through reflections in planes (eg Y transformed to -Y -> X, -Y, Z) and axis changes, (eg X and Z coords exchanged -> Z, Y, X). Stereo-chemistry will be kept.')
+    parser.add_argument(
+        "-e",
+        "--reorder",
+        action="store_true",
+        help="align the atoms of molecules",
+    )
+    parser.add_argument(
+        "--reorder-method",
+        action="store",
+        default="hungarian",
+        metavar="METHOD",
+        help=(
+            "select reorder method. Valid method are "
+            f"{valid_reorder_methods}. "
+            "Default is Hungarian."
+        ),
+    )
+    parser.add_argument(
+        "-ur",
+        "--use-reflections",
+        action="store_true",
+        help=(
+            "scan through reflections in planes "
+            "(eg Y transformed to -Y -> X, -Y, Z) "
+            "and axis changes, (eg X and Z coords exchanged -> Z, Y, X). "
+            "This will affect stereo-chemistry."
+        ),
+    )
+    parser.add_argument(
+        "-urks",
+        "--use-reflections-keep-stereo",
+        action="store_true",
+        help=(
+            "scan through reflections in planes "
+            "(eg Y transformed to -Y -> X, -Y, Z) "
+            "and axis changes, (eg X and Z coords exchanged -> Z, Y, X). "
+            "Stereo-chemistry will be kept."
+        ),
+    )
 
     # Filter
     index_group = parser.add_mutually_exclusive_group()
-    index_group.add_argument('-nh', '--no-hydrogen', action='store_true', help='ignore hydrogens when calculating RMSD')
-    index_group.add_argument('--remove-idx', nargs='+', type=int, help='index list of atoms NOT to consider', metavar='IDX')
-    index_group.add_argument('--add-idx', nargs='+', type=int, help='index list of atoms to consider', metavar='IDX')
+    index_group.add_argument(
+        "-nh",
+        "--ignore-hydrogen",
+        "--no-hydrogen",
+        action="store_true",
+        help="ignore hydrogens when calculating RMSD",
+    )
+    index_group.add_argument(
+        "--remove-idx",
+        nargs="+",
+        type=int,
+        help="index list of atoms NOT to consider",
+        metavar="IDX",
+    )
+    index_group.add_argument(
+        "--add-idx",
+        nargs="+",
+        type=int,
+        help="index list of atoms to consider",
+        metavar="IDX",
+    )
 
-    # format and print
-    parser.add_argument('--format', action='store', help='format of input files. valid format are xyz and pdb', metavar='FMT')
-    parser.add_argument('-p', '--output', '--print', action='store_true', help='print out structure B, centered and rotated unto structure A\'s coordinates in XYZ format')
+    parser.add_argument(
+        "--format",
+        action="store",
+        help="format of input files. valid format are xyz and pdb",
+        metavar="FMT",
+    )
+    parser.add_argument(
+        "--format-is-gzip",
+        action="store_true",
+        default=False,
+        help=argparse.SUPPRESS,
+    )
 
-    if len(sys.argv) == 1:
-        parser.print_help()
-        sys.exit(1)
+    parser.add_argument(
+        "-p",
+        "--output",
+        "--print",
+        action="store_true",
+        help=(
+            "print out structure B, "
+            "centered and rotated unto structure A's coordinates "
+            "in XYZ format"
+        ),
+    )
 
-    args = parser.parse_args()
+    if args is None:
+        args = parser.parse_args()
+    else:
+        args = parser.parse_args(args)
+
+    # Check illegal combinations
+    if (
+        args.output
+        and args.reorder
+        and (args.ignore_hydrogen or args.add_idx or args.remove_idx)
+    ):
+        print(
+            "error: Cannot reorder atoms and print structure, "
+            "when excluding atoms (such as --ignore-hydrogen)"
+        )
+        sys.exit()
+
+    if (
+        args.use_reflections
+        and args.output
+        and (args.ignore_hydrogen or args.add_idx or args.remove_idx)
+    ):
+        print(
+            "error: Cannot use reflections on atoms and print, "
+            "when excluding atoms (such as --ignore-hydrogen)"
+        )
+        sys.exit()
+
+    # Check methods
+    args.rotation = args.rotation.lower()
+    if args.rotation not in ROTATION_METHODS:
+        print(
+            f"error: Unknown rotation method: '{args.rotation}'. "
+            f"Please use {valid_rotation_methods}"
+        )
+        sys.exit()
+
+    # Check reorder methods
+    args.reorder_method = args.reorder_method.lower()
+    if args.reorder_method not in REORDER_METHODS:
+        print(
+            f'error: Unknown reorder method: "{args.reorder_method}". '
+            f"Please use {valid_reorder_methods}"
+        )
+        sys.exit()
+
+    # Check fileformat
+    if args.format is None:
+        filename = args.structure_a
+        suffixes = pathlib.Path(filename).suffixes
+
+        if len(suffixes) == 0:
+            ext = None
+
+        elif suffixes[-1] == ".gz":
+            args.format_is_gzip = True
+            ext = suffixes[-2].strip(".")
+
+        else:
+            ext = suffixes[-1].strip(".")
+
+        args.format = ext
+
+    return args
+
+
+def main(args=None):
+
+    # Parse arguments
+    args = parse_arguments(args)
 
     # As default, load the extension as format
     # Parse pdb.gz and xyz.gz as pdb and xyz formats
-    if args.format is None:
-        filename_split = args.structure_a.split('.')
-        filename_suffix = filename_split[-1]
-        if filename_suffix != "gz":
-            args.format = filename_suffix
-        elif len(filename_split)>=3:
-            filename_suffix2 = filename_split[-2]
-            args.format = filename_suffix2 + "." + filename_suffix
-        else:
-            args.format = filename_suffix
+    p_all_atoms, p_all = get_coordinates(
+        args.structure_a,
+        args.format,
+        is_gzip=args.format_is_gzip,
+        return_atoms_as_int=True,
+    )
 
-
-    p_all_atoms, p_all = get_coordinates(args.structure_a, args.format)
-    q_all_atoms, q_all = get_coordinates(args.structure_b, args.format)
+    q_all_atoms, q_all = get_coordinates(
+        args.structure_b,
+        args.format,
+        is_gzip=args.format_is_gzip,
+        return_atoms_as_int=True,
+    )
 
     p_size = p_all.shape[0]
     q_size = q_all.shape[0]
 
     if not p_size == q_size:
         print("error: Structures not same size")
-        quit()
+        sys.exit()
 
     if np.count_nonzero(p_all_atoms != q_all_atoms) and not args.reorder:
         msg = """
@@ -1253,17 +1870,17 @@ Please see --help or documentation for more information or
 https://github.com/charnley/rmsd for further examples.
 """
         print(msg)
-        exit()
-
+        sys.exit()
 
     # Set local view
     p_view = None
     q_view = None
 
-
-    if args.no_hydrogen:
-        p_view = np.where(p_all_atoms != 'H')
-        q_view = np.where(q_all_atoms != 'H')
+    if args.ignore_hydrogen:
+        assert type(p_all_atoms[0]) != str
+        assert type(q_all_atoms[0]) != str
+        p_view = np.where(p_all_atoms != 1)
+        q_view = np.where(q_all_atoms != 1)
 
     elif args.remove_idx:
         index = range(p_size)
@@ -1276,7 +1893,6 @@ https://github.com/charnley/rmsd for further examples.
         p_view = args.add_idx
         q_view = args.add_idx
 
-
     # Set local view
     if p_view is None:
         p_coord = copy.deepcopy(p_all)
@@ -1285,90 +1901,64 @@ https://github.com/charnley/rmsd for further examples.
         q_atoms = copy.deepcopy(q_all_atoms)
 
     else:
-
-        if args.reorder and args.output:
-            print("error: Cannot reorder atoms and print structure, when excluding atoms (such as --no-hydrogen)")
-            quit()
-
-        if args.use_reflections and args.output:
-            print("error: Cannot use reflections on atoms and print, when excluding atoms (such as --no-hydrogen)")
-            quit()
-
         p_coord = copy.deepcopy(p_all[p_view])
         q_coord = copy.deepcopy(q_all[q_view])
         p_atoms = copy.deepcopy(p_all_atoms[p_view])
         q_atoms = copy.deepcopy(q_all_atoms[q_view])
 
-
-    # Create the centroid of P and Q which is the geometric center of a
-    # N-dimensional region and translate P and Q onto that center.
-    # http://en.wikipedia.org/wiki/Centroid
+    # Recenter to centroid
     p_cent = centroid(p_coord)
     q_cent = centroid(q_coord)
     p_coord -= p_cent
     q_coord -= q_cent
 
-
     # set rotation method
-    if args.rotation.lower() == "kabsch":
+    if args.rotation.lower() == METHOD_KABSCH:
         rotation_method = kabsch_rmsd
-
-    elif args.rotation.lower() == "quaternion":
+    elif args.rotation.lower() == METHOD_QUATERNION:
         rotation_method = quaternion_rmsd
-
-    elif args.rotation.lower() == "none":
-        rotation_method = None
-
     else:
-        print("error: Unknown rotation method:", args.rotation)
-        quit()
-
+        rotation_method = None
 
     # set reorder method
     if not args.reorder:
         reorder_method = None
-
-    if args.reorder_method == "hungarian":
+    elif args.reorder_method == REORDER_QML:
+        reorder_method = reorder_similarity
+    elif args.reorder_method == REORDER_HUNGARIAN:
         reorder_method = reorder_hungarian
-
-    elif args.reorder_method == "inertia-hungarian":
+    elif args.reorder_method == REORDER_INERTIA_HUNGARIAN:
         reorder_method = reorder_inertia_hungarian
-
-    elif args.reorder_method == "brute":
+    elif args.reorder_method == REORDER_BRUTE:
         reorder_method = reorder_brute
-
-    elif args.reorder_method == "distance":
+    elif args.reorder_method == REORDER_DISTANCE:
         reorder_method = reorder_distance
-
-    else:
-        print("error: Unknown reorder method:", args.reorder_method)
-        quit()
-
 
     # Save the resulting RMSD
     result_rmsd = None
 
-
     if args.use_reflections:
 
-        result_rmsd, q_swap, q_reflection, q_review = check_reflections(
-            p_atoms,
-            q_atoms,
-            p_coord,
-            q_coord,
-            reorder_method=reorder_method,
-            rotation_method=rotation_method)
-
-    elif args.use_reflections_keep_stereo:
-
-        result_rmsd, q_swap, q_reflection, q_review = check_reflections(
+        result_rmsd, _, _, q_review = check_reflections(
             p_atoms,
             q_atoms,
             p_coord,
             q_coord,
             reorder_method=reorder_method,
             rotation_method=rotation_method,
-            keep_stereo=True)
+        )
+
+    elif args.use_reflections_keep_stereo:
+
+        result_rmsd, _, _, q_review = check_reflections(
+            p_atoms,
+            q_atoms,
+            p_coord,
+            q_coord,
+            reorder_method=reorder_method,
+            rotation_method=rotation_method,
+            keep_stereo=True,
+        )
 
     elif args.reorder:
 
@@ -1377,8 +1967,12 @@ https://github.com/charnley/rmsd for further examples.
         q_atoms = q_atoms[q_review]
 
         if not all(p_atoms == q_atoms):
-            print("error: Structure not aligned")
-            quit()
+            print(
+                "error: Structure not aligned. "
+                "Please submit bug report at "
+                "http://github.com/charnley/rmsd"
+            )
+            sys.exit()
 
     # print result
     if args.output:
@@ -1386,7 +1980,10 @@ https://github.com/charnley/rmsd for further examples.
         if args.reorder:
 
             if q_review.shape[0] != q_all.shape[0]:
-                print("error: Reorder length error. Full atom list needed for --print")
+                print(
+                    "error: Reorder length error. "
+                    "Full atom list needed for --print"
+                )
                 quit()
 
             q_all = q_all[q_review]
@@ -1403,7 +2000,9 @@ https://github.com/charnley/rmsd for further examples.
         q_all += p_cent
 
         # done and done
-        xyz = set_coordinates(q_all_atoms, q_all, title="{} - modified".format(args.structure_b))
+        xyz = set_coordinates(
+            q_all_atoms, q_all, title=f"{args.structure_b} - modified"
+        )
         print(xyz)
 
     else:
@@ -1419,8 +2018,6 @@ https://github.com/charnley/rmsd for further examples.
 
         print("{0}".format(result_rmsd))
 
-
-    return
 
 if __name__ == "__main__":
     main()
