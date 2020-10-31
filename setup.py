@@ -3,7 +3,7 @@
 import setuptools
 import os
 
-__version__ = '1.3.2'
+__version__ = '1.4'
 
 # Find the absolute path
 here = os.path.abspath(os.path.dirname(__file__))
