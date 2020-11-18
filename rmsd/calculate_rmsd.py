@@ -50,7 +50,14 @@ REORDER_METHODS = [
 
 
 AXIS_SWAPS = np.array(
-    [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 1, 0], [2, 0, 1]]
+    [
+        [0, 1, 2], 
+        [0, 2, 1], 
+        [1, 0, 2], 
+        [1, 2, 0], 
+        [2, 1, 0], 
+        [2, 0, 1]
+    ]
 )
 
 AXIS_REFLECTIONS = np.array(
@@ -314,7 +321,9 @@ def str_atom(atom):
     atoms : integer
 
     """
+
     atom = ELEMENT_NAMES[atom]
+
     return atom
 
 
@@ -333,6 +342,7 @@ def int_atom(atom):
     """
 
     atom = atom.capitalize()
+
     return NAMES_ELEMENT[atom]
 
 
@@ -352,8 +362,10 @@ def rmsd(V, W):
     rmsd : float
         Root-mean-square deviation between the two vectors
     """
+
     diff = np.array(V) - np.array(W)
     N = len(V)
+
     return np.sqrt((diff * diff).sum() / N)
 
 
@@ -387,6 +399,7 @@ def kabsch_rmsd(P, Q, W=None, translate=False):
         return kabsch_weighted_rmsd(P, Q, W)
 
     P = kabsch_rotate(P, Q)
+
     return rmsd(P, Q)
 
 
@@ -408,10 +421,12 @@ def kabsch_rotate(P, Q):
         rotated
 
     """
+
     U = kabsch(P, Q)
 
     # Rotate P
     P = np.dot(P, U)
+
     return P
 
 
@@ -443,6 +458,7 @@ def kabsch_fit(P, Q, W=None):
         Q = Q - QC
         P = P - centroid(P)
         P = kabsch_rotate(P, Q) + QC
+
     return P
 
 
@@ -457,12 +473,14 @@ def kabsch(P, Q):
     - the computation of a covariance matrix C
     - computation of the optimal rotation matrix U
     For more info see http://en.wikipedia.org/wiki/Kabsch_algorithm
+    
     Parameters
     ----------
     P : array
         (N,D) matrix, where N is points and D is dimension.
     Q : array
         (N,D) matrix, where N is points and D is dimension.
+    
     Returns
     -------
     U : matrix
@@ -527,6 +545,7 @@ def kabsch_weighted(P, Q, W=None):
     RMSD : float
            Root mean squared deviation between P and Q
     """
+
     # Computation of the weighted covariance matrix
     CMP = np.zeros(3)
     CMQ = np.zeros(3)
@@ -573,6 +592,7 @@ def kabsch_weighted(P, Q, W=None):
         t = (U[i, :] * CMQ).sum()
         V[i] = CMP[i] - t
     V = V * iw
+
     return U, V, rmsd
 
 
@@ -594,11 +614,12 @@ def kabsch_weighted_fit(P, Q, W=None, rmsd=False):
 
     Returns
     -------
-    P'   : array
+    PNEW : array
            (N,D) matrix, where N is points and D is dimension.
     RMSD : float
            if the function is called with rmsd=True
     """
+
     R, T, RMSD = kabsch_weighted(Q, P, W)
     PNEW = np.dot(P, R.T) + T
     if rmsd:
@@ -622,9 +643,11 @@ def kabsch_weighted_rmsd(P, Q, W=None):
 
     Returns
     -------
-    RMSD : float
+    w_rmsd : float
     """
+
     R, T, w_rmsd = kabsch_weighted(P, Q, W)
+
     return w_rmsd
 
 
@@ -644,8 +667,10 @@ def quaternion_rmsd(P, Q):
     -------
     rmsd : float
     """
+
     rot = quaternion_rotate(P, Q)
     P = np.dot(P, rot)
+
     return rmsd(P, Q)
 
 
@@ -655,16 +680,19 @@ def quaternion_transform(r):
     note: translation will be zero when the centroids of each molecule are the
     same
     """
-    Wt_r = makeW(*r).T
-    Q_r = makeQ(*r)
+
+    Wt_r = quaternion_makeW(*r).T
+    Q_r = quaternion_makeQ(*r)
     rot = Wt_r.dot(Q_r)[:3, :3]
+
     return rot
 
 
-def makeW(r1, r2, r3, r4=0):
+def quaternion_makeW(r1, r2, r3, r4=0):
     """
     matrix involved in quaternion rotation
     """
+
     W = np.asarray(
         [
             [r4, r3, -r2, r1],
@@ -673,13 +701,15 @@ def makeW(r1, r2, r3, r4=0):
             [-r1, -r2, -r3, r4],
         ]
     )
+
     return W
 
 
-def makeQ(r1, r2, r3, r4=0):
+def quaternion_makeQ(r1, r2, r3, r4=0):
     """
     matrix involved in quaternion rotation
     """
+
     Q = np.asarray(
         [
             [r4, -r3, r2, r1],
@@ -688,6 +718,7 @@ def makeQ(r1, r2, r3, r4=0):
             [-r1, -r2, -r3, r4],
         ]
     )
+
     return Q
 
 
@@ -707,15 +738,17 @@ def quaternion_rotate(X, Y):
     rot : matrix
         Rotation matrix (D,D)
     """
+
     N = X.shape[0]
-    W = np.asarray([makeW(*Y[k]) for k in range(N)])
-    Q = np.asarray([makeQ(*X[k]) for k in range(N)])
+    W = np.asarray([quaternion_makeW(*Y[k]) for k in range(N)])
+    Q = np.asarray([quaternion_makeQ(*X[k]) for k in range(N)])
     Qt_dot_W = np.asarray([np.dot(Q[k].T, W[k]) for k in range(N)])
     # NOTE UNUSED W_minus_Q = np.asarray([W[k] - Q[k] for k in range(N)])
     A = np.sum(Qt_dot_W, axis=0)
     eigen = np.linalg.eigh(A)
     r = eigen[1][:, eigen[0].argmax()]
     rot = quaternion_transform(r)
+
     return rot
 
 
@@ -738,7 +771,9 @@ def centroid(X):
     C : float
         centroid
     """
+
     C = X.mean(axis=0)
+
     return C
 
 
@@ -755,6 +790,10 @@ def hungarian_vectors(p_vecs, q_vecs, sigma=1e-0, use_kernel=True):
         (N,L) matrix, where N is no. of atoms and L is representation length
     q_vecs : array
         (N,L) matrix, where N is no. of atoms and L is representation length
+    sigma : float
+        Provides relevant "length" metric between atoms
+    use_kernel : boolean
+        If True uses QML, if False uses distance matrix
 
     Returns
     -------
@@ -860,9 +899,13 @@ def reorder_distance(p_atoms, q_atoms, p_coord, q_coord):
 
     Parameters
     ----------
-    atoms : array
+    p_atoms : array
         (N,1) matrix, where N is points holding the atoms' names
-    coord : array
+    q_atoms : array
+        (N,1) matrix, where N is points holding the atoms' names
+    p_coord : array
+        (N,D) matrix, where N is points and D is dimension
+    q_coord : array
         (N,D) matrix, where N is points and D is dimension
 
     Returns
@@ -982,12 +1025,16 @@ def reorder_inertia_hungarian(p_atoms, q_atoms, p_coord, q_coord):
 
     Returns
     -------
-    view_reorder : array
+    q_review1 : array
+             (N,1) matrix, reordered indexes of atom alignment based on the
+             coordinates of the atoms
+    q_review2 : array
              (N,1) matrix, reordered indexes of atom alignment based on the
              coordinates of the atoms
 
     """
-    # get the principal axis of P and Q
+ 
+   # get the principal axis of P and Q
     p_axis = get_principal_axis(p_atoms, p_coord)
     q_axis = get_principal_axis(q_atoms, q_coord)
 
@@ -1017,6 +1064,7 @@ def generate_permutations(elements, n):
     https://en.wikipedia.org/wiki/Heap%27s_algorithm
 
     """
+
     c = [0] * n
     yield elements
     i = 0
@@ -1048,7 +1096,7 @@ def brute_permutation(A, B):
 
     Returns
     -------
-    view : array
+    view_min : array
         (N,1) matrix, reordered view of B projected to A
     """
 
@@ -1211,15 +1259,17 @@ def rotation_matrix_vectors(v1, v2):
     Returns the rotation matrix that rotates v1 onto v2
     using Rodrigues' rotation formula.
     (see https://math.stackexchange.com/a/476311)
+
+    Parameters
     ----------
     v1 : array
         Dim 3 float array
     v2 : array
         Dim 3 float array
 
-    Return
+    Returns
     ------
-    output : 3x3 matrix
+    rot : 3x3 matrix
         Rotation matrix
     """
 
@@ -1247,6 +1297,8 @@ def rotation_matrix_vectors(v1, v2):
 def get_cm(atoms, V):
     """
     Get the center of mass of V.
+
+    Parameters
     ----------
     atoms : list
         List of atomic types
@@ -1255,7 +1307,7 @@ def get_cm(atoms, V):
 
     Return
     ------
-    output : (3) array
+    center_of_mass : (3) array
         The CM vector
     """
 
@@ -1272,6 +1324,8 @@ def get_cm(atoms, V):
 def get_inertia_tensor(atoms, V):
     """
     Get the tensor of intertia of V.
+
+    Parameters
     ----------
     atoms : list
         List of atomic types
@@ -1280,7 +1334,7 @@ def get_inertia_tensor(atoms, V):
 
     Return
     ------
-    output : 3x3 float matrix
+    I : 3x3 float matrix
         The tensor of inertia
     """
 
@@ -1311,17 +1365,20 @@ def get_inertia_tensor(atoms, V):
 def get_principal_axis(atoms, V):
     """
     Get the molecule's principal axis.
+
+    Parameters
     ----------
     atoms : list
         List of atomic types
     V : array
         (N,3) matrix of atomic coordinates
 
-    Return
+    Returns
     ------
     output : array
         Array of dim 3 containing the principal axis
     """
+
     inertia = get_inertia_tensor(atoms, V)
 
     eigval, eigvec = np.linalg.eig(inertia)
@@ -1332,6 +1389,7 @@ def get_principal_axis(atoms, V):
 def set_coordinates(atoms, V, title="", decimals=8):
     """
     Print coordinates V with corresponding atoms to stdout in XYZ format.
+
     Parameters
     ----------
     atoms : list
@@ -1349,6 +1407,7 @@ def set_coordinates(atoms, V, title="", decimals=8):
         Molecule in XYZ format
 
     """
+
     N, D = V.shape
 
     if not isinstance(atoms[0], str):
@@ -1381,25 +1440,27 @@ def print_coordinates(atoms, V, title=""):
         Title of molecule
 
     """
+
     print(set_coordinates(atoms, V, title=title))
 
 
 def get_coordinates(filename, fmt, is_gzip=False, return_atoms_as_int=False):
     """
     Get coordinates from filename in format fmt. Supports XYZ and PDB.
+
     Parameters
     ----------
     filename : string
         Filename to read
     fmt : string
         Format of filename. Either xyz or pdb.
+
     Returns
     -------
-    atoms : list
-        List of atomic types
-    V : array
+    val : array
         (N,3) where N is number of atoms
     """
+
     if fmt == "xyz":
         get_func = get_coordinates_xyz
 
@@ -1621,6 +1682,7 @@ def get_coordinates_xyz(filename, is_gzip=False, return_atoms_as_int=False):
 
     atoms = np.array(atoms)
     V = np.array(V)
+
     return atoms, V
 
 
