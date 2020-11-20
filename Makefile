@@ -1,4 +1,4 @@
-python = python
+python = python3
 LINE_LENGTH=79
 BLACKARGS=--line-length ${LINE_LENGTH}
 

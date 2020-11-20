@@ -50,14 +50,7 @@ REORDER_METHODS = [
 
 
 AXIS_SWAPS = np.array(
-    [
-        [0, 1, 2], 
-        [0, 2, 1], 
-        [1, 0, 2], 
-        [1, 2, 0], 
-        [2, 1, 0], 
-        [2, 0, 1]
-    ]
+    [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 1, 0], [2, 0, 1]]
 )
 
 AXIS_REFLECTIONS = np.array(
@@ -473,14 +466,14 @@ def kabsch(P, Q):
     - the computation of a covariance matrix C
     - computation of the optimal rotation matrix U
     For more info see http://en.wikipedia.org/wiki/Kabsch_algorithm
-    
+
     Parameters
     ----------
     P : array
         (N,D) matrix, where N is points and D is dimension.
     Q : array
         (N,D) matrix, where N is points and D is dimension.
-    
+
     Returns
     -------
     U : matrix
@@ -1033,8 +1026,8 @@ def reorder_inertia_hungarian(p_atoms, q_atoms, p_coord, q_coord):
              coordinates of the atoms
 
     """
- 
-   # get the principal axis of P and Q
+
+    # get the principal axis of P and Q
     p_axis = get_principal_axis(p_atoms, p_coord)
     q_axis = get_principal_axis(q_atoms, q_coord)
 
