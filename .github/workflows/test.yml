@@ -35,4 +35,4 @@ jobs:
         pre-commit run --all-files
     - name: Test with pytest
       run: |
-        python -m pytest -vv ./tests
+        python -m pytest -vrs tests
