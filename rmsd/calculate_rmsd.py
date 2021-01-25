@@ -435,7 +435,7 @@ def kabsch_fit(P, Q, W=None):
 
     """
     if W is not None:
-        P = kabsch_weighted_fit(P, Q, W, rmsd=False)
+        P = kabsch_weighted_fit(P, Q, W, return_rmsd=False)
     else:
         QC = centroid(Q)
         Q = Q - QC
