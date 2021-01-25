@@ -13,6 +13,4 @@ def test_centroid():
 
     assert 3 == len(centroid)
 
-    np.testing.assert_array_almost_equal(
-        [-20.7496, 17.5966, 25.6810], centroid, decimal=3
-    )
+    np.testing.assert_array_almost_equal([-20.7496, 17.5966, 25.6810], centroid, decimal=3)

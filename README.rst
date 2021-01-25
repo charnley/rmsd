@@ -123,19 +123,18 @@ Submit issues or pull requests on GitHub.
 Contributions
 -------------
 
-Please note that we are using ``black`` with line length of 79. Easiest way to
-abide to the code standard is to install the following packages.
+Please note that we are using ``black`` with line length of 99. Easiest way to
+abide to the code standard is to install the following package.
 
 .. code-block:: bash
 
-    pip install black flake8 autoflake isort pytest
+    pip install pre-commit
 
-and
+and run the following command in your repository
 
 .. code-block:: bash
 
-    make format test lint
+    pre-commit install
 
-to auto-format and test the code.
-
-
+This will install a hook in your git and re-format your code to adhere to the standard.
+As well as check for code quality.

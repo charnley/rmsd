@@ -49,9 +49,7 @@ REORDER_METHODS = [
 ]
 
 
-AXIS_SWAPS = np.array(
-    [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 1, 0], [2, 0, 1]]
-)
+AXIS_SWAPS = np.array([[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 1, 0], [2, 0, 1]])
 
 AXIS_REFLECTIONS = np.array(
     [
@@ -567,19 +565,19 @@ def kabsch_weighted(P, Q, W=None):
     msd = (PSQ + QSQ) * iw - 2.0 * S.sum()
     if msd < 0.0:
         msd = 0.0
-    rmsd = np.sqrt(msd)
+    rmsd_ = np.sqrt(msd)
     V = np.zeros(3)
     for i in range(3):
         t = (U[i, :] * CMQ).sum()
         V[i] = CMP[i] - t
     V = V * iw
-    return U, V, rmsd
+    return U, V, rmsd_
 
 
-def kabsch_weighted_fit(P, Q, W=None, rmsd=False):
+def kabsch_weighted_fit(P, Q, W=None, return_rmsd=False):
     """
     Fit P to Q with optional weights W.
-    Also returns the RMSD of the fit if rmsd=True.
+    Also returns the RMSD of the fit if return_rmsd=True.
 
     Parameters
     ----------
@@ -599,10 +597,10 @@ def kabsch_weighted_fit(P, Q, W=None, rmsd=False):
     RMSD : float
            if the function is called with rmsd=True
     """
-    R, T, RMSD = kabsch_weighted(Q, P, W)
+    R, T, rmsd_ = kabsch_weighted(Q, P, W)
     PNEW = np.dot(P, R.T) + T
-    if rmsd:
-        return PNEW, RMSD
+    if return_rmsd:
+        return PNEW, rmsd_
     else:
         return PNEW
 
@@ -826,13 +824,9 @@ def reorder_similarity(p_atoms, q_atoms, p_coord, q_coord, use_kernel=True):
         "acut": distance_cut,
     }
 
-    p_vecs = qml.representations.generate_fchl_acsf(
-        p_atoms, p_coord, **parameters
-    )
+    p_vecs = qml.representations.generate_fchl_acsf(p_atoms, p_coord, **parameters)
 
-    q_vecs = qml.representations.generate_fchl_acsf(
-        q_atoms, q_coord, **parameters
-    )
+    q_vecs = qml.representations.generate_fchl_acsf(q_atoms, q_coord, **parameters)
 
     # generate full view from q shape to fill in atom view on the fly
     view_reorder = np.zeros(q_atoms.shape, dtype=int)
@@ -845,9 +839,7 @@ def reorder_similarity(p_atoms, q_atoms, p_coord, q_coord, use_kernel=True):
         p_vecs_atom = p_vecs[p_atom_idx]
         q_vecs_atom = q_vecs[q_atom_idx]
 
-        view = hungarian_vectors(
-            p_vecs_atom, q_vecs_atom, use_kernel=use_kernel
-        )
+        view = hungarian_vectors(p_vecs_atom, q_vecs_atom, use_kernel=use_kernel)
         view_reorder[p_atom_idx] = q_atom_idx[view]
 
     return view_reorder
@@ -1180,9 +1172,7 @@ def check_reflections(
 
             # Reorder
             if reorder_method is not None:
-                tmp_review = reorder_method(
-                    p_atoms, tmp_atoms, p_coord, tmp_coord
-                )
+                tmp_review = reorder_method(p_atoms, tmp_atoms, p_coord, tmp_coord)
 
                 tmp_coord = tmp_coord[tmp_review]
                 tmp_atoms = tmp_atoms[tmp_review]
@@ -1235,9 +1225,7 @@ def rotation_matrix_vectors(v1, v2):
         s = np.linalg.norm(v)
         c = np.vdot(v1, v2)
 
-        vx = np.array(
-            [[0.0, -v[2], v[1]], [v[2], 0.0, -v[0]], [-v[1], v[0], 0.0]]
-        )
+        vx = np.array([[0.0, -v[2], v[1]], [v[2], 0.0, -v[0]], [-v[1], v[0], 0.0]])
 
         rot = np.eye(3) + vx + np.dot(vx, vx) * ((1.0 - c) / (s * s))
 
@@ -1409,9 +1397,7 @@ def get_coordinates(filename, fmt, is_gzip=False, return_atoms_as_int=False):
     else:
         exit("Could not recognize file format: {:s}".format(fmt))
 
-    val = get_func(
-        filename, is_gzip=is_gzip, return_atoms_as_int=return_atoms_as_int
-    )
+    val = get_func(filename, is_gzip=is_gzip, return_atoms_as_int=return_atoms_as_int)
 
     return val
 
@@ -1478,39 +1464,24 @@ def get_coordinates_pdb(filename, is_gzip=False, return_atoms_as_int=False):
                             raise Exception
 
                 except ValueError:
-                    msg = (
-                        f"error: Parsing atomtype for the following line:"
-                        f" \n{line}"
-                    )
+                    msg = f"error: Parsing atomtype for the following line:" f" \n{line}"
                     exit(msg)
 
                 if x_column is None:
                     try:
                         # look for x column
                         for i, x in enumerate(tokens):
-                            if (
-                                "." in x
-                                and "." in tokens[i + 1]
-                                and "." in tokens[i + 2]
-                            ):
+                            if "." in x and "." in tokens[i + 1] and "." in tokens[i + 2]:
                                 x_column = i
                                 break
 
                     except IndexError:
-                        msg = (
-                            "error: Parsing coordinates "
-                            "for the following line:"
-                            f"\n{line}"
-                        )
+                        msg = "error: Parsing coordinates " "for the following line:" f"\n{line}"
                         exit(msg)
 
                 # Try to read the coordinates
                 try:
-                    V.append(
-                        np.asarray(
-                            tokens[x_column : x_column + 3], dtype=float
-                        )
-                    )
+                    V.append(np.asarray(tokens[x_column : x_column + 3], dtype=float))
 
                 except ValueError:
                     # If that doesn't work, use hardcoded indices
@@ -1520,11 +1491,7 @@ def get_coordinates_pdb(filename, is_gzip=False, return_atoms_as_int=False):
                         z = line[46:54]
                         V.append(np.asarray([x, y, z], dtype=float))
                     except ValueError:
-                        msg = (
-                            "error: Parsing input "
-                            "for the following line:"
-                            f"\n{line}"
-                        )
+                        msg = "error: Parsing input " "for the following line:" f"\n{line}"
                         exit(msg)
 
     if return_atoms_as_int:
@@ -1658,9 +1625,7 @@ See https://github.com/charnley/rmsd for citation information
     parser.add_argument("structure_b", metavar="FILE_B", type=str)
 
     # Admin
-    parser.add_argument(
-        "-v", "--version", action="version", version=version_msg
-    )
+    parser.add_argument("-v", "--version", action="version", version=version_msg)
 
     # Rotation
     parser.add_argument(
@@ -1772,11 +1737,7 @@ See https://github.com/charnley/rmsd for citation information
         args = parser.parse_args(args)
 
     # Check illegal combinations
-    if (
-        args.output
-        and args.reorder
-        and (args.ignore_hydrogen or args.add_idx or args.remove_idx)
-    ):
+    if args.output and args.reorder and (args.ignore_hydrogen or args.add_idx or args.remove_idx):
         print(
             "error: Cannot reorder atoms and print structure, "
             "when excluding atoms (such as --ignore-hydrogen)"
@@ -1980,10 +1941,7 @@ https://github.com/charnley/rmsd for further examples.
         if args.reorder:
 
             if q_review.shape[0] != q_all.shape[0]:
-                print(
-                    "error: Reorder length error. "
-                    "Full atom list needed for --print"
-                )
+                print("error: Reorder length error. " "Full atom list needed for --print")
                 quit()
 
             q_all = q_all[q_review]
@@ -2000,9 +1958,7 @@ https://github.com/charnley/rmsd for further examples.
         q_all += p_cent
 
         # done and done
-        xyz = set_coordinates(
-            q_all_atoms, q_all, title=f"{args.structure_b} - modified"
-        )
+        xyz = set_coordinates(q_all_atoms, q_all, title=f"{args.structure_b} - modified")
         print(xyz)
 
     else:

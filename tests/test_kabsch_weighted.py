@@ -35,6 +35,4 @@ def test_kabash_weighted_fit_pdb():
 
     new_p_coord = rmsd.kabsch_fit(p_coord, q_coord, weights)
 
-    np.testing.assert_array_almost_equal(
-        q_coord[300], new_p_coord[300], decimal=2
-    )
+    np.testing.assert_array_almost_equal(q_coord[300], new_p_coord[300], decimal=2)

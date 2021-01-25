@@ -93,9 +93,7 @@ def test_reorder_qml_distmat():
     q_coord = np.dot(q_coord, rotation_y)
 
     # Reorder based in chemical similarity
-    view = rmsd.reorder_similarity(
-        p_atoms, q_atoms, p_coord, q_coord, use_kernel=False
-    )
+    view = rmsd.reorder_similarity(p_atoms, q_atoms, p_coord, q_coord, use_kernel=False)
     q_atoms = q_atoms[view]
     q_coord = q_coord[view]
 

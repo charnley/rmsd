@@ -48,15 +48,16 @@ repos:
     hooks:
       - id: flake8
         name: Checks pep8 style
-        args: [
-          "--max-line-length=99",
-          # Ignore imports in init files
-          "--per-file-ignores=*/__init__.py:F401,setup.py:E121",
+        args:
+          - --max-line-length=99
+          # F405 - init imports * from module
+          # F401 - ignore imports used in init
+          # F403 - import * used in init
+          - --exclude=__init__.py
           # ignore long comments (E501), as long lines are formatted by black
           # ignore Whitespace before ':' (E203)
           # ignore Line break occurred before a binary operator (W503)
-          "--ignore=E501,E203,W503",
-        ]
+          - --ignore=E501,E203,W503
 
   # - repo: https://github.com/pre-commit/mirrors-mypy
   #   rev: v0.790
@@ -71,7 +72,7 @@ repos:
   #     - id: pylint
   #       name: Checks code quality
   #       args:
-  #         - --max-line-length=80
+  #         - --max-line-length=99
   #         - --ignore-imports=yes
   #         - -d duplicate-code
 

@@ -78,9 +78,7 @@ def test_reorder_hungarian():
 def test_reorder_inertia_hungarian():
 
     # coordinates of scrambled and rotated butane
-    atoms = np.array(
-        ["C", "C", "C", "C", "H", "H", "H", "H", "H", "H", "H", "H", "H", "H"]
-    )
+    atoms = np.array(["C", "C", "C", "C", "H", "H", "H", "H", "H", "H", "H", "H", "H", "H"])
 
     p_coord = np.array(
         [

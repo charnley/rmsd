@@ -38,9 +38,7 @@ def test_quaternion_rotate_pdb():
 
     new_p_coord = rmsd.quaternion_rotate(p_coord, q_coord)
 
-    np.testing.assert_array_almost_equal(
-        [-0.5124, 0.8565, 0.0608], new_p_coord[0], decimal=3
-    )
+    np.testing.assert_array_almost_equal([-0.5124, 0.8565, 0.0608], new_p_coord[0], decimal=3)
 
 
 def test_quaternion_transform():
@@ -48,9 +46,7 @@ def test_quaternion_transform():
     r = [-0.31019, -0.59291, 0.63612, -0.38415]
     U = rmsd.quaternion_transform(r)
 
-    np.testing.assert_array_almost_equal(
-        [-0.5124, 0.8565, 0.0608], U[0], decimal=3
-    )
+    np.testing.assert_array_almost_equal([-0.5124, 0.8565, 0.0608], U[0], decimal=3)
 
 
 def test_makeQ():
@@ -58,15 +54,11 @@ def test_makeQ():
     r = [-0.31019, -0.59291, 0.63612, -0.38415]
     Q_r = rmsd.makeQ(*r)
 
-    np.testing.assert_array_almost_equal(
-        [-0.3841, -0.6361, -0.5929, -0.3101], Q_r[0], decimal=3
-    )
+    np.testing.assert_array_almost_equal([-0.3841, -0.6361, -0.5929, -0.3101], Q_r[0], decimal=3)
 
 
 def test_makeW():
     r = [-0.31019, -0.59291, 0.63612, -0.38415]
     Wt_r = rmsd.makeW(*r)
 
-    np.testing.assert_array_almost_equal(
-        [-0.3841, 0.6361, 0.5929, -0.3101], Wt_r[0], decimal=3
-    )
+    np.testing.assert_array_almost_equal([-0.3841, 0.6361, 0.5929, -0.3101], Wt_r[0], decimal=3)
