@@ -1,4 +1,2 @@
-flake8
 pytest
-isort
-black
+pre-commit

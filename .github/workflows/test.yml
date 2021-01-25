@@ -29,9 +29,10 @@ jobs:
         if test -f requirements.txt; then pip install -r requirements.txt; fi
         if test -f requirements.dev.txt; then pip install -r requirements.dev.txt; fi
         python -m pip install git+https://github.com/qmlcode/qml@develop
-    - name: Lint with flake8
+        python -m pip install pre-commit
+    - name: Test format
       run: |
-        make lint
+        pre-commit run --all-files
     - name: Test with pytest
       run: |
-        make test
+        python -m pytest -vv ./tests
