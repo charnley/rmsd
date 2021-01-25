@@ -3,7 +3,7 @@ import pathlib
 
 import numpy as np
 import pytest
-from constants import RESOURCE_PATH
+from context import RESOURCE_PATH
 
 import rmsd
 
