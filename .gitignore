@@ -3,6 +3,10 @@
 
 *.py[cod]
 
+# Test coverage
+htmlcov
+*,cover
+
 # setup.py output
 files.txt
 
