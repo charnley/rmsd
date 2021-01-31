@@ -2,6 +2,7 @@ import gzip
 import pathlib
 
 import numpy as np
+import pytest
 from context import RESOURCE_PATH
 
 import rmsd
@@ -21,9 +22,19 @@ def test_get_coordinates_pdb():
 
     filename = pathlib.PurePath(RESOURCE_PATH, "ci2_1.pdb")
     atoms, coords = rmsd.get_coordinates_pdb(filename)
-
     assert "N" == atoms[0]
     assert [-7.173, -13.891, -6.266] == coords[0].tolist()
+
+    filename = pathlib.PurePath(RESOURCE_PATH, "ci2_1.pdb")
+    atoms, coords = rmsd.get_coordinates(filename, "pdb")
+    assert "N" == atoms[0]
+    assert [-7.173, -13.891, -6.266] == coords[0].tolist()
+
+
+def test_get_coordinates_wrong():
+    filename = pathlib.PurePath(RESOURCE_PATH, "ci2_1.pdb")
+    with pytest.raises(ValueError):
+        atoms, coords = rmsd.get_coordinates(filename, "qqq")
 
 
 def test_get_coordinates_xyz():
@@ -33,6 +44,11 @@ def test_get_coordinates_xyz():
 
     assert "C" == atoms[0]
     assert [-0.98353, 1.81095, -0.0314] == coords[0].tolist()
+
+
+def test_get_coordinates_xyz_bad():
+    filename = RESOURCE_PATH / "bad_format.xyz"
+    atoms, coords = rmsd.get_coordinates(filename, "xyz")
 
 
 def test_get_coordinates():
