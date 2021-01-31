@@ -1189,9 +1189,7 @@ def check_reflections(
                 min_reflection = reflection
                 min_review = tmp_review
 
-    if not (p_atoms == q_atoms[min_review]).all():
-        print("error: Not aligned")
-        quit()
+    assert (p_atoms == q_atoms[min_review]).all(), "error: Not aligned"
 
     return min_rmsd, min_swap, min_reflection, min_review
 
@@ -1355,23 +1353,6 @@ def set_coordinates(atoms, V, title="", decimals=8):
     return "\n".join(out)
 
 
-def print_coordinates(atoms, V, title=""):
-    """
-    Print coordinates V with corresponding atoms to stdout in XYZ format.
-
-    Parameters
-    ----------
-    atoms : list
-        List of element types
-    V : array
-        (N,3) matrix of atomic coordinates
-    title : string (optional)
-        Title of molecule
-
-    """
-    print(set_coordinates(atoms, V, title=title))
-
-
 def get_coordinates(filename, fmt, is_gzip=False, return_atoms_as_int=False):
     """
     Get coordinates from filename in format fmt. Supports XYZ and PDB.
@@ -1395,7 +1376,7 @@ def get_coordinates(filename, fmt, is_gzip=False, return_atoms_as_int=False):
         get_func = get_coordinates_pdb
 
     else:
-        exit("Could not recognize file format: {:s}".format(fmt))
+        raise ValueError("Could not recognize file format: {:s}".format(fmt))
 
     val = get_func(filename, is_gzip=is_gzip, return_atoms_as_int=return_atoms_as_int)
 
