@@ -76,6 +76,17 @@ repos:
   #         - --ignore-imports=yes
   #         - -d duplicate-code
 
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: Checking types
+        entry: mypy
+        language: system
+        types: [ python ]
+        args: ["--strict"]
+
+
   - repo: local
     hooks:
       - id: jupyisort
