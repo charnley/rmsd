@@ -75,6 +75,17 @@ repos:
   #   - id: mypy
   #     args: [--ignore-missing-imports]
 
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: Checking types
+        entry: mypy
+        language: system
+        types: [ python ]
+        args: ["--strict"]
+
+
   - repo: local
     hooks:
 
