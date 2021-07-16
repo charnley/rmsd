@@ -1,3 +1,5 @@
+mypy
+pre-commit
+pylint
 pytest
 pytest-cov
-pre-commit
