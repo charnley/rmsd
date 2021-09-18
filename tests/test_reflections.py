@@ -3,7 +3,6 @@ import copy
 import numpy as np
 from context import RESOURCE_PATH
 
-import calculate_rmsd_132 as rmsd132
 import rmsd
 
 
@@ -173,7 +172,7 @@ def test_reflection_issue_78():
 
     print(result_rmsd)
 
-    result_rmsd, _, _, q_review = rmsd132.check_reflections(
+    result_rmsd, _, _, q_review = rmsd.check_reflections(
         atoms_a,
         atoms_b,
         coordinates_a,
