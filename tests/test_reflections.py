@@ -1,7 +1,9 @@
 import copy
 
 import numpy as np
+from context import RESOURCE_PATH
 
+import calculate_rmsd_132 as rmsd132
 import rmsd
 
 
@@ -130,3 +132,56 @@ def test_reflections_keep_stereo():
     )
 
     assert np.isclose(min_rmsd, 1.1457797, atol=1e-6)
+
+
+def test_reflection_issue_78():
+    """
+    Issue 78
+
+    Using the --use-reflections option with the calculate_rmsd script affects
+    the computed rmsd, but it doesn't seem to affect the output structure when
+    -p is used too
+
+    Moreover, with the latest pip version, --use-reflections does almost
+    nothing at all
+
+    """
+
+    # TODO Check print consistency
+
+    print(rmsd, __file__)
+
+    xyz_a = RESOURCE_PATH / "ethane-1-2-diolate_a.xyz"
+    xyz_b = RESOURCE_PATH / "ethane-1-2-diolate_b.xyz"
+
+    atoms_a, coordinates_a = rmsd.get_coordinates_xyz(xyz_a)
+    atoms_b, coordinates_b = rmsd.get_coordinates_xyz(xyz_b)
+
+    coordinates_a -= rmsd.centroid(coordinates_a)
+    coordinates_b -= rmsd.centroid(coordinates_b)
+
+    reorder_method = None
+    rotation_method = rmsd.kabsch_rmsd
+
+    print(np.sum(coordinates_a))
+    print(np.sum(coordinates_b))
+
+    result_rmsd = rmsd.kabsch_rmsd(
+        coordinates_a,
+        coordinates_b,
+    )
+
+    print(result_rmsd)
+
+    result_rmsd, _, _, q_review = rmsd132.check_reflections(
+        atoms_a,
+        atoms_b,
+        coordinates_a,
+        coordinates_b,
+        reorder_method=reorder_method,
+        rotation_method=rotation_method,
+    )
+
+    print(result_rmsd)
+
+    return

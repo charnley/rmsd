@@ -1191,7 +1191,7 @@ def check_reflections(
 
     if not (p_atoms == q_atoms[min_review]).all():
         print("error: Not aligned")
-        quit()
+        sys.exit()
 
     return min_rmsd, min_swap, min_reflection, min_review
 
@@ -1898,9 +1898,14 @@ https://github.com/charnley/rmsd for further examples.
     # Save the resulting RMSD
     result_rmsd = None
 
+    # Collect changes to be done on q coords
+    q_swap = None
+    q_reflection = None
+    q_review = None
+
     if args.use_reflections:
 
-        result_rmsd, _, _, q_review = check_reflections(
+        result_rmsd, q_swap, q_reflection, q_review = check_reflections(
             p_atoms,
             q_atoms,
             p_coord,
@@ -1911,7 +1916,7 @@ https://github.com/charnley/rmsd for further examples.
 
     elif args.use_reflections_keep_stereo:
 
-        result_rmsd, _, _, q_review = check_reflections(
+        result_rmsd, q_swap, q_reflection, q_review = check_reflections(
             p_atoms,
             q_atoms,
             p_coord,
@@ -1938,27 +1943,34 @@ https://github.com/charnley/rmsd for further examples.
     # print result
     if args.output:
 
-        if args.reorder:
+        if q_swap is not None:
+            q_coord = q_coord[:, q_swap]
+
+        if q_reflection is not None:
+            q_coord = np.dot(q_coord, np.diag(q_reflection))
+
+        q_coord -= centroid(q_coord)
+
+        if q_review is not None:
 
             if q_review.shape[0] != q_all.shape[0]:
-                print("error: Reorder length error. " "Full atom list needed for --print")
-                quit()
+                print("error: Reorder length error. Full atom list needed for --print")
+                sys.exit()
 
-            q_all = q_all[q_review]
+            q_coord = q_coord[q_review]
             q_all_atoms = q_all_atoms[q_review]
 
         # Get rotation matrix
         U = kabsch(q_coord, p_coord)
 
         # recenter all atoms and rotate all atoms
-        q_all -= q_cent
-        q_all = np.dot(q_all, U)
+        q_coord = np.dot(q_coord, U)
 
         # center q on p's original coordinates
-        q_all += p_cent
+        q_coord += p_cent
 
         # done and done
-        xyz = set_coordinates(q_all_atoms, q_all, title=f"{args.structure_b} - modified")
+        xyz = set_coordinates(q_all_atoms, q_coord, title=f"{args.structure_b} - modified")
         print(xyz)
 
     else:
