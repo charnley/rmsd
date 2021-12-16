@@ -1,5 +1,6 @@
 # dev
 .vim
+env
 
 *.py[cod]
 
