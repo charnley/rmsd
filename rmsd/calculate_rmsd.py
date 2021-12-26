@@ -17,7 +17,7 @@ import re
 import sys
 from typing import Any, Iterator, List, Optional, Set, Tuple, Union
 
-import numpy as np  # type: ignore
+import numpy as np
 from numpy.typing import NDArray  # type: ignore
 from scipy.optimize import linear_sum_assignment  # type: ignore
 from scipy.spatial import distance_matrix  # type: ignore
@@ -1486,7 +1486,8 @@ def get_coordinates_pdb(filename: str, is_gzip: bool = False) -> Tuple[NDArray, 
     # above column indices as a fallback.
 
     x_column: Optional[int] = None
-    V: Union[List[int], NDArray] = list()
+    V: Union[List[NDArray], NDArray] = list()
+    assert isinstance(V, list)
 
     # Same with atoms and atom naming.
     # The most robust way to do this is probably
@@ -1558,6 +1559,7 @@ def get_coordinates_pdb(filename: str, is_gzip: bool = False) -> Tuple[NDArray, 
     atoms = [int_atom(str(atom)) for atom in atoms]
 
     V = np.asarray(V)
+    assert isinstance(V, NDArray)
     atoms = np.asarray(atoms)
 
     # TODO Convert to int atoms
@@ -1598,8 +1600,8 @@ def get_coordinates_xyz(
         openarg = "r"
 
     f = openfunc(filename, openarg)
-    V = list()
-    atoms = list()
+    V: Union[List[NDArray], NDArray] = list()
+    atoms: Union[List[str], NDArray] = list()
     n_atoms = 0
 
     # Read the first line to obtain the number of atoms to read
