@@ -5,7 +5,7 @@ import numpy as np
 import rmsd
 
 
-def test_reflections():
+def test_reflections() -> None:
 
     atoms = np.array(["C", "H", "H", "H", "F"])
 
@@ -25,14 +25,12 @@ def test_reflections():
     # TODO Insert a rotation on q
     q_coord[:, [0, 2]] = q_coord[:, [2, 0]]
 
-    min_rmsd, min_swap, min_reflection, min_review = rmsd.check_reflections(
-        atoms, atoms, p_coord, q_coord, reorder_method=None
-    )
+    min_rmsd, _, _, _ = rmsd.check_reflections(atoms, atoms, p_coord, q_coord, reorder_method=None)
 
     assert np.isclose(min_rmsd, 0.0, atol=1e-6)
 
 
-def test_reflections_norotation():
+def test_reflections_norotation() -> None:
 
     atoms = np.array(["C", "H", "H", "H", "F"])
 
@@ -51,7 +49,7 @@ def test_reflections_norotation():
     # Insert reflection
     q_coord[:, [0, 2]] = q_coord[:, [2, 0]]
 
-    min_rmsd, min_swap, min_reflection, min_review = rmsd.check_reflections(
+    min_rmsd, _, _, _ = rmsd.check_reflections(
         atoms,
         atoms,
         p_coord,
@@ -63,7 +61,7 @@ def test_reflections_norotation():
     assert np.isclose(min_rmsd, 0.0, atol=1e-6)
 
 
-def test_reflections_reorder():
+def test_reflections_reorder() -> None:
 
     p_atoms = np.array(["C", "H", "H", "H", "F"])
 
@@ -87,14 +85,12 @@ def test_reflections_reorder():
     q_coord = q_coord[review]
     q_atoms = p_atoms[review]
 
-    min_rmsd, min_swap, min_reflection, min_review = rmsd.check_reflections(
-        p_atoms, q_atoms, p_coord, q_coord
-    )
+    min_rmsd, _, _, _ = rmsd.check_reflections(p_atoms, q_atoms, p_coord, q_coord)
 
     assert np.isclose(min_rmsd, 0.0, atol=1e-6)
 
 
-def test_reflections_keep_stereo():
+def test_reflections_keep_stereo() -> None:
 
     atoms = np.array(["C", "H", "H", "H", "F"])
 
@@ -116,7 +112,7 @@ def test_reflections_keep_stereo():
 
     # If keep_stereo is off, enantiomer coordinates of q_coord are considered,
     # resulting into identical coordinates of p_coord.
-    min_rmsd, min_swap, min_reflection, min_review = rmsd.check_reflections(
+    min_rmsd, _, _, _ = rmsd.check_reflections(
         atoms, atoms, p_coord, q_coord, reorder_method=None, keep_stereo=False
     )
 
@@ -125,7 +121,7 @@ def test_reflections_keep_stereo():
     assert np.isclose(min_rmsd, 0.0, atol=1e-6)
 
     # No enantiomer coordinates, non-zero RMSD.
-    min_rmsd, min_swap, min_reflection, min_review = rmsd.check_reflections(
+    min_rmsd, _, _, _ = rmsd.check_reflections(
         atoms, atoms, p_coord, q_coord, reorder_method=None, keep_stereo=True
     )
 
