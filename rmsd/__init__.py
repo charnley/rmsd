@@ -15,6 +15,7 @@ __all__ = [
     "kabsch",
     "kabsch_rmsd",
     "kabsch_rotate",
+    "kabsch_fit",
     "quaternion_rmsd",
     "quaternion_rotate",
     "quaternion_transform",
