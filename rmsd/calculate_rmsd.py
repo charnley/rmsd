@@ -12,9 +12,9 @@ __version__ = "1.4"
 import argparse
 import copy
 import gzip
-import pathlib
 import re
 import sys
+from pathlib import Path
 from typing import Any, Iterator, List, Optional, Set, Tuple, Union
 
 import numpy as np
@@ -1430,7 +1430,7 @@ def set_coordinates(atoms: ndarray, V: ndarray, title: str = "", decimals: int =
 
 
 def get_coordinates(
-    filename: str, fmt: str, is_gzip: bool = False, return_atoms_as_int: bool = False
+    filename: Path, fmt: str, is_gzip: bool = False, return_atoms_as_int: bool = False
 ) -> Tuple[ndarray, ndarray]:
     """
     Get coordinates from filename in format fmt. Supports XYZ and PDB.
@@ -1461,7 +1461,7 @@ def get_coordinates(
     return val
 
 
-def get_coordinates_pdb(filename: str, is_gzip: bool = False) -> Tuple[ndarray, ndarray]:
+def get_coordinates_pdb(filename: Path, is_gzip: bool = False) -> Tuple[ndarray, ndarray]:
     """
     Get coordinates from the first chain in a pdb file
     and return a vectorset with all the coordinates.
@@ -1573,7 +1573,7 @@ def get_coordinates_pdb(filename: str, is_gzip: bool = False) -> Tuple[ndarray, 
 
 
 def get_coordinates_xyz(
-    filename: str,
+    filename: Path,
     is_gzip: bool = False,
 ) -> Tuple[ndarray, ndarray]:
     """
@@ -1847,7 +1847,7 @@ See https://github.com/charnley/rmsd for citation information
     # Check fileformat
     if args.format is None:
         filename = args.structure_a
-        suffixes = pathlib.Path(filename).suffixes
+        suffixes = Path(filename).suffixes
 
         if len(suffixes) == 0:
             ext = None

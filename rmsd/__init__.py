@@ -20,6 +20,7 @@ __all__ = [
     "reorder_brute",
     "reorder_distance",
     "reorder_hungarian",
+    "reorder_similarity",
     "rmsd",
     "set_coordinates",
 ]
