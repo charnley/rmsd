@@ -1665,7 +1665,7 @@ def get_coordinates_xyz(
     return atoms, V
 
 
-def parse_arguments(arguments: Optional[str] = None) -> argparse.Namespace:
+def parse_arguments(arguments: Optional[Union[str, List[str]]] = None) -> argparse.Namespace:
 
     description = __doc__
 

@@ -1,20 +1,19 @@
 import pytest
 
-import rmsd
+from rmsd import calculate_rmsd
 
 
-def test_legal_arguments():
+def test_legal_arguments() -> None:
 
-    args = "--rotation kabsch --ignore-hydrogen FILE_A FILE_B"
-    args = args.split()
-    args = rmsd.parse_arguments(args)
+    args_ = "--rotation kabsch --ignore-hydrogen FILE_A FILE_B".split()
+    args = calculate_rmsd.parse_arguments(args_)
 
     assert args.reorder is False
     assert args.ignore_hydrogen is True
     assert args.rotation == "kabsch"
 
 
-def test_illegal_arguments():
+def test_illegal_arguments() -> None:
 
     args = [
         "--rotation kabsch",
@@ -26,12 +25,12 @@ def test_illegal_arguments():
     ]
 
     with pytest.raises(SystemExit) as exception:
-        args = rmsd.parse_arguments(args)
+        _ = calculate_rmsd.parse_arguments(args)
 
     assert exception.type == SystemExit
 
 
-def test_illegal_reflection():
+def test_illegal_reflection() -> None:
 
     args = [
         "--rotation kabsch",
@@ -43,26 +42,26 @@ def test_illegal_reflection():
     ]
 
     with pytest.raises(SystemExit) as exception:
-        args = rmsd.parse_arguments(args)
+        _ = calculate_rmsd.parse_arguments(args)
 
     assert exception.type == SystemExit
 
 
-def test_illegal_rotation_method():
+def test_illegal_rotation_method() -> None:
 
     args = ["--rotation NeverHeardOfThisMethod", "FILE_A", "FILE_B"]
 
     with pytest.raises(SystemExit) as exception:
-        args = rmsd.parse_arguments(args)
+        _ = calculate_rmsd.parse_arguments(args)
 
     assert exception.type == SystemExit
 
 
-def test_illegal_reorder_method():
+def test_illegal_reorder_method() -> None:
 
     args = ["--reorder-method NotImplementedYet", "FILE_A", "FILE_B"]
 
     with pytest.raises(SystemExit) as exception:
-        args = rmsd.parse_arguments(args)
+        _ = calculate_rmsd.parse_arguments(args)
 
     assert exception.type == SystemExit
