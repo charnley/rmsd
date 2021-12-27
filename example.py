@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
+from pathlib import Path
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # type: ignore
 import numpy as np
+from numpy import ndarray
 
 import rmsd
 
 
-def rotation_matrix(sigma):
+def rotation_matrix(sigma: float) -> ndarray:
     """
 
     https://en.wikipedia.org/wiki/Rotation_matrix
@@ -27,7 +28,7 @@ def rotation_matrix(sigma):
     return R
 
 
-def save_plot(A, B, filename):
+def save_plot(A: ndarray, B: ndarray, filename: Path) -> None:
 
     Ax = A[:, 0]
     Ay = A[:, 1]
@@ -42,11 +43,8 @@ def save_plot(A, B, filename):
     plt.xlim([-2.5, 2.5])
     plt.grid(True)
     plt.tick_params(labelsize=15)
-    plt.savefig(filename + ".png")
-
+    plt.savefig(filename.with_suffix(".png"))
     plt.clf()
-
-    return
 
 
 A = np.array([[1.0, 1.0], [1.0, 2.0], [2.0, 1.5]])
@@ -63,17 +61,17 @@ B -= 3
 B = np.dot(B, rotation_matrix(90))
 
 print("Normal RMSD", rmsd.rmsd(A, B))
-save_plot(A, B, "plot_beginning")
+save_plot(A, B, Path("plot_beginning"))
 
 # Manipulate
 A -= rmsd.centroid(A)
 B -= rmsd.centroid(B)
 
 print("Translated RMSD", rmsd.rmsd(A, B))
-save_plot(A, B, "plot_translated")
+save_plot(A, B, Path("plot_translated"))
 
 U = rmsd.kabsch(A, B)
 A = np.dot(A, U)
 
 print("Rotated RMSD", rmsd.rmsd(A, B))
-save_plot(A, B, "plot_rotated")
+save_plot(A, B, Path("plot_rotated"))
