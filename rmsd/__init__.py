@@ -11,6 +11,7 @@ __all__ = [
     "get_coordinates_pdb",
     "get_coordinates_xyz",
     "hungarian",
+    "int_atom",
     "kabsch",
     "kabsch_rmsd",
     "kabsch_rotate",
@@ -20,9 +21,11 @@ __all__ = [
     "reorder_brute",
     "reorder_distance",
     "reorder_hungarian",
+    "reorder_inertia_hungarian",
     "reorder_similarity",
     "rmsd",
     "set_coordinates",
+    "str_atom",
 ]
 
 if __name__ == "__main__":
