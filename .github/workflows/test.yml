@@ -20,7 +20,6 @@ jobs:
     - uses: conda-incubator/setup-miniconda@v2
       with:
         activate-environment: rmsd-dev
-        environment-file: environment.yml
         python-version: ${{ matrix.python-version }}
     - run: |
         which python
