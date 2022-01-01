@@ -1,5 +1,8 @@
 python = python
 
+env:
+	env create -f ./environment.yml -p ./env --quiet
+
 test:
 	${python} -m pytest -vrs tests
 

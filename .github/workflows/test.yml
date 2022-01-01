@@ -25,10 +25,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        $CONDA/bin/conda env update --file environment.yml --name base
+        $CONDA/bin/conda env update --file environment.yml --name base --quiet
     - name: Test format
       run: |
+        conda activate base
         pre-commit run --all-files
     - name: Test with pytest
       run: |
+        conda activate base
         make test
