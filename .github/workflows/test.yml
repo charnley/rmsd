@@ -22,6 +22,8 @@ jobs:
         activate-environment: rmsd-dev
         python-version: ${{ matrix.python-version }}
     - run: |
+        ls
+        pwd
         which python
         conda info
         conda --version
