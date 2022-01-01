@@ -19,13 +19,13 @@ jobs:
     steps:
     - uses: conda-incubator/setup-miniconda@v2
       with:
-        activate-environment: test
+        activate-environment: rmsd-dev
         environment-file: environment.yml
         python-version: ${{ matrix.python-version }}
-        auto-activate-base: false
-    - run: conda --version
     - run: |
         which python
+        conda info
+        conda --version
     - run: |
         make test
     - run: |
