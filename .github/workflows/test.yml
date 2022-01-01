@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.6, 3.7, 3.8, 3.9]
 
     steps:
     - uses: actions/checkout@v2
@@ -25,11 +25,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        if test -f requirements.txt; then pip install -r requirements.txt; fi
-        if test -f requirements.dev.txt; then pip install -r requirements.dev.txt; fi
-        python -m pip install git+https://github.com/qmlcode/qml@develop
-        python -m pip install pre-commit
+        $CONDA/bin/conda env update --file environment.yml --name base
     - name: Test format
       run: |
         pre-commit run --all-files
