@@ -31,6 +31,9 @@ jobs:
         conda-channels: anaconda, conda-forge
     - run: conda --version
     - run: which python
-    - run: conda env update --file environment.yml --name base --quiet
+    - run: conda env update --file environment.yml --name base
     - run: pre-commit run --all-files
-    - run: make test
+    - run: |
+        which python
+        which pytest
+        make test
