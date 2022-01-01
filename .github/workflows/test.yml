@@ -9,25 +9,30 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
+  test:
+    name: Testing
+    runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        shell: bash -l {0}
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
-
     steps:
-    - uses: conda-incubator/setup-miniconda@v2
-      with:
-        activate-environment: rmsd-dev
-        python-version: ${{ matrix.python-version }}
-    - run: |
-        ls
-        pwd
-        which python
-        conda info
-        conda --version
-    - run: |
-        make test
-    - run: |
-        pre-commit run --all-files
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: rmsd-dev
+          python-version: ${{ matrix.python-version }}
+      - run: ls
+      - run: pwd
+      - run: which python
+      - run: |
+          ls
+          pwd
+          which python
+          conda info
+          conda --version
+      - run: |
+          make test
+      - run: |
+          pre-commit run --all-files
