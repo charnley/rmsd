@@ -4,8 +4,7 @@ name: Test Python package
 on:
   push:
     branches:
-      - 'master'
-      - 'dev'
+      - '**'
   pull_request:
     branches: [ master ]
 
@@ -23,14 +22,15 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        $CONDA/bin/conda env update --file environment.yml --name base --quiet
-    - name: Test format
-      run: |
-        conda activate base
-        pre-commit run --all-files
-    - name: Test with pytest
-      run: |
-        conda activate base
-        make test
+    - uses: actions/checkout@v2
+    - name: Setup conda
+      uses: s-weigand/setup-conda@v1
+      with:
+        update-conda: true
+        python-version: ${{ matrix.python-version }}
+        conda-channels: anaconda, conda-forge
+    - run: conda --version
+    - run: which python
+    - run: conda env update --file environment.yml --name base --quiet
+    - run: pre-commit run --all-files
+    - run: make test
