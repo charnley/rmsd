@@ -30,12 +30,13 @@ jobs:
         python-version: ${{ matrix.python-version }}
         conda-channels: anaconda, conda-forge
     - run: conda --version
-    - run: which python
+    - run: |
+        conda activate base
+        which python
     - run: conda env update --file environment.yml --name base
     - run: |
-        which python
-        which pytest
-        which pip
-        python -m pip install pytest
+        conda activate base
         make test
-    - run: pre-commit run --all-files
+    - run: |
+        conda activate base
+        pre-commit run --all-files
