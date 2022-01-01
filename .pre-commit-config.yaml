@@ -59,13 +59,7 @@ repos:
           # ignore Line break occurred before a binary operator (W503)
           - --ignore=E501,E203,W503
 
-  # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: v0.790
-  #   hooks:
-  #     - id: mypy
-  #       name: Checks code types
-  #       args: ["--strict"]
-  #
+
   # - repo: https://github.com/pycqa/pylint
   #   rev: pylint-2.6.0
   #   hooks:
@@ -76,7 +70,6 @@ repos:
   #         - --ignore-imports=yes
   #         - -d duplicate-code
 
-
   - repo: local
     hooks:
       - id: mypy
@@ -84,7 +77,6 @@ repos:
         entry: mypy
         language: system
         types: [ python ]
-        args: ["--strict"]
 
 
   - repo: local
