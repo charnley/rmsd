@@ -25,15 +25,11 @@ jobs:
           activate-environment: rmsd-dev
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
-      - run: ls
-      - run: pwd
-      - run: which python
       - run: |
           ls
           pwd
           which python
           conda info
-          conda --version
       - run: |
           make test
       - run: |
