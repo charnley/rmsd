@@ -4,10 +4,21 @@ repos:
     rev: v3.4.0
     hooks:
       - id: trailing-whitespace
+        exclude: ^tests/resources/
       - id: end-of-file-fixer
+        exclude: ^tests/resources/
       - id: check-yaml
         args: ["--unsafe"]
       - id: check-added-large-files
+      - id: check-ast
+      - id: check-json
+      - id: debug-statements
+      - id: detect-aws-credentials
+        args: [--allow-missing-credentials]
+      - id: detect-private-key
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=3000']
 
   - repo: https://github.com/myint/autoflake
     rev: v1.4
@@ -17,12 +28,11 @@ repos:
         args:
           - --in-place
           - --remove-all-unused-imports
-          - --remove-unused-variables
           - --expand-star-imports
           - --ignore-init-module-imports
 
   - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.7.0
+    rev: v5.10.1
     hooks:
       - id: isort
         name: Sorts imports
@@ -36,39 +46,34 @@ repos:
         ]
 
   - repo: https://github.com/psf/black
-    rev: 20.8b1
+    rev: 22.3.0
     hooks:
       - id: black
         name: Fixes formatting
         language_version: python3
         args: ["--line-length=99"]
 
+
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.4
+    rev: 4.0.1
     hooks:
       - id: flake8
         name: Checks pep8 style
-        args:
-          - --max-line-length=99
-          # F405 - init imports * from module
-          # F401 - ignore imports used in init
-          # F403 - import * used in init
-          - --exclude=__init__.py
+        args: [
+          "--max-line-length=99",
+          # Ignore imports in init files
+          "--per-file-ignores=*/__init__.py:F401,setup.py:E121",
           # ignore long comments (E501), as long lines are formatted by black
           # ignore Whitespace before ':' (E203)
           # ignore Line break occurred before a binary operator (W503)
-          - --ignore=E501,E203,W503
+          "--ignore=E501,E203,W503",
+        ]
 
-
-  # - repo: https://github.com/pycqa/pylint
-  #   rev: pylint-2.6.0
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v0.782
   #   hooks:
-  #     - id: pylint
-  #       name: Checks code quality
-  #       args:
-  #         - --max-line-length=99
-  #         - --ignore-imports=yes
-  #         - -d duplicate-code
+  #   - id: mypy
+  #     args: [--ignore-missing-imports]
 
   - repo: local
     hooks:
@@ -81,18 +86,36 @@ repos:
 
   - repo: local
     hooks:
+
+      # - id: mypy
+      #   name: Static type checking
+      #   entry: mypy
+      #   files: \.py$
+      #   language: python
+
       - id: jupyisort
         name: Sorts ipynb imports
-        entry: jupytext --pipe-fmt ".py" --pipe "isort - --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --line-width=99"
-        files: .ipynb
+        entry: jupytext --pipe-fmt ".py" --pipe "isort - --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --line-width=99" --sync
+        files: \.ipynb$
         language: python
+
       - id: jupyblack
         name: Fixes ipynb format
-        entry: jupytext --pipe-fmt ".py" --pipe "black - --line-length=99"
-        files: .ipynb
+        entry: jupytext --pipe-fmt ".py" --pipe "black - --line-length=99" --sync
+        files: \.ipynb$
         language: python
+
       - id: nbconvert
         name: Removes ipynb content
-        entry: jupyter nbconvert --ClearOutputPreprocessor.enabled=True --ClearMetadataPreprocessor.enabled=True RegexRemovePreprocessor.enabled=True --to=notebook --log-level=ERROR --inplace
-        files: .ipynb
+        entry: jupyter nbconvert
+        args:
+          [
+            "--ClearOutputPreprocessor.enabled=True",
+            "--ClearMetadataPreprocessor.enabled=True",
+            "--RegexRemovePreprocessor.enabled=True",
+            "--to=notebook",
+            "--log-level=ERROR",
+            "--inplace",
+          ]
+        files: \.ipynb$
         language: python

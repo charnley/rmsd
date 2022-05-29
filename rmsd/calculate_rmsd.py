@@ -305,12 +305,21 @@ NAMES_ELEMENT = {value: key for key, value in ELEMENT_NAMES.items()}
 class ReorderCallable(Protocol):
     def __call__(
         self,
+<<<<<<< HEAD
         p_atoms: ndarray,
         q_atoms: ndarray,
         p_coord: ndarray,
         q_coord: ndarray,
         **kwargs: Any,
     ) -> ndarray:
+=======
+        p_atoms: NDArray,
+        q_atoms: NDArray,
+        p_coord: NDArray,
+        q_coord: NDArray,
+        **kwargs: Any,
+    ) -> NDArray:
+>>>>>>> master
         """
         Protocol for a reorder callable function
 
@@ -323,8 +332,13 @@ class ReorderCallable(Protocol):
 class RotationCallable(Protocol):
     def __call__(
         self,
+<<<<<<< HEAD
         P: ndarray,
         Q: ndarray,
+=======
+        P: NDArray,
+        Q: NDArray,
+>>>>>>> master
         **kwargs: Any,
     ) -> float:
         """
@@ -369,7 +383,11 @@ def int_atom(atom: str) -> int:
     return NAMES_ELEMENT[atom]
 
 
+<<<<<<< HEAD
 def rmsd(V: ndarray, W: ndarray) -> float:
+=======
+def rmsd(V: NDArray, W: NDArray) -> float:
+>>>>>>> master
     """
     Calculate Root-mean-square deviation from two sets of vectors V and W.
 
@@ -392,9 +410,15 @@ def rmsd(V: ndarray, W: ndarray) -> float:
 
 
 def kabsch_rmsd(
+<<<<<<< HEAD
     P: ndarray,
     Q: ndarray,
     W: Optional[ndarray] = None,
+=======
+    P: NDArray,
+    Q: NDArray,
+    W: Optional[NDArray] = None,
+>>>>>>> master
     translate: bool = False,
     **kwargs: Any,
 ) -> float:
@@ -430,7 +454,11 @@ def kabsch_rmsd(
     return rmsd(P, Q)
 
 
+<<<<<<< HEAD
 def kabsch_rotate(P: ndarray, Q: ndarray) -> ndarray:
+=======
+def kabsch_rotate(P: NDArray, Q: NDArray) -> NDArray:
+>>>>>>> master
     """
     Rotate matrix P unto matrix Q using Kabsch algorithm.
 
@@ -455,7 +483,11 @@ def kabsch_rotate(P: ndarray, Q: ndarray) -> ndarray:
     return P
 
 
+<<<<<<< HEAD
 def kabsch_fit(P: ndarray, Q: ndarray, W: Optional[ndarray] = None) -> ndarray:
+=======
+def kabsch_fit(P: NDArray, Q: NDArray, W: Optional[NDArray] = None) -> NDArray:
+>>>>>>> master
     """
     Rotate and translate matrix P unto matrix Q using Kabsch algorithm.
     An optional vector of weights W may be provided.
@@ -486,7 +518,11 @@ def kabsch_fit(P: ndarray, Q: ndarray, W: Optional[ndarray] = None) -> ndarray:
     return P
 
 
+<<<<<<< HEAD
 def kabsch(P: ndarray, Q: ndarray) -> ndarray:
+=======
+def kabsch(P: NDArray, Q: NDArray) -> NDArray:
+>>>>>>> master
     """
     Using the Kabsch algorithm with two sets of paired point P and Q, centered
     around the centroid. Each vector set is represented as an NxD
@@ -527,14 +563,23 @@ def kabsch(P: ndarray, Q: ndarray) -> ndarray:
         V[:, -1] = -V[:, -1]
 
     # Create Rotation matrix U
+<<<<<<< HEAD
     U: ndarray = np.dot(V, W)
+=======
+    U: NDArray = np.dot(V, W)
+>>>>>>> master
 
     return U
 
 
 def kabsch_weighted(
+<<<<<<< HEAD
     P: ndarray, Q: ndarray, W: Optional[ndarray] = None
 ) -> Tuple[ndarray, ndarray, float]:
+=======
+    P: NDArray, Q: NDArray, W: Optional[NDArray] = None
+) -> Tuple[NDArray, NDArray, float]:
+>>>>>>> master
     """
     Using the Kabsch algorithm with two sets of paired point P and Q.
     Each vector set is represented as an NxD matrix, where D is the
@@ -619,11 +664,19 @@ def kabsch_weighted(
 
 
 def kabsch_weighted_fit(
+<<<<<<< HEAD
     P: ndarray,
     Q: ndarray,
     W: Optional[ndarray] = None,
     return_rmsd: bool = False,
 ) -> Tuple[ndarray, Optional[float]]:
+=======
+    P: NDArray,
+    Q: NDArray,
+    W: Optional[NDArray] = None,
+    return_rmsd: bool = False,
+) -> Tuple[NDArray, ...]:
+>>>>>>> master
     """
     Fit P to Q with optional weights W.
     Also returns the RMSD of the fit if return_rmsd=True.
@@ -648,6 +701,7 @@ def kabsch_weighted_fit(
     """
     rmsd_: float
     R, T, rmsd_ = kabsch_weighted(Q, P, W)
+<<<<<<< HEAD
     PNEW: ndarray = np.dot(P, R.T) + T
     if return_rmsd:
         return (PNEW, rmsd_)
@@ -656,6 +710,16 @@ def kabsch_weighted_fit(
 
 
 def kabsch_weighted_rmsd(P: ndarray, Q: ndarray, W: Optional[ndarray] = None) -> float:
+=======
+    PNEW: NDArray = np.dot(P, R.T) + T
+    if return_rmsd:
+        return (PNEW, rmsd_)
+    else:
+        return (PNEW,)
+
+
+def kabsch_weighted_rmsd(P: NDArray, Q: NDArray, W: Optional[NDArray] = None) -> float:
+>>>>>>> master
     """
     Calculate the RMSD between P and Q with optional weighhts W
 
@@ -676,7 +740,11 @@ def kabsch_weighted_rmsd(P: ndarray, Q: ndarray, W: Optional[ndarray] = None) ->
     return w_rmsd
 
 
+<<<<<<< HEAD
 def quaternion_rmsd(P: ndarray, Q: ndarray, **kwargs: Any) -> float:
+=======
+def quaternion_rmsd(P: NDArray, Q: NDArray, **kwargs: Any) -> float:
+>>>>>>> master
     """
     Rotate matrix P unto Q and calculate the RMSD
     based on doi:10.1016/1049-9660(91)90036-O
@@ -697,7 +765,11 @@ def quaternion_rmsd(P: ndarray, Q: ndarray, **kwargs: Any) -> float:
     return rmsd(P, Q)
 
 
+<<<<<<< HEAD
 def quaternion_transform(r: ndarray) -> ndarray:
+=======
+def quaternion_transform(r: NDArray) -> NDArray:
+>>>>>>> master
     """
     Get optimal rotation
     note: translation will be zero when the centroids of each molecule are the
@@ -705,11 +777,19 @@ def quaternion_transform(r: ndarray) -> ndarray:
     """
     Wt_r = makeW(*r).T
     Q_r = makeQ(*r)
+<<<<<<< HEAD
     rot: ndarray = Wt_r.dot(Q_r)[:3, :3]
     return rot
 
 
 def makeW(r1: float, r2: float, r3: float, r4: float = 0) -> ndarray:
+=======
+    rot: NDArray = Wt_r.dot(Q_r)[:3, :3]
+    return rot
+
+
+def makeW(r1: float, r2: float, r3: float, r4: float = 0) -> NDArray:
+>>>>>>> master
     """
     matrix involved in quaternion rotation
     """
@@ -724,7 +804,11 @@ def makeW(r1: float, r2: float, r3: float, r4: float = 0) -> ndarray:
     return W
 
 
+<<<<<<< HEAD
 def makeQ(r1: float, r2: float, r3: float, r4: float = 0) -> ndarray:
+=======
+def makeQ(r1: float, r2: float, r3: float, r4: float = 0) -> NDArray:
+>>>>>>> master
     """
     matrix involved in quaternion rotation
     """
@@ -739,7 +823,11 @@ def makeQ(r1: float, r2: float, r3: float, r4: float = 0) -> ndarray:
     return Q
 
 
+<<<<<<< HEAD
 def quaternion_rotate(X: ndarray, Y: ndarray) -> ndarray:
+=======
+def quaternion_rotate(X: NDArray, Y: NDArray) -> NDArray:
+>>>>>>> master
     """
     Calculate the rotation
 
@@ -767,7 +855,11 @@ def quaternion_rotate(X: ndarray, Y: ndarray) -> ndarray:
     return rot
 
 
+<<<<<<< HEAD
 def centroid(X: ndarray) -> ndarray:
+=======
+def centroid(X: NDArray) -> NDArray:
+>>>>>>> master
     """
     Centroid is the mean position of all the points in all of the coordinate
     directions, from a vectorset X.
@@ -783,16 +875,28 @@ def centroid(X: ndarray) -> ndarray:
 
     Returns
     -------
+<<<<<<< HEAD
     C : ndarray
         centroid
     """
     C: ndarray = X.mean(axis=0)
+=======
+    C : NDArray
+        centroid
+    """
+    C: NDArray = X.mean(axis=0)
+>>>>>>> master
     return C
 
 
 def hungarian_vectors(
+<<<<<<< HEAD
     p_vecs: ndarray, q_vecs: ndarray, sigma: float = 1e-0, use_kernel: bool = True
 ) -> ndarray:
+=======
+    p_vecs: NDArray, q_vecs: NDArray, sigma: float = 1e-0, use_kernel: bool = True
+) -> NDArray:
+>>>>>>> master
     """
 
     Hungarian cost assignment of a similiarty molecule kernel.
@@ -824,14 +928,20 @@ def hungarian_vectors(
 
     # Perform Hungarian analysis on distance matrix between atoms of 1st
     # structure and trial structure
+<<<<<<< HEAD
     indices_b: ndarray
     indices_a: ndarray
+=======
+    indices_b: NDArray
+    indices_a: NDArray
+>>>>>>> master
     indices_a, indices_b = linear_sum_assignment(K)
 
     return indices_b
 
 
 def reorder_similarity(
+<<<<<<< HEAD
     p_atoms: ndarray,
     q_atoms: ndarray,
     p_coord: ndarray,
@@ -839,6 +949,15 @@ def reorder_similarity(
     use_kernel: bool = True,
     **kwargs: Any,
 ) -> ndarray:
+=======
+    p_atoms: NDArray,
+    q_atoms: NDArray,
+    p_coord: NDArray,
+    q_coord: NDArray,
+    use_kernel: bool = True,
+    **kwargs: Any,
+) -> NDArray:
+>>>>>>> master
     """
     Re-orders the input atom list and xyz coordinates using QML similarity
     the Hungarian method for assignment.
@@ -901,12 +1020,21 @@ def reorder_similarity(
 
 
 def reorder_distance(
+<<<<<<< HEAD
     p_atoms: ndarray,
     q_atoms: ndarray,
     p_coord: ndarray,
     q_coord: ndarray,
     **kwargs: Any,
 ) -> ndarray:
+=======
+    p_atoms: NDArray,
+    q_atoms: NDArray,
+    p_coord: NDArray,
+    q_coord: NDArray,
+    **kwargs: Any,
+) -> NDArray:
+>>>>>>> master
     """
     Re-orders the input atom list and xyz coordinates by atom type and then by
     distance of each atom from the centroid.
@@ -955,7 +1083,11 @@ def reorder_distance(
     return view_reorder
 
 
+<<<<<<< HEAD
 def hungarian(A: ndarray, B: ndarray) -> ndarray:
+=======
+def hungarian(A: NDArray, B: NDArray) -> NDArray:
+>>>>>>> master
     """
     Hungarian reordering.
 
@@ -967,20 +1099,34 @@ def hungarian(A: ndarray, B: ndarray) -> ndarray:
 
     # Perform Hungarian analysis on distance matrix between atoms of 1st
     # structure and trial structure
+<<<<<<< HEAD
     indices_b: ndarray
     indices_a: ndarray
+=======
+    indices_b: NDArray
+    indices_a: NDArray
+>>>>>>> master
     indices_a, indices_b = linear_sum_assignment(distances)
 
     return indices_b
 
 
 def reorder_hungarian(
+<<<<<<< HEAD
     p_atoms: ndarray,
     q_atoms: ndarray,
     p_coord: ndarray,
     q_coord: ndarray,
     **kwargs: Any,
 ) -> ndarray:
+=======
+    p_atoms: NDArray,
+    q_atoms: NDArray,
+    p_coord: NDArray,
+    q_coord: NDArray,
+    **kwargs: Any,
+) -> NDArray:
+>>>>>>> master
     """
     Re-orders the input atom list and xyz coordinates using the Hungarian
     method (using optimized column results)
@@ -1025,12 +1171,21 @@ def reorder_hungarian(
 
 
 def reorder_inertia_hungarian(
+<<<<<<< HEAD
     p_atoms: ndarray,
     q_atoms: ndarray,
     p_coord: ndarray,
     q_coord: ndarray,
     **kwargs: Any,
 ) -> ndarray:
+=======
+    p_atoms: NDArray,
+    q_atoms: NDArray,
+    p_coord: NDArray,
+    q_coord: NDArray,
+    **kwargs: Any,
+) -> NDArray:
+>>>>>>> master
     """
     Align the principal intertia axis and then re-orders the input atom list
     and xyz coordinates using the Hungarian method (using optimized column
@@ -1101,7 +1256,11 @@ def generate_permutations(elements: List[int], n: int) -> Iterator[List[int]]:
             i += 1
 
 
+<<<<<<< HEAD
 def brute_permutation(A: ndarray, B: ndarray) -> ndarray:
+=======
+def brute_permutation(A: NDArray, B: NDArray) -> NDArray:
+>>>>>>> master
     """
     Re-orders the input atom list and xyz coordinates using the brute force
     method of permuting all rows of the input coordinates
@@ -1147,12 +1306,21 @@ def brute_permutation(A: ndarray, B: ndarray) -> ndarray:
 
 
 def reorder_brute(
+<<<<<<< HEAD
     p_atoms: ndarray,
     q_atoms: ndarray,
     p_coord: ndarray,
     q_coord: ndarray,
     **kwargs: Any,
 ) -> ndarray:
+=======
+    p_atoms: NDArray,
+    q_atoms: NDArray,
+    p_coord: NDArray,
+    q_coord: NDArray,
+    **kwargs: Any,
+) -> NDArray:
+>>>>>>> master
     """
     Re-orders the input atom list and xyz coordinates using all permutation of
     rows (using optimized column results)
@@ -1197,6 +1365,7 @@ def reorder_brute(
 
 
 def check_reflections(
+<<<<<<< HEAD
     p_atoms: ndarray,
     q_atoms: ndarray,
     p_coord: ndarray,
@@ -1205,6 +1374,16 @@ def check_reflections(
     rotation_method: Optional[RotationCallable] = None,
     keep_stereo: bool = False,
 ) -> Tuple[float, ndarray, ndarray, ndarray]:
+=======
+    p_atoms: NDArray,
+    q_atoms: NDArray,
+    p_coord: NDArray,
+    q_coord: NDArray,
+    reorder_method: Optional[ReorderCallable] = None,
+    rotation_method: Optional[RotationCallable] = None,
+    keep_stereo: bool = False,
+) -> Tuple[float, NDArray, NDArray, NDArray]:
+>>>>>>> master
     """
     Minimize RMSD using reflection planes for molecule P and Q
 
@@ -1275,7 +1454,11 @@ def check_reflections(
     return min_rmsd, min_swap, min_reflection, min_review
 
 
+<<<<<<< HEAD
 def rotation_matrix_vectors(v1: ndarray, v2: ndarray) -> ndarray:
+=======
+def rotation_matrix_vectors(v1: NDArray, v2: NDArray) -> NDArray:
+>>>>>>> master
     """
     Returns the rotation matrix that rotates v1 onto v2
     using Rodrigues' rotation formula.
@@ -1292,7 +1475,11 @@ def rotation_matrix_vectors(v1: ndarray, v2: ndarray) -> ndarray:
         Rotation matrix
     """
 
+<<<<<<< HEAD
     rot: ndarray
+=======
+    rot: NDArray
+>>>>>>> master
 
     if (v1 == v2).all():
         rot = np.eye(3)
@@ -1313,7 +1500,11 @@ def rotation_matrix_vectors(v1: ndarray, v2: ndarray) -> ndarray:
     return rot
 
 
+<<<<<<< HEAD
 def get_cm(atoms: ndarray, V: ndarray) -> ndarray:
+=======
+def get_cm(atoms: NDArray, V: NDArray) -> NDArray:
+>>>>>>> master
     """
     Get the center of mass of V.
     ----------
@@ -1328,14 +1519,24 @@ def get_cm(atoms: ndarray, V: ndarray) -> ndarray:
         The CM vector
     """
 
+<<<<<<< HEAD
     weights: Union[List[float], ndarray] = [ELEMENT_WEIGHTS[x] for x in atoms]
     weights = np.asarray(weights)
     center_of_mass: ndarray = np.average(V, axis=0, weights=weights)
+=======
+    weights: Union[List[float], NDArray] = [ELEMENT_WEIGHTS[x] for x in atoms]
+    weights = np.asarray(weights)
+    center_of_mass: NDArray = np.average(V, axis=0, weights=weights)
+>>>>>>> master
 
     return center_of_mass
 
 
+<<<<<<< HEAD
 def get_inertia_tensor(atoms: ndarray, V: ndarray) -> ndarray:
+=======
+def get_inertia_tensor(atoms: NDArray, V: NDArray) -> NDArray:
+>>>>>>> master
     """
     Get the tensor of intertia of V.
     ----------
@@ -1371,7 +1572,11 @@ def get_inertia_tensor(atoms: ndarray, V: ndarray) -> ndarray:
     return np.array([[Ixx, Ixy, Ixz], [Ixy, Iyy, Iyz], [Ixz, Iyz, Izz]])
 
 
+<<<<<<< HEAD
 def get_principal_axis(atoms: ndarray, V: ndarray) -> ndarray:
+=======
+def get_principal_axis(atoms: NDArray, V: NDArray) -> NDArray:
+>>>>>>> master
     """
     Get the molecule's principal axis.
     ----------
@@ -1389,12 +1594,20 @@ def get_principal_axis(atoms: ndarray, V: ndarray) -> ndarray:
 
     eigval, eigvec = np.linalg.eig(inertia)
 
+<<<<<<< HEAD
     principal_axis: ndarray = eigvec[np.argmax(eigval)]
+=======
+    principal_axis: NDArray = eigvec[np.argmax(eigval)]
+>>>>>>> master
 
     return principal_axis
 
 
+<<<<<<< HEAD
 def set_coordinates(atoms: ndarray, V: ndarray, title: str = "", decimals: int = 8) -> str:
+=======
+def set_coordinates(atoms: NDArray, V: NDArray, title: str = "", decimals: int = 8) -> str:
+>>>>>>> master
     """
     Print coordinates V with corresponding atoms to stdout in XYZ format.
     Parameters
@@ -1430,8 +1643,13 @@ def set_coordinates(atoms: ndarray, V: ndarray, title: str = "", decimals: int =
 
 
 def get_coordinates(
+<<<<<<< HEAD
     filename: Path, fmt: str, is_gzip: bool = False, return_atoms_as_int: bool = False
 ) -> Tuple[ndarray, ndarray]:
+=======
+    filename: str, fmt: str, is_gzip: bool = False, return_atoms_as_int: bool = False
+) -> Tuple[NDArray, NDArray]:
+>>>>>>> master
     """
     Get coordinates from filename in format fmt. Supports XYZ and PDB.
     Parameters
@@ -1461,7 +1679,11 @@ def get_coordinates(
     return val
 
 
+<<<<<<< HEAD
 def get_coordinates_pdb(filename: Path, is_gzip: bool = False) -> Tuple[ndarray, ndarray]:
+=======
+def get_coordinates_pdb(filename: str, is_gzip: bool = False) -> Tuple[NDArray, NDArray]:
+>>>>>>> master
     """
     Get coordinates from the first chain in a pdb file
     and return a vectorset with all the coordinates.
@@ -1487,15 +1709,23 @@ def get_coordinates_pdb(filename: Path, is_gzip: bool = False) -> Tuple[ndarray,
     # above column indices as a fallback.
 
     x_column: Optional[int] = None
+<<<<<<< HEAD
     V: Union[List[ndarray], ndarray] = list()
     assert isinstance(V, list)
+=======
+    V: Union[List[int], NDArray] = list()
+>>>>>>> master
 
     # Same with atoms and atom naming.
     # The most robust way to do this is probably
     # to assume that the atomtype is given in column 3.
 
+<<<<<<< HEAD
     atoms: Union[List[int], ndarray] = list()
     assert isinstance(atoms, list)
+=======
+    atoms: Union[List[int], NDArray] = list()
+>>>>>>> master
     openfunc: Any
 
     if is_gzip:
@@ -1510,7 +1740,7 @@ def get_coordinates_pdb(filename: Path, is_gzip: bool = False) -> Tuple[ndarray,
         for line in lines:
             if line.startswith("TER") or line.startswith("END"):
                 break
-            if line.startswith("ATOM"):
+            if line.startswith("ATOM") or line.startswith("HETATM"):
                 tokens = line.split()
                 # Try to get the atomtype
                 try:
@@ -1567,15 +1797,23 @@ def get_coordinates_pdb(filename: Path, is_gzip: bool = False) -> Tuple[ndarray,
 
     # TODO Convert to int atoms
 
+    # TODO Convert to int atoms
+
     assert V.shape[0] == atoms.size
 
     return atoms, V
 
 
 def get_coordinates_xyz(
+<<<<<<< HEAD
     filename: Path,
     is_gzip: bool = False,
 ) -> Tuple[ndarray, ndarray]:
+=======
+    filename: str,
+    is_gzip: bool = False,
+) -> Tuple[NDArray, NDArray]:
+>>>>>>> master
     """
     Get coordinates from filename and return a vectorset with all the
     coordinates, in XYZ format.
@@ -1658,14 +1896,22 @@ def get_coordinates_xyz(
         # Correct atom spelling
         atoms = [atom.capitalize() for atom in atoms]
 
+<<<<<<< HEAD
     atoms_ = [int_atom(atom) for atom in atoms]
+=======
+    atoms = [int_atom(atom) for atom in atoms]
+>>>>>>> master
 
     atoms = np.array(atoms_)
     V = np.array(V)
     return atoms, V
 
 
+<<<<<<< HEAD
 def parse_arguments(arguments: Optional[Union[str, List[str]]] = None) -> argparse.Namespace:
+=======
+def parse_arguments(arguments: Optional[str] = None) -> argparse.Namespace:
+>>>>>>> master
 
     description = __doc__
 
