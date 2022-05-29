@@ -1,3 +1,4 @@
+# flake8: noqa
 from . import calculate_rmsd
 from .calculate_rmsd import *
 from .calculate_rmsd import __doc__, __version__

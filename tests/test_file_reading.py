@@ -7,6 +7,16 @@ from context import RESOURCE_PATH
 import rmsd
 
 
+def test_get_coordinates_pdb_hetatm():
+
+    filename = pathlib.Path(RESOURCE_PATH) / "issue88" / "native.pdb"
+    atoms, _ = rmsd.get_coordinates_pdb(filename)
+
+    assert len(atoms)
+    assert atoms[0] == "C"
+    assert atoms[-1] == "C"
+
+
 def test_get_coordinates_pdb():
 
     filename = pathlib.PurePath(RESOURCE_PATH, "ci2_1.pdb")
