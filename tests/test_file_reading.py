@@ -10,7 +10,7 @@ import rmsd
 
 def test_get_coordinates_pdb_hetatm() -> None:
 
-    filename = pathlib.Path(RESOURCE_PATH) / "issue88" / "native.pdb"
+    filename = Path(RESOURCE_PATH) / "issue88" / "native.pdb"
     atoms, _ = rmsd.get_coordinates_pdb(filename)
 
     assert len(atoms)
@@ -24,12 +24,6 @@ def test_get_coordinates_pdb() -> None:
     atoms, coords = rmsd.get_coordinates_pdb(filename)
     assert "N" == atoms[0]
     assert [-7.173, -13.891, -6.266] == coords[0].tolist()
-
-
-def test_get_coordinates_wrong():
-    filename = pathlib.PurePath(RESOURCE_PATH, "ci2_1.pdb")
-    with pytest.raises(ValueError):
-        atoms, coords = rmsd.get_coordinates(filename, "qqq")
 
 
 def test_get_coordinates_wrong() -> None:
