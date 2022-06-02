@@ -386,9 +386,7 @@ def rmsd(V: ndarray, W: ndarray) -> float:
         Root-mean-square deviation between the two vectors
     """
     diff = V - W
-    diff *= diff
-    rmsd_: float = np.sqrt(diff.mean())
-    return rmsd_
+    return np.sqrt((diff * diff).sum() / V.shape[0])
 
 
 def kabsch_rmsd(
@@ -1230,11 +1228,14 @@ def check_reflections(
 
     """
 
+    if reorder_method is None:
+        assert (p_atoms == q_atoms).all(), "No reorder method selected, but atoms are not ordered"
+
     min_rmsd = np.inf
     min_swap: ndarray
     min_reflection: ndarray
-    min_review: ndarray
-    tmp_review: ndarray
+    min_review: ndarray = np.array(range(len(p_atoms)))
+    tmp_review: ndarray = min_review
     swap_mask = [1, -1, -1, 1, -1, 1]
     reflection_mask = [1, -1, -1, -1, 1, 1, 1, -1]
 
@@ -1456,12 +1457,14 @@ def get_coordinates(
     else:
         raise ValueError("Could not recognize file format: {:s}".format(fmt))
 
-    val = get_func(filename, is_gzip=is_gzip)
+    val = get_func(filename, is_gzip=is_gzip, return_atoms_as_int=return_atoms_as_int)
 
     return val
 
 
-def get_coordinates_pdb(filename: Path, is_gzip: bool = False) -> Tuple[ndarray, ndarray]:
+def get_coordinates_pdb(
+    filename: Path, is_gzip: bool = False, return_atoms_as_int: bool = False
+) -> Tuple[ndarray, ndarray]:
     """
     Get coordinates from the first chain in a pdb file
     and return a vectorset with all the coordinates.
@@ -1558,17 +1561,14 @@ def get_coordinates_pdb(filename: Path, is_gzip: bool = False) -> Tuple[ndarray,
                         msg = f"error: Parsing input for the following line \n{line}"
                         exit(msg)
 
-    atoms = [int_atom(str(atom)) for atom in atoms]
+    if return_atoms_as_int:
+        atoms = [int_atom(str(atom)) for atom in atoms]
 
     V = np.asarray(V)
     assert isinstance(V, ndarray)
+
     atoms = np.asarray(atoms)
     assert isinstance(atoms, ndarray)
-
-    # TODO Convert to int atoms
-
-    # TODO Convert to int atoms
-
     assert V.shape[0] == atoms.size
 
     return atoms, V
@@ -1577,6 +1577,7 @@ def get_coordinates_pdb(filename: Path, is_gzip: bool = False) -> Tuple[ndarray,
 def get_coordinates_xyz(
     filename: Path,
     is_gzip: bool = False,
+    return_atoms_as_int: bool = False,
 ) -> Tuple[ndarray, ndarray]:
     """
     Get coordinates from filename and return a vectorset with all the
@@ -1660,9 +1661,12 @@ def get_coordinates_xyz(
         # Correct atom spelling
         atoms = [atom.capitalize() for atom in atoms]
 
-    atoms_ = [int_atom(atom) for atom in atoms]
+    if return_atoms_as_int:
+        atoms_ = [int_atom(atom) for atom in atoms]
+        atoms = np.array(atoms_)
+    else:
+        atoms = np.array(atoms)
 
-    atoms = np.array(atoms_)
     V = np.array(V)
     return atoms, V
 

@@ -85,7 +85,9 @@ def test_reflections_reorder() -> None:
     q_coord = q_coord[review]
     q_atoms = p_atoms[review]
 
-    min_rmsd, _, _, _ = rmsd.check_reflections(p_atoms, q_atoms, p_coord, q_coord)
+    min_rmsd, _, _, _ = rmsd.check_reflections(
+        p_atoms, q_atoms, p_coord, q_coord, reorder_method=rmsd.reorder_hungarian
+    )
 
     assert np.isclose(min_rmsd, 0.0, atol=1e-6)
 

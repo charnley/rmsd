@@ -7,6 +7,8 @@ def test_reorder_inertia_hungarian() -> None:
 
     # coordinates of scrambled and rotated butane
     atoms = np.array(["C", "C", "C", "C", "H", "H", "H", "H", "H", "H", "H", "H", "H", "H"])
+    atoms_ = [rmsd.int_atom(atom) for atom in atoms]
+    atoms = np.array(atoms_)
 
     p_coord = np.array(
         [
