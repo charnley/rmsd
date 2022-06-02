@@ -2,7 +2,7 @@
 
 import os
 
-import setuptools
+import setuptools  # type: ignore
 
 __version__ = "1.4"
 

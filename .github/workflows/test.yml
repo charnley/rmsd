@@ -4,35 +4,33 @@ name: Test Python package
 on:
   push:
     branches:
-      - 'master'
-      - 'dev'
+      - '**'
   pull_request:
     branches: [ master ]
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
+  test:
+    name: Testing
+    runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        shell: bash -l {0}
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
-
+        python-version: [3.6, 3.7, 3.8, 3.9]
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if test -f requirements.txt; then pip install -r requirements.txt; fi
-        if test -f requirements.dev.txt; then pip install -r requirements.dev.txt; fi
-        python -m pip install git+https://github.com/qmlcode/qml@develop
-        python -m pip install pre-commit
-    - name: Test format
-      run: |
-        pre-commit run --all-files
-    - name: Test with pytest
-      run: |
-        make test
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: rmsd-dev
+          environment-file: environment.yml
+          python-version: ${{ matrix.python-version }}
+      - run: |
+          ls
+          pwd
+          which python
+          conda info
+      - run: |
+          make test
+      - run: |
+          pre-commit run --all-files
