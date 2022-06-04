@@ -1255,7 +1255,6 @@ def check_reflections(
             # Reorder
             if reorder_method is not None:
                 tmp_review = reorder_method(p_atoms, tmp_atoms, p_coord, tmp_coord)
-
                 tmp_coord = tmp_coord[tmp_review]
                 tmp_atoms = tmp_atoms[tmp_review]
 
@@ -1574,6 +1573,74 @@ def get_coordinates_pdb(
     return atoms, V
 
 
+def get_coordinates_xyz_lines(
+    lines: List[str], return_atoms_as_int: bool = False
+) -> Tuple[ndarray, ndarray]:
+
+    V: Union[List[ndarray], ndarray] = list()
+    atoms: Union[List[str], ndarray] = list()
+    n_atoms = 0
+
+    assert isinstance(V, list)
+    assert isinstance(atoms, list)
+
+    # Read the first line to obtain the number of atoms to read
+    try:
+        n_atoms = int(lines[0])
+    except ValueError:
+        exit("error: Could not obtain the number of atoms in the .xyz file.")
+
+    # Skip the title line
+    # Use the number of atoms to not read beyond the end of a file
+    for lines_read, line in enumerate(lines[2:]):
+
+        line = line.strip()
+
+        if lines_read == n_atoms:
+            break
+
+        values = line.split()
+
+        if len(values) < 4:
+            atom = re.findall(r"[a-zA-Z]+", line)[0]
+            atom = atom.upper()
+            numbers = re.findall(r"[-]?\d+\.\d*(?:[Ee][-\+]\d+)?", line)
+            numbers = [float(number) for number in numbers]
+        else:
+            atom = values[0]
+            numbers = [float(number) for number in values[1:]]
+
+        # The numbers are not valid unless we obtain exacly three
+        if len(numbers) >= 3:
+            V.append(np.array(numbers)[:3])
+            atoms.append(atom)
+        else:
+            msg = (
+                f"Reading the .xyz file failed in line {lines_read + 2}."
+                "Please check the format."
+            )
+            exit(msg)
+
+    try:
+        # I've seen examples where XYZ are written with integer atoms types
+        atoms_ = [int(atom) for atom in atoms]
+        atoms = [str_atom(atom) for atom in atoms_]
+
+    except ValueError:
+        # Correct atom spelling
+        atoms = [atom.capitalize() for atom in atoms]
+
+    if return_atoms_as_int:
+        atoms_ = [int_atom(atom) for atom in atoms]
+        atoms = np.array(atoms_)
+    else:
+        atoms = np.array(atoms)
+
+    V = np.array(V)
+
+    return atoms, V
+
+
 def get_coordinates_xyz(
     filename: Path,
     is_gzip: bool = False,
@@ -1605,69 +1672,11 @@ def get_coordinates_xyz(
         openfunc = open
         openarg = "r"
 
-    f = openfunc(filename, openarg)
-    V: Union[List[ndarray], ndarray] = list()
-    atoms: Union[List[str], ndarray] = list()
-    n_atoms = 0
+    with openfunc(filename, openarg) as f:
+        lines = f.readlines()
 
-    assert isinstance(V, list)
-    assert isinstance(atoms, list)
+    atoms, V = get_coordinates_xyz_lines(lines, return_atoms_as_int=return_atoms_as_int)
 
-    # Read the first line to obtain the number of atoms to read
-    try:
-        n_atoms = int(f.readline())
-    except ValueError:
-        exit("error: Could not obtain the number of atoms in the .xyz file.")
-
-    # Skip the title line
-    f.readline()
-
-    # Use the number of atoms to not read beyond the end of a file
-    for lines_read, line in enumerate(f):
-
-        if lines_read == n_atoms:
-            break
-
-        values = line.split()
-
-        if len(values) < 4:
-            atom = re.findall(r"[a-zA-Z]+", line)[0]
-            atom = atom.upper()
-            numbers = re.findall(r"[-]?\d+\.\d*(?:[Ee][-\+]\d+)?", line)
-            numbers = [float(number) for number in numbers]
-        else:
-            atom = values[0]
-            numbers = [float(number) for number in values[1:]]
-
-        # The numbers are not valid unless we obtain exacly three
-        if len(numbers) >= 3:
-            V.append(np.array(numbers)[:3])
-            atoms.append(atom)
-        else:
-            msg = (
-                f"Reading the .xyz file failed in line {lines_read + 2}."
-                "Please check the format."
-            )
-            exit(msg)
-
-    f.close()
-
-    try:
-        # I've seen examples where XYZ are written with integer atoms types
-        atoms_ = [int(atom) for atom in atoms]
-        atoms = [str_atom(atom) for atom in atoms_]
-
-    except ValueError:
-        # Correct atom spelling
-        atoms = [atom.capitalize() for atom in atoms]
-
-    if return_atoms_as_int:
-        atoms_ = [int_atom(atom) for atom in atoms]
-        atoms = np.array(atoms_)
-    else:
-        atoms = np.array(atoms)
-
-    V = np.array(V)
     return atoms, V
 
 
@@ -1870,7 +1879,7 @@ See https://github.com/charnley/rmsd for citation information
     return args
 
 
-def main(args: Optional[str] = None) -> None:
+def main(args: Optional[List[str]] = None) -> None:
 
     # Parse arguments
     settings = parse_arguments(args)
@@ -1941,13 +1950,12 @@ https://github.com/charnley/rmsd for further examples.
         q_atoms = copy.deepcopy(q_all_atoms)
 
     else:
+        assert p_view is not None
+        assert q_view is not None
         p_coord = copy.deepcopy(p_all[p_view])
         q_coord = copy.deepcopy(q_all[q_view])
         p_atoms = copy.deepcopy(p_all_atoms[p_view])
         q_atoms = copy.deepcopy(q_all_atoms[q_view])
-
-    assert p_view is not None
-    assert q_view is not None
 
     # Recenter to centroid
     p_cent = centroid(p_coord)
@@ -1959,17 +1967,15 @@ https://github.com/charnley/rmsd for further examples.
     reorder_method: Optional[ReorderCallable]
 
     # set rotation method
-    if settings.rotation.lower() == METHOD_KABSCH:
+    rotation_method = None
+    if settings.rotation == METHOD_KABSCH:
         rotation_method = kabsch_rmsd
-    elif settings.rotation.lower() == METHOD_QUATERNION:
+    elif settings.rotation == METHOD_QUATERNION:
         rotation_method = quaternion_rmsd
-    else:
-        rotation_method = None
 
     # set reorder method
-    if not settings.reorder:
-        reorder_method = None
-    elif settings.reorder_method == REORDER_QML:
+    reorder_method = None
+    if settings.reorder_method == REORDER_QML:
         reorder_method = reorder_similarity
     elif settings.reorder_method == REORDER_HUNGARIAN:
         reorder_method = reorder_hungarian
@@ -2030,6 +2036,11 @@ https://github.com/charnley/rmsd for further examples.
     # print result
     if settings.output:
 
+        # print(q_coord)
+        # print(q_swap)
+        # print(q_reflection)
+        # print(q_review)
+
         if q_swap is not None:
             q_coord = q_coord[:, q_swap]
 
@@ -2038,29 +2049,23 @@ https://github.com/charnley/rmsd for further examples.
 
         q_coord -= centroid(q_coord)
 
-        if settings.reorder:
-
-            if q_review.shape[0] != q_all.shape[0]:
-                print("error: Reorder length error. Full atom list needed for --print")
-                sys.exit()
-
+        if q_review is not None:
             q_coord = q_coord[q_review]
             q_all_atoms = q_all_atoms[q_review]
 
-        # Get rotation matrix
+        # Rotate q coordinates
         # TODO Should actually follow rotation method
-        U = kabsch(q_coord, p_coord)
-
-        # recenter all atoms and rotate all atoms
-        q_coord = np.dot(q_coord, U)
+        q_coord = kabsch_rotate(q_coord, p_coord)
 
         # center q on p's original coordinates
         q_coord += p_cent
 
         # done and done
-        xyz = set_coordinates(q_all_atoms, q_all, title=f"{settings.structure_b} - modified")
+        xyz = set_coordinates(q_all_atoms, q_coord, title=f"{settings.structure_b} - modified")
         print(xyz)
 
+        # print(kabsch_rmsd(q_coord, p_coord, translate=True))
+        # assert False
     else:
 
         if result_rmsd:
