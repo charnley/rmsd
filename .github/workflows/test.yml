@@ -26,6 +26,8 @@ jobs:
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
       - run: |
+          pip install git+https://github.com/qmlcode/qml@develop
+      - run: |
           ls
           pwd
           which python
