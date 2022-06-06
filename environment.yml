@@ -5,7 +5,7 @@ channels:
 dependencies:
   - matplotlib
   - mypy
-  - numpy >= 1.20
+  - numpy
   - pre-commit
   - pylint
   - pytest
