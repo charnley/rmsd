@@ -1911,11 +1911,11 @@ https://github.com/charnley/rmsd for further examples.
         sys.exit()
 
     # Typing
-    index: Union[Set[int], List[int]]
+    index: Union[Set[int], List[int], ndarray]
 
     # Set local view
-    p_view = None
-    q_view = None
+    p_view: Optional[ndarray] = None
+    q_view: Optional[ndarray] = None
 
     if settings.ignore_hydrogen:
         assert type(p_all_atoms[0]) != str
@@ -1924,8 +1924,7 @@ https://github.com/charnley/rmsd for further examples.
         q_view = np.where(q_all_atoms != 1)
 
     elif settings.remove_idx:
-        index = set(range(p_size)) - set(settings.remove_idx)
-        index = list(index)
+        index = np.array(list(set(range(p_size)) - set(settings.remove_idx)))
         p_view = index
         q_view = index
 
