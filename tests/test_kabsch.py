@@ -4,6 +4,19 @@ from context import RESOURCE_PATH
 import rmsd
 
 
+def test_kabash_algorith_rmsd() -> None:
+
+    filename_1 = RESOURCE_PATH / "ci2_1.pdb"
+    filename_2 = RESOURCE_PATH / "ci2_2.pdb"
+
+    _, p_coord = rmsd.get_coordinates(filename_1, "pdb")
+    _, q_coord = rmsd.get_coordinates(filename_2, "pdb")
+
+    value = rmsd.kabsch_rmsd(p_coord, q_coord, translate=True)
+
+    np.testing.assert_almost_equal(value, 11.7768, decimal=4)
+
+
 def test_kabash_algorith_pdb() -> None:
 
     filename_1 = RESOURCE_PATH / "ci2_1.pdb"

@@ -26,8 +26,8 @@ from typing_extensions import Protocol
 
 try:
     import qml  # type: ignore
-except ImportError:
-    qml = None
+except ImportError:  # pragma: no cover
+    qml = None  # pragma: no cover
 
 
 METHOD_KABSCH = "kabsch"
@@ -317,7 +317,7 @@ class ReorderCallable(Protocol):
         Return:
             ndarray dtype=int  # Array of indices
         """
-        ...
+        ...  # pragma: no cover
 
 
 class RotationCallable(Protocol):
@@ -333,7 +333,7 @@ class RotationCallable(Protocol):
         return:
             RMSD after rotation
         """
-        ...
+        ...  # pragma: no cover
 
 
 def str_atom(atom: int) -> str:
@@ -860,7 +860,7 @@ def reorder_similarity(
     """
 
     if qml is None:
-        raise ImportError(
+        raise ImportError(  # pragma: no cover
             "QML is not installed. Package is avaliable from"
             "\n github.com/qmlcode/qml"
             "\n pip install qml"
@@ -2080,4 +2080,4 @@ https://github.com/charnley/rmsd for further examples.
 
 
 if __name__ == "__main__":
-    main()
+    main()  # pragma: no cover

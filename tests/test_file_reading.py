@@ -57,6 +57,26 @@ def test_get_coordinates() -> None:
 
 def test_get_coordinates_gzip(tmp_path: Path) -> None:
 
+    filename = RESOURCE_PATH / "ci2_1.pdb"
+    with open(filename, "r") as f:
+        content = f.read()
+
+    content_byte = content.encode()
+
+    filename_gzip = tmp_path / "molecule.pdb.gz"
+
+    with gzip.open(filename_gzip, "wb") as f:  # type: ignore
+        f.write(content_byte)  # type: ignore
+
+    atoms, coords = rmsd.get_coordinates(
+        filename_gzip, "pdb", is_gzip=True, return_atoms_as_int=True
+    )
+    assert 7 == atoms[0]
+    assert [-7.173, -13.891, -6.266] == coords[0].tolist()
+
+
+def test_get_coordinates_gzip_pdb(tmp_path: Path) -> None:
+
     filename = RESOURCE_PATH / "ethane.xyz"
     with open(filename, "r") as f:
         content = f.read()
