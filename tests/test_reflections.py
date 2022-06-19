@@ -56,7 +56,6 @@ def test_reflections_norotation() -> None:
         p_coord,
         q_coord,
         reorder_method=None,
-        rotation_method=None,
     )
 
     assert np.isclose(min_rmsd, 0.0, atol=1e-6)
@@ -158,7 +157,7 @@ def test_reflection_issue_78():
     coordinates_b -= rmsd.centroid(coordinates_b)
 
     reorder_method = None
-    rotation_method = rmsd.kabsch_rmsd
+    rmsd_method = rmsd.kabsch_rmsd
 
     print(np.sum(coordinates_a))
     print(np.sum(coordinates_b))
@@ -176,7 +175,7 @@ def test_reflection_issue_78():
         coordinates_a,
         coordinates_b,
         reorder_method=reorder_method,
-        rotation_method=rotation_method,
+        rmsd_method=rmsd_method,
     )
 
     print(result_rmsd)

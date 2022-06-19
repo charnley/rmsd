@@ -320,7 +320,7 @@ class ReorderCallable(Protocol):
         ...  # pragma: no cover
 
 
-class RotationCallable(Protocol):
+class RmsdCallable(Protocol):
     def __call__(
         self,
         P: ndarray,
@@ -369,7 +369,7 @@ def int_atom(atom: str) -> int:
     return NAMES_ELEMENT[atom]
 
 
-def rmsd(V: ndarray, W: ndarray) -> float:
+def rmsd(P: ndarray, Q: ndarray, **kwargs) -> float:
     """
     Calculate Root-mean-square deviation from two sets of vectors V and W.
 
@@ -385,8 +385,8 @@ def rmsd(V: ndarray, W: ndarray) -> float:
     rmsd : float
         Root-mean-square deviation between the two vectors
     """
-    diff = V - W
-    return np.sqrt((diff * diff).sum() / V.shape[0])
+    diff = P - Q
+    return np.sqrt((diff * diff).sum() / P.shape[0])
 
 
 def kabsch_rmsd(
@@ -1200,7 +1200,7 @@ def check_reflections(
     p_coord: ndarray,
     q_coord: ndarray,
     reorder_method: Optional[ReorderCallable] = None,
-    rotation_method: Optional[RotationCallable] = None,
+    rmsd_method: RmsdCallable = kabsch_rmsd,
     keep_stereo: bool = False,
 ) -> Tuple[float, ndarray, ndarray, ndarray]:
     """
@@ -1259,10 +1259,7 @@ def check_reflections(
                 tmp_atoms = tmp_atoms[tmp_review]
 
             # Rotation
-            if rotation_method is None:
-                this_rmsd = rmsd(p_coord, tmp_coord)
-            else:
-                this_rmsd = rotation_method(p_coord, tmp_coord)
+            this_rmsd = rmsd_method(p_coord, tmp_coord)
 
             if this_rmsd < min_rmsd:
                 min_rmsd = this_rmsd
@@ -1962,15 +1959,16 @@ https://github.com/charnley/rmsd for further examples.
     p_coord -= p_cent
     q_coord -= q_cent
 
-    rotation_method: Optional[RotationCallable]
+    rmsd_method: RmsdCallable
     reorder_method: Optional[ReorderCallable]
 
     # set rotation method
-    rotation_method = None
     if settings.rotation == METHOD_KABSCH:
-        rotation_method = kabsch_rmsd
+        rmsd_method = kabsch_rmsd
     elif settings.rotation == METHOD_QUATERNION:
-        rotation_method = quaternion_rmsd
+        rmsd_method = quaternion_rmsd
+    else:
+        rmsd_method = rmsd
 
     # set reorder method
     reorder_method = None
@@ -1981,7 +1979,7 @@ https://github.com/charnley/rmsd for further examples.
     elif settings.reorder_method == REORDER_INERTIA_HUNGARIAN:
         reorder_method = reorder_inertia_hungarian
     elif settings.reorder_method == REORDER_BRUTE:
-        reorder_method = reorder_brute
+        reorder_method = reorder_brute  # pragma: no cover
     elif settings.reorder_method == REORDER_DISTANCE:
         reorder_method = reorder_distance
 
@@ -2001,7 +1999,7 @@ https://github.com/charnley/rmsd for further examples.
             p_coord,
             q_coord,
             reorder_method=reorder_method,
-            rotation_method=rotation_method,
+            rmsd_method=rmsd_method,
         )
 
     elif settings.use_reflections_keep_stereo:
@@ -2012,7 +2010,7 @@ https://github.com/charnley/rmsd for further examples.
             p_coord,
             q_coord,
             reorder_method=reorder_method,
-            rotation_method=rotation_method,
+            rmsd_method=rmsd_method,
             keep_stereo=True,
         )
 
@@ -2024,13 +2022,9 @@ https://github.com/charnley/rmsd for further examples.
         q_coord = q_coord[q_review]
         q_atoms = q_atoms[q_review]
 
-        if not all(p_atoms == q_atoms):
-            print(
-                "error: Structure not aligned. "
-                "Please submit bug report at "
-                "http://github.com/charnley/rmsd"
-            )
-            sys.exit()
+        assert all(
+            p_atoms == q_atoms
+        ), "error: Structure not aligned. Please submit bug report at http://github.com/charnley/rmsd"
 
     # print result
     if settings.output:
@@ -2067,14 +2061,8 @@ https://github.com/charnley/rmsd for further examples.
         # assert False
     else:
 
-        if result_rmsd:
-            pass
-
-        elif rotation_method is None:
-            result_rmsd = rmsd(p_coord, q_coord)
-
-        else:
-            result_rmsd = rotation_method(p_coord, q_coord)
+        if not result_rmsd:
+            result_rmsd = rmsd_method(p_coord, q_coord)
 
         print("{0}".format(result_rmsd))
 

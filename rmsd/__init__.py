@@ -31,4 +31,4 @@ __all__ = [
 ]
 
 if __name__ == "__main__":
-    calculate_rmsd.main()
+    calculate_rmsd.main()  # pragma: no cover

@@ -3,6 +3,14 @@ import pytest
 from rmsd import calculate_rmsd
 
 
+def test_formats() -> None:
+
+    args_ = "filename.xyz.gz filename2.xyz.gz".split()
+    args = calculate_rmsd.parse_arguments(args_)
+
+    assert args.format_is_gzip
+
+
 def test_legal_arguments() -> None:
 
     args_ = "--rotation kabsch --ignore-hydrogen FILE_A FILE_B".split()
@@ -15,19 +23,27 @@ def test_legal_arguments() -> None:
 
 def test_illegal_arguments() -> None:
 
-    args = [
-        "--rotation kabsch",
-        "--reorder",
-        "--print",
-        "--ignore-hydrogen",
-        "FILE_A",
-        "FILE_B",
-    ]
+    with pytest.raises(SystemExit):
+        args = calculate_rmsd.parse_arguments(
+            "--reorder --ignore-hydrogen --print filea fileb".split()
+        )
+        print(args)
 
-    with pytest.raises(SystemExit) as exception:
-        _ = calculate_rmsd.parse_arguments(args)
+    with pytest.raises(SystemExit):
+        args = calculate_rmsd.parse_arguments(
+            "--print --ignore-hydrogen --use-reflections filea fileb".split()
+        )
+        print(args)
 
-    assert exception.type == SystemExit
+    with pytest.raises(SystemExit):
+        args = calculate_rmsd.parse_arguments("--rotation do-not-exists filea fileb".split())
+        print(args)
+
+    with pytest.raises(SystemExit):
+        args = calculate_rmsd.parse_arguments(
+            "--reorder --reorder-method do-not-exists filea fileb".split()
+        )
+        print(args)
 
 
 def test_illegal_reflection() -> None:
