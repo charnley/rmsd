@@ -119,7 +119,7 @@ def test_reorder_methods() -> None:
     filename_a = RESOURCE_PATH / "CHEMBL3039407.xyz"
     filename_b = RESOURCE_PATH / "CHEMBL3039407_order.xyz"
 
-    methods = ["hungarian", "inertia-hungarian", "qml", "distance"]
+    methods = ["hungarian", "inertia-hungarian", "distance"]
 
     for method in methods:
         rmsdlib.main(f"--reorder --reorder-method {method} {filename_a} {filename_b}".split())
