@@ -5,7 +5,7 @@ import numpy as np
 import rmsd
 
 
-def test_reorder_distance():
+def test_reorder_distance() -> None:
 
     N = 5
     atoms = np.array(["H"] * N)
@@ -21,7 +21,7 @@ def test_reorder_distance():
     assert p_coord.tolist() == q_coord[review].tolist()
 
 
-def test_reorder_brute():
+def test_reorder_brute() -> None:
     N = 5
     atoms = np.array(["H"] * N)
     p_coord = np.arange(N * 3)
@@ -35,11 +35,12 @@ def test_reorder_brute():
     assert p_coord.tolist() == q_coord[review].tolist()
 
 
-def test_reorder_brute_ch():
+def test_reorder_brute_ch() -> None:
 
     N = 6
-    p_atoms = ["C"] * 3 + ["H"] * 3
-    p_atoms = np.array(p_atoms)
+    p_atoms_str = ["C"] * 3 + ["H"] * 3
+    p_atoms_int = [rmsd.int_atom(atom) for atom in p_atoms_str]
+    p_atoms = np.array(p_atoms_int)
     p_coord = np.arange(N * 3)
     p_coord = p_coord.reshape((N, 3))
 
@@ -60,7 +61,7 @@ def test_reorder_brute_ch():
     assert p_atoms.tolist() == q_atoms[review].tolist()
 
 
-def test_reorder_hungarian():
+def test_reorder_hungarian() -> None:
 
     N = 5
     atoms = np.array(["H"] * N)
@@ -75,10 +76,12 @@ def test_reorder_hungarian():
     assert p_coord.tolist() == q_coord[review].tolist()
 
 
-def test_reorder_inertia_hungarian():
+def test_reorder_inertia_hungarian() -> None:
 
     # coordinates of scrambled and rotated butane
     atoms = np.array(["C", "C", "C", "C", "H", "H", "H", "H", "H", "H", "H", "H", "H", "H"])
+    atoms_ = [rmsd.int_atom(atom) for atom in atoms]
+    atoms = np.array(atoms_)
 
     p_coord = np.array(
         [

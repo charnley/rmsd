@@ -1,4 +1,9 @@
-python = python
+
+env:
+	conda env create -f ./environment.yml -p ./env --quiet
 
 test:
-	${python} -m pytest -vrs tests
+	python -m pytest -vrs tests
+
+test-cov-html:
+	python -m pytest -vrs --cov=rmsd --cov-report html tests

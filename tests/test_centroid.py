@@ -3,7 +3,7 @@ import numpy as np
 import rmsd
 
 
-def test_centroid():
+def test_centroid() -> None:
     a1 = np.array([-19.658, 17.18, 25.163], dtype=float)
     a2 = np.array([-20.573, 18.059, 25.88], dtype=float)
     a3 = np.array([-22.018, 17.551, 26.0], dtype=float)

@@ -1,5 +1,4 @@
 import copy
-import pathlib
 
 import numpy as np
 import pytest
@@ -10,11 +9,11 @@ import rmsd
 qml = pytest.importorskip("qml")
 
 
-def test_reorder_qml():
+def test_reorder_qml() -> None:
 
-    filename_1 = pathlib.PurePath(RESOURCE_PATH, "CHEMBL3039407.xyz")
+    filename_1 = RESOURCE_PATH / "CHEMBL3039407.xyz"
 
-    p_atoms, p_coord = rmsd.get_coordinates_xyz(filename_1)
+    p_atoms, p_coord = rmsd.get_coordinates_xyz(filename_1, return_atoms_as_int=True)
 
     # Reorder atoms
     n_atoms = len(p_atoms)
@@ -63,11 +62,11 @@ def test_reorder_qml():
     pytest.approx(0.0) == _rmsd
 
 
-def test_reorder_qml_distmat():
+def test_reorder_qml_distmat() -> None:
 
-    filename_1 = pathlib.PurePath(RESOURCE_PATH, "CHEMBL3039407.xyz")
+    filename_1 = RESOURCE_PATH / "CHEMBL3039407.xyz"
 
-    p_atoms, p_coord = rmsd.get_coordinates_xyz(filename_1)
+    p_atoms, p_coord = rmsd.get_coordinates_xyz(filename_1, return_atoms_as_int=True)
 
     # Reorder atoms
     n_atoms = len(p_atoms)

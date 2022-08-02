@@ -12,19 +12,22 @@ __version__ = "1.4"
 import argparse
 import copy
 import gzip
-import pathlib
 import re
 import sys
+from pathlib import Path
+from typing import Any, Iterator, List, Optional, Set, Tuple, Union
 
 import numpy as np
-from scipy.optimize import linear_sum_assignment
-from scipy.spatial import distance_matrix
-from scipy.spatial.distance import cdist
+from numpy import ndarray
+from scipy.optimize import linear_sum_assignment  # type: ignore
+from scipy.spatial import distance_matrix  # type: ignore
+from scipy.spatial.distance import cdist  # type: ignore
+from typing_extensions import Protocol
 
 try:
-    import qml
-except ImportError:
-    qml = None
+    import qml  # type: ignore
+except ImportError:  # pragma: no cover
+    qml = None  # pragma: no cover
 
 
 METHOD_KABSCH = "kabsch"
@@ -299,7 +302,41 @@ ELEMENT_NAMES = {
 NAMES_ELEMENT = {value: key for key, value in ELEMENT_NAMES.items()}
 
 
-def str_atom(atom):
+class ReorderCallable(Protocol):
+    def __call__(
+        self,
+        p_atoms: ndarray,
+        q_atoms: ndarray,
+        p_coord: ndarray,
+        q_coord: ndarray,
+        **kwargs: Any,
+    ) -> ndarray:
+        """
+        Protocol for a reorder callable function
+
+        Return:
+            ndarray dtype=int  # Array of indices
+        """
+        ...  # pragma: no cover
+
+
+class RmsdCallable(Protocol):
+    def __call__(
+        self,
+        P: ndarray,
+        Q: ndarray,
+        **kwargs: Any,
+    ) -> float:
+        """
+        Protocol for a rotation callable function
+
+        return:
+            RMSD after rotation
+        """
+        ...  # pragma: no cover
+
+
+def str_atom(atom: int) -> str:
     """
     Convert atom type from integer to string
 
@@ -312,11 +349,10 @@ def str_atom(atom):
     atoms : integer
 
     """
-    atom = ELEMENT_NAMES[atom]
-    return atom
+    return ELEMENT_NAMES[atom]
 
 
-def int_atom(atom):
+def int_atom(atom: str) -> int:
     """
     Convert atom type from string to integer
 
@@ -327,14 +363,13 @@ def int_atom(atom):
     Returns
     -------
     atoms : integer
-
     """
 
-    atom = atom.capitalize()
+    atom = atom.capitalize().strip()
     return NAMES_ELEMENT[atom]
 
 
-def rmsd(V, W):
+def rmsd(P: ndarray, Q: ndarray, **kwargs) -> float:
     """
     Calculate Root-mean-square deviation from two sets of vectors V and W.
 
@@ -350,12 +385,17 @@ def rmsd(V, W):
     rmsd : float
         Root-mean-square deviation between the two vectors
     """
-    diff = np.array(V) - np.array(W)
-    N = len(V)
-    return np.sqrt((diff * diff).sum() / N)
+    diff = P - Q
+    return np.sqrt((diff * diff).sum() / P.shape[0])
 
 
-def kabsch_rmsd(P, Q, W=None, translate=False):
+def kabsch_rmsd(
+    P: ndarray,
+    Q: ndarray,
+    W: Optional[ndarray] = None,
+    translate: bool = False,
+    **kwargs: Any,
+) -> float:
     """
     Rotate matrix P unto Q using Kabsch algorithm and calculate the RMSD.
     An optional vector of weights W may be provided.
@@ -388,7 +428,7 @@ def kabsch_rmsd(P, Q, W=None, translate=False):
     return rmsd(P, Q)
 
 
-def kabsch_rotate(P, Q):
+def kabsch_rotate(P: ndarray, Q: ndarray) -> ndarray:
     """
     Rotate matrix P unto matrix Q using Kabsch algorithm.
 
@@ -413,7 +453,7 @@ def kabsch_rotate(P, Q):
     return P
 
 
-def kabsch_fit(P, Q, W=None):
+def kabsch_fit(P: ndarray, Q: ndarray, W: Optional[ndarray] = None) -> ndarray:
     """
     Rotate and translate matrix P unto matrix Q using Kabsch algorithm.
     An optional vector of weights W may be provided.
@@ -435,7 +475,7 @@ def kabsch_fit(P, Q, W=None):
 
     """
     if W is not None:
-        P = kabsch_weighted_fit(P, Q, W, return_rmsd=False)
+        P, _ = kabsch_weighted_fit(P, Q, W, return_rmsd=False)
     else:
         QC = centroid(Q)
         Q = Q - QC
@@ -444,7 +484,7 @@ def kabsch_fit(P, Q, W=None):
     return P
 
 
-def kabsch(P, Q):
+def kabsch(P: ndarray, Q: ndarray) -> ndarray:
     """
     Using the Kabsch algorithm with two sets of paired point P and Q, centered
     around the centroid. Each vector set is represented as an NxD
@@ -485,12 +525,14 @@ def kabsch(P, Q):
         V[:, -1] = -V[:, -1]
 
     # Create Rotation matrix U
-    U = np.dot(V, W)
+    U: ndarray = np.dot(V, W)
 
     return U
 
 
-def kabsch_weighted(P, Q, W=None):
+def kabsch_weighted(
+    P: ndarray, Q: ndarray, W: Optional[ndarray] = None
+) -> Tuple[ndarray, ndarray, float]:
     """
     Using the Kabsch algorithm with two sets of paired point P and Q.
     Each vector set is represented as an NxD matrix, where D is the
@@ -574,7 +616,12 @@ def kabsch_weighted(P, Q, W=None):
     return U, V, rmsd_
 
 
-def kabsch_weighted_fit(P, Q, W=None, return_rmsd=False):
+def kabsch_weighted_fit(
+    P: ndarray,
+    Q: ndarray,
+    W: Optional[ndarray] = None,
+    return_rmsd: bool = False,
+) -> Tuple[ndarray, Optional[float]]:
     """
     Fit P to Q with optional weights W.
     Also returns the RMSD of the fit if return_rmsd=True.
@@ -597,15 +644,16 @@ def kabsch_weighted_fit(P, Q, W=None, return_rmsd=False):
     RMSD : float
            if the function is called with rmsd=True
     """
+    rmsd_: float
     R, T, rmsd_ = kabsch_weighted(Q, P, W)
-    PNEW = np.dot(P, R.T) + T
+    PNEW: ndarray = np.dot(P, R.T) + T
     if return_rmsd:
-        return PNEW, rmsd_
+        return (PNEW, rmsd_)
     else:
-        return PNEW
+        return (PNEW, None)
 
 
-def kabsch_weighted_rmsd(P, Q, W=None):
+def kabsch_weighted_rmsd(P: ndarray, Q: ndarray, W: Optional[ndarray] = None) -> float:
     """
     Calculate the RMSD between P and Q with optional weighhts W
 
@@ -622,11 +670,11 @@ def kabsch_weighted_rmsd(P, Q, W=None):
     -------
     RMSD : float
     """
-    R, T, w_rmsd = kabsch_weighted(P, Q, W)
+    _, _, w_rmsd = kabsch_weighted(P, Q, W)
     return w_rmsd
 
 
-def quaternion_rmsd(P, Q):
+def quaternion_rmsd(P: ndarray, Q: ndarray, **kwargs: Any) -> float:
     """
     Rotate matrix P unto Q and calculate the RMSD
     based on doi:10.1016/1049-9660(91)90036-O
@@ -647,7 +695,7 @@ def quaternion_rmsd(P, Q):
     return rmsd(P, Q)
 
 
-def quaternion_transform(r):
+def quaternion_transform(r: ndarray) -> ndarray:
     """
     Get optimal rotation
     note: translation will be zero when the centroids of each molecule are the
@@ -655,11 +703,11 @@ def quaternion_transform(r):
     """
     Wt_r = makeW(*r).T
     Q_r = makeQ(*r)
-    rot = Wt_r.dot(Q_r)[:3, :3]
+    rot: ndarray = Wt_r.dot(Q_r)[:3, :3]
     return rot
 
 
-def makeW(r1, r2, r3, r4=0):
+def makeW(r1: float, r2: float, r3: float, r4: float = 0) -> ndarray:
     """
     matrix involved in quaternion rotation
     """
@@ -674,7 +722,7 @@ def makeW(r1, r2, r3, r4=0):
     return W
 
 
-def makeQ(r1, r2, r3, r4=0):
+def makeQ(r1: float, r2: float, r3: float, r4: float = 0) -> ndarray:
     """
     matrix involved in quaternion rotation
     """
@@ -689,7 +737,7 @@ def makeQ(r1, r2, r3, r4=0):
     return Q
 
 
-def quaternion_rotate(X, Y):
+def quaternion_rotate(X: ndarray, Y: ndarray) -> ndarray:
     """
     Calculate the rotation
 
@@ -717,7 +765,7 @@ def quaternion_rotate(X, Y):
     return rot
 
 
-def centroid(X):
+def centroid(X: ndarray) -> ndarray:
     """
     Centroid is the mean position of all the points in all of the coordinate
     directions, from a vectorset X.
@@ -733,14 +781,16 @@ def centroid(X):
 
     Returns
     -------
-    C : float
+    C : ndarray
         centroid
     """
-    C = X.mean(axis=0)
+    C: ndarray = X.mean(axis=0)
     return C
 
 
-def hungarian_vectors(p_vecs, q_vecs, sigma=1e-0, use_kernel=True):
+def hungarian_vectors(
+    p_vecs: ndarray, q_vecs: ndarray, sigma: float = 1e-0, use_kernel: bool = True
+) -> ndarray:
     """
 
     Hungarian cost assignment of a similiarty molecule kernel.
@@ -772,12 +822,21 @@ def hungarian_vectors(p_vecs, q_vecs, sigma=1e-0, use_kernel=True):
 
     # Perform Hungarian analysis on distance matrix between atoms of 1st
     # structure and trial structure
+    indices_b: ndarray
+    indices_a: ndarray
     indices_a, indices_b = linear_sum_assignment(K)
 
     return indices_b
 
 
-def reorder_similarity(p_atoms, q_atoms, p_coord, q_coord, use_kernel=True):
+def reorder_similarity(
+    p_atoms: ndarray,
+    q_atoms: ndarray,
+    p_coord: ndarray,
+    q_coord: ndarray,
+    use_kernel: bool = True,
+    **kwargs: Any,
+) -> ndarray:
     """
     Re-orders the input atom list and xyz coordinates using QML similarity
     the Hungarian method for assignment.
@@ -801,17 +860,11 @@ def reorder_similarity(p_atoms, q_atoms, p_coord, q_coord, use_kernel=True):
     """
 
     if qml is None:
-        raise ImportError(
+        raise ImportError(  # pragma: no cover
             "QML is not installed. Package is avaliable from"
             "\n github.com/qmlcode/qml"
             "\n pip install qml"
         )
-
-    if isinstance(p_atoms[0], str):
-        p_atoms = [int_atom(atom) for atom in p_atoms]
-        q_atoms = [int_atom(atom) for atom in q_atoms]
-        p_atoms = np.array(p_atoms)
-        q_atoms = np.array(q_atoms)
 
     elements = np.unique(p_atoms)
     n_atoms = p_atoms.shape[0]
@@ -845,7 +898,13 @@ def reorder_similarity(p_atoms, q_atoms, p_coord, q_coord, use_kernel=True):
     return view_reorder
 
 
-def reorder_distance(p_atoms, q_atoms, p_coord, q_coord):
+def reorder_distance(
+    p_atoms: ndarray,
+    q_atoms: ndarray,
+    p_coord: ndarray,
+    q_coord: ndarray,
+    **kwargs: Any,
+) -> ndarray:
     """
     Re-orders the input atom list and xyz coordinates by atom type and then by
     distance of each atom from the centroid.
@@ -894,7 +953,7 @@ def reorder_distance(p_atoms, q_atoms, p_coord, q_coord):
     return view_reorder
 
 
-def hungarian(A, B):
+def hungarian(A: ndarray, B: ndarray) -> ndarray:
     """
     Hungarian reordering.
 
@@ -906,12 +965,20 @@ def hungarian(A, B):
 
     # Perform Hungarian analysis on distance matrix between atoms of 1st
     # structure and trial structure
+    indices_b: ndarray
+    indices_a: ndarray
     indices_a, indices_b = linear_sum_assignment(distances)
 
     return indices_b
 
 
-def reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord):
+def reorder_hungarian(
+    p_atoms: ndarray,
+    q_atoms: ndarray,
+    p_coord: ndarray,
+    q_coord: ndarray,
+    **kwargs: Any,
+) -> ndarray:
     """
     Re-orders the input atom list and xyz coordinates using the Hungarian
     method (using optimized column results)
@@ -955,7 +1022,13 @@ def reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord):
     return view_reorder
 
 
-def reorder_inertia_hungarian(p_atoms, q_atoms, p_coord, q_coord):
+def reorder_inertia_hungarian(
+    p_atoms: ndarray,
+    q_atoms: ndarray,
+    p_coord: ndarray,
+    q_coord: ndarray,
+    **kwargs: Any,
+) -> ndarray:
     """
     Align the principal intertia axis and then re-orders the input atom list
     and xyz coordinates using the Hungarian method (using optimized column
@@ -1003,7 +1076,7 @@ def reorder_inertia_hungarian(p_atoms, q_atoms, p_coord, q_coord):
         return q_review2
 
 
-def generate_permutations(elements, n):
+def generate_permutations(elements: List[int], n: int) -> Iterator[List[int]]:
     """
     Heap's algorithm for generating all n! permutations in a list
     https://en.wikipedia.org/wiki/Heap%27s_algorithm
@@ -1026,7 +1099,7 @@ def generate_permutations(elements, n):
             i += 1
 
 
-def brute_permutation(A, B):
+def brute_permutation(A: ndarray, B: ndarray) -> ndarray:
     """
     Re-orders the input atom list and xyz coordinates using the brute force
     method of permuting all rows of the input coordinates
@@ -1045,7 +1118,7 @@ def brute_permutation(A, B):
     """
 
     rmsd_min = np.inf
-    view_min = None
+    view_min: ndarray
 
     # Sets initial ordering for row indices to [0, 1, 2, ..., len(A)], used in
     # brute-force method
@@ -1066,12 +1139,18 @@ def brute_permutation(A, B):
         # RMSD is lower
         if rmsd_temp < rmsd_min:
             rmsd_min = rmsd_temp
-            view_min = copy.deepcopy(reorder_indices)
+            view_min = np.asarray(copy.deepcopy(reorder_indices))
 
     return view_min
 
 
-def reorder_brute(p_atoms, q_atoms, p_coord, q_coord):
+def reorder_brute(
+    p_atoms: ndarray,
+    q_atoms: ndarray,
+    p_coord: ndarray,
+    q_coord: ndarray,
+    **kwargs: Any,
+) -> ndarray:
     """
     Re-orders the input atom list and xyz coordinates using all permutation of
     rows (using optimized column results)
@@ -1116,14 +1195,14 @@ def reorder_brute(p_atoms, q_atoms, p_coord, q_coord):
 
 
 def check_reflections(
-    p_atoms,
-    q_atoms,
-    p_coord,
-    q_coord,
-    reorder_method=reorder_hungarian,
-    rotation_method=kabsch_rmsd,
-    keep_stereo=False,
-):
+    p_atoms: ndarray,
+    q_atoms: ndarray,
+    p_coord: ndarray,
+    q_coord: ndarray,
+    reorder_method: Optional[ReorderCallable] = None,
+    rmsd_method: RmsdCallable = kabsch_rmsd,
+    keep_stereo: bool = False,
+) -> Tuple[float, ndarray, ndarray, ndarray]:
     """
     Minimize RMSD using reflection planes for molecule P and Q
 
@@ -1149,11 +1228,14 @@ def check_reflections(
 
     """
 
+    if reorder_method is None:
+        assert (p_atoms == q_atoms).all(), "No reorder method selected, but atoms are not ordered"
+
     min_rmsd = np.inf
-    min_swap = None
-    min_reflection = None
-    min_review = None
-    tmp_review = None
+    min_swap: ndarray
+    min_reflection: ndarray
+    min_review: ndarray = np.array(range(len(p_atoms)))
+    tmp_review: ndarray = min_review
     swap_mask = [1, -1, -1, 1, -1, 1]
     reflection_mask = [1, -1, -1, -1, 1, 1, 1, -1]
 
@@ -1173,15 +1255,11 @@ def check_reflections(
             # Reorder
             if reorder_method is not None:
                 tmp_review = reorder_method(p_atoms, tmp_atoms, p_coord, tmp_coord)
-
                 tmp_coord = tmp_coord[tmp_review]
                 tmp_atoms = tmp_atoms[tmp_review]
 
             # Rotation
-            if rotation_method is None:
-                this_rmsd = rmsd(p_coord, tmp_coord)
-            else:
-                this_rmsd = rotation_method(p_coord, tmp_coord)
+            this_rmsd = rmsd_method(p_coord, tmp_coord)
 
             if this_rmsd < min_rmsd:
                 min_rmsd = this_rmsd
@@ -1189,14 +1267,12 @@ def check_reflections(
                 min_reflection = reflection
                 min_review = tmp_review
 
-    if not (p_atoms == q_atoms[min_review]).all():
-        print("error: Not aligned")
-        quit()
+    assert (p_atoms == q_atoms[min_review]).all(), "error: Not aligned"
 
     return min_rmsd, min_swap, min_reflection, min_review
 
 
-def rotation_matrix_vectors(v1, v2):
+def rotation_matrix_vectors(v1: ndarray, v2: ndarray) -> ndarray:
     """
     Returns the rotation matrix that rotates v1 onto v2
     using Rodrigues' rotation formula.
@@ -1212,6 +1288,8 @@ def rotation_matrix_vectors(v1, v2):
     output : 3x3 matrix
         Rotation matrix
     """
+
+    rot: ndarray
 
     if (v1 == v2).all():
         rot = np.eye(3)
@@ -1232,7 +1310,7 @@ def rotation_matrix_vectors(v1, v2):
     return rot
 
 
-def get_cm(atoms, V):
+def get_cm(atoms: ndarray, V: ndarray) -> ndarray:
     """
     Get the center of mass of V.
     ----------
@@ -1247,17 +1325,14 @@ def get_cm(atoms, V):
         The CM vector
     """
 
-    if isinstance(atoms[0], str):
-        atoms = [int_atom(atom) for atom in atoms]
-
-    weights = [ELEMENT_WEIGHTS[x] for x in atoms]
-
-    center_of_mass = np.average(V, axis=0, weights=weights)
+    weights: Union[List[float], ndarray] = [ELEMENT_WEIGHTS[x] for x in atoms]
+    weights = np.asarray(weights)
+    center_of_mass: ndarray = np.average(V, axis=0, weights=weights)
 
     return center_of_mass
 
 
-def get_inertia_tensor(atoms, V):
+def get_inertia_tensor(atoms: ndarray, V: ndarray) -> ndarray:
     """
     Get the tensor of intertia of V.
     ----------
@@ -1271,9 +1346,6 @@ def get_inertia_tensor(atoms, V):
     output : 3x3 float matrix
         The tensor of inertia
     """
-
-    if isinstance(atoms[0], str):
-        atoms = [int_atom(atom) for atom in atoms]
 
     CV = V - get_cm(atoms, V)
 
@@ -1296,7 +1368,7 @@ def get_inertia_tensor(atoms, V):
     return np.array([[Ixx, Ixy, Ixz], [Ixy, Iyy, Iyz], [Ixz, Iyz, Izz]])
 
 
-def get_principal_axis(atoms, V):
+def get_principal_axis(atoms: ndarray, V: ndarray) -> ndarray:
     """
     Get the molecule's principal axis.
     ----------
@@ -1314,10 +1386,12 @@ def get_principal_axis(atoms, V):
 
     eigval, eigvec = np.linalg.eig(inertia)
 
-    return eigvec[np.argmax(eigval)]
+    principal_axis: ndarray = eigvec[np.argmax(eigval)]
+
+    return principal_axis
 
 
-def set_coordinates(atoms, V, title="", decimals=8):
+def set_coordinates(atoms: ndarray, V: ndarray, title: str = "", decimals: int = 8) -> str:
     """
     Print coordinates V with corresponding atoms to stdout in XYZ format.
     Parameters
@@ -1339,9 +1413,6 @@ def set_coordinates(atoms, V, title="", decimals=8):
     """
     N, D = V.shape
 
-    if not isinstance(atoms[0], str):
-        atoms = [str_atom(atom) for atom in atoms]
-
     fmt = "{:<2}" + (" {:15." + str(decimals) + "f}") * 3
 
     out = list()
@@ -1355,24 +1426,9 @@ def set_coordinates(atoms, V, title="", decimals=8):
     return "\n".join(out)
 
 
-def print_coordinates(atoms, V, title=""):
-    """
-    Print coordinates V with corresponding atoms to stdout in XYZ format.
-
-    Parameters
-    ----------
-    atoms : list
-        List of element types
-    V : array
-        (N,3) matrix of atomic coordinates
-    title : string (optional)
-        Title of molecule
-
-    """
-    print(set_coordinates(atoms, V, title=title))
-
-
-def get_coordinates(filename, fmt, is_gzip=False, return_atoms_as_int=False):
+def get_coordinates(
+    filename: Path, fmt: str, is_gzip: bool = False, return_atoms_as_int: bool = False
+) -> Tuple[ndarray, ndarray]:
     """
     Get coordinates from filename in format fmt. Supports XYZ and PDB.
     Parameters
@@ -1395,14 +1451,16 @@ def get_coordinates(filename, fmt, is_gzip=False, return_atoms_as_int=False):
         get_func = get_coordinates_pdb
 
     else:
-        exit("Could not recognize file format: {:s}".format(fmt))
+        raise ValueError("Could not recognize file format: {:s}".format(fmt))
 
     val = get_func(filename, is_gzip=is_gzip, return_atoms_as_int=return_atoms_as_int)
 
     return val
 
 
-def get_coordinates_pdb(filename, is_gzip=False, return_atoms_as_int=False):
+def get_coordinates_pdb(
+    filename: Path, is_gzip: bool = False, return_atoms_as_int: bool = False
+) -> Tuple[ndarray, ndarray]:
     """
     Get coordinates from the first chain in a pdb file
     and return a vectorset with all the coordinates.
@@ -1427,14 +1485,17 @@ def get_coordinates_pdb(filename, is_gzip=False, return_atoms_as_int=False):
     # Since the format doesn't require a space between columns, we use the
     # above column indices as a fallback.
 
-    x_column = None
-    V = list()
+    x_column: Optional[int] = None
+    V: Union[List[ndarray], ndarray] = list()
+    assert isinstance(V, list)
 
     # Same with atoms and atom naming.
     # The most robust way to do this is probably
     # to assume that the atomtype is given in column 3.
 
-    atoms = list()
+    atoms: Union[List[int], ndarray] = list()
+    assert isinstance(atoms, list)
+    openfunc: Any
 
     if is_gzip:
         openfunc = gzip.open
@@ -1479,6 +1540,8 @@ def get_coordinates_pdb(filename, is_gzip=False, return_atoms_as_int=False):
                         msg = "error: Parsing coordinates " "for the following line:" f"\n{line}"
                         exit(msg)
 
+                assert x_column is not None
+
                 # Try to read the coordinates
                 try:
                     V.append(np.asarray(tokens[x_column : x_column + 3], dtype=float))
@@ -1491,61 +1554,44 @@ def get_coordinates_pdb(filename, is_gzip=False, return_atoms_as_int=False):
                         z = line[46:54]
                         V.append(np.asarray([x, y, z], dtype=float))
                     except ValueError:
-                        msg = "error: Parsing input " "for the following line:" f"\n{line}"
+                        msg = f"error: Parsing input for the following line \n{line}"
                         exit(msg)
 
     if return_atoms_as_int:
-        atoms = [int_atom(atom) for atom in atoms]
+        atoms = [int_atom(str(atom)) for atom in atoms]
 
     V = np.asarray(V)
-    atoms = np.asarray(atoms)
+    assert isinstance(V, ndarray)
 
+    atoms = np.asarray(atoms)
+    assert isinstance(atoms, ndarray)
     assert V.shape[0] == atoms.size
 
     return atoms, V
 
 
-def get_coordinates_xyz(filename, is_gzip=False, return_atoms_as_int=False):
-    """
-    Get coordinates from filename and return a vectorset with all the
-    coordinates, in XYZ format.
+def get_coordinates_xyz_lines(
+    lines: List[str], return_atoms_as_int: bool = False
+) -> Tuple[ndarray, ndarray]:
 
-    Parameters
-    ----------
-    filename : string
-        Filename to read
-
-    Returns
-    -------
-    atoms : list
-        List of atomic types
-    V : array
-        (N,3) where N is number of atoms
-    """
-
-    if is_gzip:
-        openfunc = gzip.open
-        openarg = "rt"
-    else:
-        openfunc = open
-        openarg = "r"
-
-    f = openfunc(filename, openarg)
-    V = list()
-    atoms = list()
+    V: Union[List[ndarray], ndarray] = list()
+    atoms: Union[List[str], ndarray] = list()
     n_atoms = 0
+
+    assert isinstance(V, list)
+    assert isinstance(atoms, list)
 
     # Read the first line to obtain the number of atoms to read
     try:
-        n_atoms = int(f.readline())
+        n_atoms = int(lines[0])
     except ValueError:
         exit("error: Could not obtain the number of atoms in the .xyz file.")
 
     # Skip the title line
-    f.readline()
-
     # Use the number of atoms to not read beyond the end of a file
-    for lines_read, line in enumerate(f):
+    for lines_read, line in enumerate(lines[2:]):
+
+        line = line.strip()
 
         if lines_read == n_atoms:
             break
@@ -1572,26 +1618,66 @@ def get_coordinates_xyz(filename, is_gzip=False, return_atoms_as_int=False):
             )
             exit(msg)
 
-    f.close()
-
     try:
         # I've seen examples where XYZ are written with integer atoms types
-        atoms = [int(atom) for atom in atoms]
-        atoms = [str_atom(atom) for atom in atoms]
+        atoms_ = [int(atom) for atom in atoms]
+        atoms = [str_atom(atom) for atom in atoms_]
 
     except ValueError:
         # Correct atom spelling
         atoms = [atom.capitalize() for atom in atoms]
 
     if return_atoms_as_int:
-        atoms = [int_atom(atom) for atom in atoms]
+        atoms_ = [int_atom(atom) for atom in atoms]
+        atoms = np.array(atoms_)
+    else:
+        atoms = np.array(atoms)
 
-    atoms = np.array(atoms)
     V = np.array(V)
+
     return atoms, V
 
 
-def parse_arguments(args=None):
+def get_coordinates_xyz(
+    filename: Path,
+    is_gzip: bool = False,
+    return_atoms_as_int: bool = False,
+) -> Tuple[ndarray, ndarray]:
+    """
+    Get coordinates from filename and return a vectorset with all the
+    coordinates, in XYZ format.
+
+    Parameters
+    ----------
+    filename : string
+        Filename to read
+
+    Returns
+    -------
+    atoms : list
+        List of atomic types
+    V : array
+        (N,3) where N is number of atoms
+    """
+
+    openfunc: Any
+
+    if is_gzip:
+        openfunc = gzip.open
+        openarg = "rt"
+    else:
+        openfunc = open
+        openarg = "r"
+
+    with openfunc(filename, openarg) as f:
+        lines = f.readlines()
+
+    atoms, V = get_coordinates_xyz_lines(lines, return_atoms_as_int=return_atoms_as_int)
+
+    return atoms, V
+
+
+def parse_arguments(arguments: Optional[Union[str, List[str]]] = None) -> argparse.Namespace:
 
     description = __doc__
 
@@ -1731,10 +1817,7 @@ See https://github.com/charnley/rmsd for citation information
         ),
     )
 
-    if args is None:
-        args = parser.parse_args()
-    else:
-        args = parser.parse_args(args)
+    args = parser.parse_args(arguments)
 
     # Check illegal combinations
     if args.output and args.reorder and (args.ignore_hydrogen or args.add_idx or args.remove_idx):
@@ -1776,7 +1859,7 @@ See https://github.com/charnley/rmsd for citation information
     # Check fileformat
     if args.format is None:
         filename = args.structure_a
-        suffixes = pathlib.Path(filename).suffixes
+        suffixes = Path(filename).suffixes
 
         if len(suffixes) == 0:
             ext = None
@@ -1793,24 +1876,24 @@ See https://github.com/charnley/rmsd for citation information
     return args
 
 
-def main(args=None):
+def main(args: Optional[List[str]] = None) -> None:
 
     # Parse arguments
-    args = parse_arguments(args)
+    settings = parse_arguments(args)
 
     # As default, load the extension as format
     # Parse pdb.gz and xyz.gz as pdb and xyz formats
     p_all_atoms, p_all = get_coordinates(
-        args.structure_a,
-        args.format,
-        is_gzip=args.format_is_gzip,
+        settings.structure_a,
+        settings.format,
+        is_gzip=settings.format_is_gzip,
         return_atoms_as_int=True,
     )
 
     q_all_atoms, q_all = get_coordinates(
-        args.structure_b,
-        args.format,
-        is_gzip=args.format_is_gzip,
+        settings.structure_b,
+        settings.format,
+        is_gzip=settings.format_is_gzip,
         return_atoms_as_int=True,
     )
 
@@ -1821,7 +1904,7 @@ def main(args=None):
         print("error: Structures not same size")
         sys.exit()
 
-    if np.count_nonzero(p_all_atoms != q_all_atoms) and not args.reorder:
+    if np.count_nonzero(p_all_atoms != q_all_atoms) and not settings.reorder:
         msg = """
 error: Atoms are not in the same order.
 
@@ -1833,26 +1916,27 @@ https://github.com/charnley/rmsd for further examples.
         print(msg)
         sys.exit()
 
-    # Set local view
-    p_view = None
-    q_view = None
+    # Typing
+    index: Union[Set[int], List[int], ndarray]
 
-    if args.ignore_hydrogen:
+    # Set local view
+    p_view: Optional[ndarray] = None
+    q_view: Optional[ndarray] = None
+
+    if settings.ignore_hydrogen:
         assert type(p_all_atoms[0]) != str
         assert type(q_all_atoms[0]) != str
-        p_view = np.where(p_all_atoms != 1)
-        q_view = np.where(q_all_atoms != 1)
+        p_view = np.where(p_all_atoms != 1)  # type: ignore
+        q_view = np.where(q_all_atoms != 1)  # type: ignore
 
-    elif args.remove_idx:
-        index = range(p_size)
-        index = set(index) - set(args.remove_idx)
-        index = list(index)
+    elif settings.remove_idx:
+        index = np.array(list(set(range(p_size)) - set(settings.remove_idx)))
         p_view = index
         q_view = index
 
-    elif args.add_idx:
-        p_view = args.add_idx
-        q_view = args.add_idx
+    elif settings.add_idx:
+        p_view = settings.add_idx
+        q_view = settings.add_idx
 
     # Set local view
     if p_view is None:
@@ -1862,6 +1946,8 @@ https://github.com/charnley/rmsd for further examples.
         q_atoms = copy.deepcopy(q_all_atoms)
 
     else:
+        assert p_view is not None
+        assert q_view is not None
         p_coord = copy.deepcopy(p_all[p_view])
         q_coord = copy.deepcopy(q_all[q_view])
         p_atoms = copy.deepcopy(p_all_atoms[p_view])
@@ -1873,107 +1959,113 @@ https://github.com/charnley/rmsd for further examples.
     p_coord -= p_cent
     q_coord -= q_cent
 
+    rmsd_method: RmsdCallable
+    reorder_method: Optional[ReorderCallable]
+
     # set rotation method
-    if args.rotation.lower() == METHOD_KABSCH:
-        rotation_method = kabsch_rmsd
-    elif args.rotation.lower() == METHOD_QUATERNION:
-        rotation_method = quaternion_rmsd
+    if settings.rotation == METHOD_KABSCH:
+        rmsd_method = kabsch_rmsd
+    elif settings.rotation == METHOD_QUATERNION:
+        rmsd_method = quaternion_rmsd
     else:
-        rotation_method = None
+        rmsd_method = rmsd
 
     # set reorder method
-    if not args.reorder:
-        reorder_method = None
-    elif args.reorder_method == REORDER_QML:
+    reorder_method = None
+    if settings.reorder_method == REORDER_QML:
         reorder_method = reorder_similarity
-    elif args.reorder_method == REORDER_HUNGARIAN:
+    elif settings.reorder_method == REORDER_HUNGARIAN:
         reorder_method = reorder_hungarian
-    elif args.reorder_method == REORDER_INERTIA_HUNGARIAN:
+    elif settings.reorder_method == REORDER_INERTIA_HUNGARIAN:
         reorder_method = reorder_inertia_hungarian
-    elif args.reorder_method == REORDER_BRUTE:
-        reorder_method = reorder_brute
-    elif args.reorder_method == REORDER_DISTANCE:
+    elif settings.reorder_method == REORDER_BRUTE:
+        reorder_method = reorder_brute  # pragma: no cover
+    elif settings.reorder_method == REORDER_DISTANCE:
         reorder_method = reorder_distance
 
     # Save the resulting RMSD
     result_rmsd = None
 
-    if args.use_reflections:
+    # Collect changes to be done on q coords
+    q_swap = None
+    q_reflection = None
+    q_review = None
 
-        result_rmsd, _, _, q_review = check_reflections(
+    if settings.use_reflections:
+
+        result_rmsd, q_swap, q_reflection, q_review = check_reflections(
             p_atoms,
             q_atoms,
             p_coord,
             q_coord,
             reorder_method=reorder_method,
-            rotation_method=rotation_method,
+            rmsd_method=rmsd_method,
         )
 
-    elif args.use_reflections_keep_stereo:
+    elif settings.use_reflections_keep_stereo:
 
-        result_rmsd, _, _, q_review = check_reflections(
+        result_rmsd, q_swap, q_reflection, q_review = check_reflections(
             p_atoms,
             q_atoms,
             p_coord,
             q_coord,
             reorder_method=reorder_method,
-            rotation_method=rotation_method,
+            rmsd_method=rmsd_method,
             keep_stereo=True,
         )
 
-    elif args.reorder:
+    elif settings.reorder:
+
+        assert reorder_method is not None, "Cannot reorder without selecting --reorder method"
 
         q_review = reorder_method(p_atoms, q_atoms, p_coord, q_coord)
         q_coord = q_coord[q_review]
         q_atoms = q_atoms[q_review]
 
-        if not all(p_atoms == q_atoms):
-            print(
-                "error: Structure not aligned. "
-                "Please submit bug report at "
-                "http://github.com/charnley/rmsd"
-            )
-            sys.exit()
+        assert all(
+            p_atoms == q_atoms
+        ), "error: Structure not aligned. Please submit bug report at http://github.com/charnley/rmsd"
 
     # print result
-    if args.output:
+    if settings.output:
 
-        if args.reorder:
+        # print(q_coord)
+        # print(q_swap)
+        # print(q_reflection)
+        # print(q_review)
 
-            if q_review.shape[0] != q_all.shape[0]:
-                print("error: Reorder length error. " "Full atom list needed for --print")
-                quit()
+        if q_swap is not None:
+            q_coord = q_coord[:, q_swap]
 
-            q_all = q_all[q_review]
+        if q_reflection is not None:
+            q_coord = np.dot(q_coord, np.diag(q_reflection))
+
+        q_coord -= centroid(q_coord)
+
+        if q_review is not None:
+            q_coord = q_coord[q_review]
             q_all_atoms = q_all_atoms[q_review]
 
-        # Get rotation matrix
-        U = kabsch(q_coord, p_coord)
-
-        # recenter all atoms and rotate all atoms
-        q_all -= q_cent
-        q_all = np.dot(q_all, U)
+        # Rotate q coordinates
+        # TODO Should actually follow rotation method
+        q_coord = kabsch_rotate(q_coord, p_coord)
 
         # center q on p's original coordinates
-        q_all += p_cent
+        q_coord += p_cent
 
         # done and done
-        xyz = set_coordinates(q_all_atoms, q_all, title=f"{args.structure_b} - modified")
+        xyz = set_coordinates(q_all_atoms, q_coord, title=f"{settings.structure_b} - modified")
         print(xyz)
 
+        # print(kabsch_rmsd(q_coord, p_coord, translate=True))
+        # assert False
     else:
 
-        if result_rmsd:
-            pass
-
-        elif rotation_method is None:
-            result_rmsd = rmsd(p_coord, q_coord)
-
-        else:
-            result_rmsd = rotation_method(p_coord, q_coord)
+        if not result_rmsd:
+            result_rmsd = rmsd_method(p_coord, q_coord)
 
         print("{0}".format(result_rmsd))
 
 
 if __name__ == "__main__":
-    main()
+    main()  # pragma: no cover

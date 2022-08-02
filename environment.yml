@@ -1,0 +1,13 @@
+name: rmsd-dev
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - matplotlib
+  - mypy
+  - numpy
+  - pre-commit
+  - pylint
+  - pytest
+  - pytest-cov
+  - scipy

@@ -1,3 +1,3 @@
-import pathlib
+from pathlib import Path
 
-RESOURCE_PATH = pathlib.Path("tests/resources")
+RESOURCE_PATH = Path("tests/resources")
