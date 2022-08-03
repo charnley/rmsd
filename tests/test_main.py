@@ -37,6 +37,8 @@ def test_print_reflection_reorder():
     atoms_a, coord_a = rmsdlib.get_coordinates_xyz(filename_a, return_atoms_as_int=True)
     atoms_b, coord_b = rmsdlib.get_coordinates_xyz(filename_b, return_atoms_as_int=True)
 
+    n_atoms = len(atoms_a)
+
     coord_a -= rmsdlib.centroid(coord_a)
     coord_b -= rmsdlib.centroid(coord_b)
 
@@ -69,15 +71,15 @@ def test_print_reflection_reorder():
 
     # Main call rmsd value
     args = f"--use-reflections --reorder {filename_a} {filename_b}"
-    stdout = _call_main(args.split())
-    value = float(stdout)
+    stdout = _call_main(args.split()).split("\n")
+    value = float(stdout[-1])
     assert value is not None
     np.testing.assert_almost_equal(result_rmsd, value)
 
     # Main call print, check rmsd is still the same
     args = f"--use-reflections --reorder --print {filename_a} {filename_b}"
-    stdout = _call_main(args.split())
-    _, coord = rmsdlib.get_coordinates_xyz_lines(stdout.split("\n"))
+    stdout = _call_main(args.split()).split("\n")
+    _, coord = rmsdlib.get_coordinates_xyz_lines(stdout[-(n_atoms+2):])
     rmsd_check = rmsdlib.kabsch_rmsd(coord, coord_a, translate=True)
     np.testing.assert_almost_equal(result_rmsd, rmsd_check)
 
