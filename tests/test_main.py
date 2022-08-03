@@ -79,7 +79,7 @@ def test_print_reflection_reorder():
     # Main call print, check rmsd is still the same
     args = f"--use-reflections --reorder --print {filename_a} {filename_b}"
     stdout = _call_main(args.split()).split("\n")
-    _, coord = rmsdlib.get_coordinates_xyz_lines(stdout[-(n_atoms+2):])
+    _, coord = rmsdlib.get_coordinates_xyz_lines(stdout[-(n_atoms + 2) :])
     rmsd_check = rmsdlib.kabsch_rmsd(coord, coord_a, translate=True)
     np.testing.assert_almost_equal(result_rmsd, rmsd_check)
 

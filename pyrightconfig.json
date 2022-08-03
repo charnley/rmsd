@@ -1,0 +1,8 @@
+{
+  "exclude": [
+    "env",
+    "**/node_modules",
+    "**/__pycache__",
+    ".git"
+  ]
+}
