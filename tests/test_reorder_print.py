@@ -7,9 +7,10 @@ from rmsd.calculate_rmsd import rmsd as get_rmsd
 
 def test_reorder_print_and_rmsd():
 
-    # TODO Calculate rmsd with --reorder (structure a and b)
-    # TODO Calculate --print and --reorder to structure c.xyz
-    # TODO Calculate normal rmsd a.xyz and c.xyz
+    # Issue 93, problem with printed structure after reorder.
+    # - Calculate rmsd with --reorder (structure a and b)
+    # - Calculate --print and --reorder to structure c.xyz
+    # - Calculate normal rmsd a.xyz and c.xyz
 
     filename_a = RESOURCE_PATH / "issue93" / "a.xyz"
     filename_b = RESOURCE_PATH / "issue93" / "b.xyz"
@@ -36,6 +37,3 @@ def test_reorder_print_and_rmsd():
     print(rmsd_ac)
 
     assert rmsd_ac == rmsd_ab
-
-    assert False
-
