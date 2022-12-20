@@ -1,10 +1,11 @@
 import subprocess
 from pathlib import Path
+from typing import List
 
 RESOURCE_PATH = Path("tests/resources")
 
 
-def call_main(args: list[str]) -> list[str]:
+def call_main(args: List[str]) -> List[str]:
 
     root_path = Path("./")
     filename = root_path / "rmsd/calculate_rmsd.py"
