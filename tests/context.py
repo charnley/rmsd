@@ -1,7 +1,8 @@
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
 RESOURCE_PATH = Path("tests/resources")
+
 
 def call_main(args: list[str]) -> list[str]:
 
