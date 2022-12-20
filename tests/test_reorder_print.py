@@ -1,11 +1,11 @@
-
+import numpy as np
 from context import RESOURCE_PATH, call_main
 
-from rmsd.calculate_rmsd import get_coordinates_xyz_lines, get_coordinates_xyz
+from rmsd.calculate_rmsd import get_coordinates_xyz, get_coordinates_xyz_lines
 from rmsd.calculate_rmsd import rmsd as get_rmsd
 
 
-def test_reorder_print_and_rmsd():
+def test_reorder_print_and_rmsd() -> None:
 
     # Issue 93, problem with printed structure after reorder.
     # - Calculate rmsd with --reorder (structure a and b)
@@ -36,4 +36,4 @@ def test_reorder_print_and_rmsd():
     rmsd_ac = get_rmsd(coord_a, coord_c)
     print(rmsd_ac)
 
-    assert rmsd_ac == rmsd_ab
+    np.testing.assert_almost_equal(rmsd_ab, rmsd_ac, decimal=8)

@@ -2029,11 +2029,6 @@ https://github.com/charnley/rmsd for further examples.
     # print result
     if settings.output:
 
-        # print(q_coord)
-        # print(q_swap)
-        # print(q_reflection)
-        # print(q_review)
-
         if q_swap is not None:
             q_coord = q_coord[:, q_swap]
 
@@ -2057,8 +2052,6 @@ https://github.com/charnley/rmsd for further examples.
         xyz = set_coordinates(q_all_atoms, q_coord, title=f"{settings.structure_b} - modified")
         print(xyz)
 
-        # print(kabsch_rmsd(q_coord, p_coord, translate=True))
-        # assert False
     else:
 
         if not result_rmsd:
