@@ -1,8 +1,8 @@
 import numpy as np
 from context import RESOURCE_PATH, call_main
 
-from rmsd.calculate_rmsd import get_coordinates_xyz, get_coordinates_xyz_lines
-from rmsd.calculate_rmsd import rmsd as get_rmsd
+import rmsd as rmsdlib
+from rmsd import get_coordinates_xyz, get_coordinates_xyz_lines
 
 
 def test_reorder_print_and_rmsd() -> None:
@@ -33,7 +33,7 @@ def test_reorder_print_and_rmsd() -> None:
     print(coord_c)
     print(atoms_c)
 
-    rmsd_ac = get_rmsd(coord_a, coord_c)
+    rmsd_ac = rmsdlib.rmsd(coord_a, coord_c)
     print(rmsd_ac)
 
     np.testing.assert_almost_equal(rmsd_ab, rmsd_ac, decimal=8)

@@ -3,7 +3,7 @@ import copy
 import numpy as np
 from context import RESOURCE_PATH
 
-import rmsd
+import rmsd as rmsdlib
 
 
 def test_reflections() -> None:
@@ -26,7 +26,9 @@ def test_reflections() -> None:
     # TODO Insert a rotation on q
     q_coord[:, [0, 2]] = q_coord[:, [2, 0]]
 
-    min_rmsd, _, _, _ = rmsd.check_reflections(atoms, atoms, p_coord, q_coord, reorder_method=None)
+    min_rmsd, _, _, _ = rmsdlib.check_reflections(
+        atoms, atoms, p_coord, q_coord, reorder_method=None
+    )
 
     assert np.isclose(min_rmsd, 0.0, atol=1e-6)
 
@@ -50,7 +52,7 @@ def test_reflections_norotation() -> None:
     # Insert reflection
     q_coord[:, [0, 2]] = q_coord[:, [2, 0]]
 
-    min_rmsd, _, _, _ = rmsd.check_reflections(
+    min_rmsd, _, _, _ = rmsdlib.check_reflections(
         atoms,
         atoms,
         p_coord,
@@ -85,8 +87,8 @@ def test_reflections_reorder() -> None:
     q_coord = q_coord[review]
     q_atoms = p_atoms[review]
 
-    min_rmsd, _, _, _ = rmsd.check_reflections(
-        p_atoms, q_atoms, p_coord, q_coord, reorder_method=rmsd.reorder_hungarian
+    min_rmsd, _, _, _ = rmsdlib.check_reflections(
+        p_atoms, q_atoms, p_coord, q_coord, reorder_method=rmsdlib.reorder_hungarian
     )
 
     assert np.isclose(min_rmsd, 0.0, atol=1e-6)
@@ -114,7 +116,7 @@ def test_reflections_keep_stereo() -> None:
 
     # If keep_stereo is off, enantiomer coordinates of q_coord are considered,
     # resulting into identical coordinates of p_coord.
-    min_rmsd, _, _, _ = rmsd.check_reflections(
+    min_rmsd, _, _, _ = rmsdlib.check_reflections(
         atoms, atoms, p_coord, q_coord, reorder_method=None, keep_stereo=False
     )
 
@@ -122,8 +124,8 @@ def test_reflections_keep_stereo() -> None:
     # with the original molecule.
     assert np.isclose(min_rmsd, 0.0, atol=1e-6)
 
-    # No enantiomer coordinates, non-zero RMSD.
-    min_rmsd, _, _, _ = rmsd.check_reflections(
+    # No enantiomer coordinates, non-zero rmsdlib.
+    min_rmsd, _, _, _ = rmsdlib.check_reflections(
         atoms, atoms, p_coord, q_coord, reorder_method=None, keep_stereo=True
     )
 
@@ -143,33 +145,29 @@ def test_reflection_issue_78():
 
     """
 
-    # TODO Check print consistency
-
-    print(rmsd, __file__)
-
     xyz_a = RESOURCE_PATH / "ethane-1-2-diolate_a.xyz"
     xyz_b = RESOURCE_PATH / "ethane-1-2-diolate_b.xyz"
 
-    atoms_a, coordinates_a = rmsd.get_coordinates_xyz(xyz_a)
-    atoms_b, coordinates_b = rmsd.get_coordinates_xyz(xyz_b)
+    atoms_a, coordinates_a = rmsdlib.get_coordinates_xyz(xyz_a)
+    atoms_b, coordinates_b = rmsdlib.get_coordinates_xyz(xyz_b)
 
-    coordinates_a -= rmsd.centroid(coordinates_a)
-    coordinates_b -= rmsd.centroid(coordinates_b)
+    coordinates_a -= rmsdlib.centroid(coordinates_a)
+    coordinates_b -= rmsdlib.centroid(coordinates_b)
 
     reorder_method = None
-    rmsd_method = rmsd.kabsch_rmsd
+    rmsd_method = rmsdlib.kabsch_rmsd
 
     print(np.sum(coordinates_a))
     print(np.sum(coordinates_b))
 
-    result_rmsd = rmsd.kabsch_rmsd(
+    result_rmsd = rmsdlib.kabsch_rmsd(
         coordinates_a,
         coordinates_b,
     )
 
     print(result_rmsd)
 
-    result_rmsd, _, _, q_review = rmsd.check_reflections(
+    result_rmsd, _, _, q_review = rmsdlib.check_reflections(
         atoms_a,
         atoms_b,
         coordinates_a,

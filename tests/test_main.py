@@ -1,33 +1,13 @@
 import copy
-import subprocess
-from pathlib import Path
-from typing import List
 
 import numpy as np
 import pytest
-from context import RESOURCE_PATH
+from context import RESOURCE_PATH, call_main
 
 import rmsd as rmsdlib
 
 
-def _call_main(args: List[str]) -> str:
-
-    root_path = Path("./")
-    filename = root_path / "rmsd/calculate_rmsd.py"
-
-    cmd = ["python", f"{filename}", *args]
-    print(cmd)
-
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    stdout, stderr = proc.communicate()
-
-    if stderr is not None:
-        print(stderr.decode())
-
-    return stdout.decode().strip()
-
-
-def test_print_reflection_reorder():
+def test_print_reflection_reorder() -> None:
     # Test issue 78
 
     filename_a = RESOURCE_PATH / "issue78" / "a.xyz"
@@ -71,14 +51,14 @@ def test_print_reflection_reorder():
 
     # Main call rmsd value
     args = f"--use-reflections --reorder {filename_a} {filename_b}"
-    stdout = _call_main(args.split()).split("\n")
+    stdout = call_main(args.split())
     value = float(stdout[-1])
     assert value is not None
     np.testing.assert_almost_equal(result_rmsd, value)
 
     # Main call print, check rmsd is still the same
     args = f"--use-reflections --reorder --print {filename_a} {filename_b}"
-    stdout = _call_main(args.split()).split("\n")
+    stdout = call_main(args.split())
     _, coord = rmsdlib.get_coordinates_xyz_lines(stdout[-(n_atoms + 2) :])
     rmsd_check = rmsdlib.kabsch_rmsd(coord, coord_a, translate=True)
     np.testing.assert_almost_equal(result_rmsd, rmsd_check)
