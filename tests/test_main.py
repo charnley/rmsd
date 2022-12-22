@@ -17,8 +17,7 @@ def test_print_reflection_reorder() -> None:
     atoms_a, coord_a = rmsdlib.get_coordinates_xyz(filename_a, return_atoms_as_int=True)
     atoms_b, coord_b = rmsdlib.get_coordinates_xyz(filename_b, return_atoms_as_int=True)
 
-    n_atoms = len(atoms_a)
-
+    # re-center molecules
     coord_a -= rmsdlib.centroid(coord_a)
     coord_b -= rmsdlib.centroid(coord_b)
 
@@ -39,7 +38,7 @@ def test_print_reflection_reorder() -> None:
     print(q_reflection)
     print(q_review)
 
-    # tmp_atoms = copy.copy(atoms_b)
+    # Apply the swap, reflection and review
     tmp_coord = copy.deepcopy(coord_b)
     tmp_coord = tmp_coord[:, q_swap]
     tmp_coord = np.dot(tmp_coord, np.diag(q_reflection))
@@ -48,20 +47,30 @@ def test_print_reflection_reorder() -> None:
     tmp_coord = rmsdlib.kabsch_rotate(tmp_coord, coord_a)
     rmsd_ = rmsdlib.rmsd(coord_a, tmp_coord)
     print(rmsd_)
+    print(tmp_coord)
 
     # Main call rmsd value
     args = f"--use-reflections --reorder {filename_a} {filename_b}"
     stdout = call_main(args.split())
     value = float(stdout[-1])
+    print(value)
     assert value is not None
     np.testing.assert_almost_equal(result_rmsd, value)
 
     # Main call print, check rmsd is still the same
+    # Note, that --print is translating b to a center
     args = f"--use-reflections --reorder --print {filename_a} {filename_b}"
     stdout = call_main(args.split())
-    _, coord = rmsdlib.get_coordinates_xyz_lines(stdout[-(n_atoms + 2) :])
-    rmsd_check = rmsdlib.kabsch_rmsd(coord, coord_a, translate=True)
-    np.testing.assert_almost_equal(result_rmsd, rmsd_check)
+    _, coord = rmsdlib.get_coordinates_xyz_lines(stdout)
+    coord -= rmsdlib.centroid(coord)  # fix translation
+    print(coord)
+
+    rmsd_check1 = rmsdlib.kabsch_rmsd(coord, coord_a)
+    rmsd_check2 = rmsdlib.rmsd(coord, coord_a)
+    print(rmsd_check1)
+    print(rmsd_check2)
+    np.testing.assert_almost_equal(rmsd_check2, rmsd_check1)
+    np.testing.assert_almost_equal(rmsd_check2, result_rmsd)
 
 
 def test_bad_different_molcules() -> None:
