@@ -2017,10 +2017,14 @@ https://github.com/charnley/rmsd for further examples.
     elif settings.reorder:
 
         assert reorder_method is not None, "Cannot reorder without selecting --reorder method"
-
         q_review = reorder_method(p_atoms, q_atoms, p_coord, q_coord)
-        q_coord = q_coord[q_review]
+
+    # If there is a reorder, then apply before print
+    if q_review is not None:
+
+        q_all_atoms = q_all_atoms[q_review]
         q_atoms = q_atoms[q_review]
+        q_coord = q_coord[q_review]
 
         assert all(
             p_atoms == q_atoms
@@ -2029,11 +2033,6 @@ https://github.com/charnley/rmsd for further examples.
     # print result
     if settings.output:
 
-        # print(q_coord)
-        # print(q_swap)
-        # print(q_reflection)
-        # print(q_review)
-
         if q_swap is not None:
             q_coord = q_coord[:, q_swap]
 
@@ -2041,10 +2040,6 @@ https://github.com/charnley/rmsd for further examples.
             q_coord = np.dot(q_coord, np.diag(q_reflection))
 
         q_coord -= centroid(q_coord)
-
-        if q_review is not None:
-            q_coord = q_coord[q_review]
-            q_all_atoms = q_all_atoms[q_review]
 
         # Rotate q coordinates
         # TODO Should actually follow rotation method
@@ -2057,8 +2052,6 @@ https://github.com/charnley/rmsd for further examples.
         xyz = set_coordinates(q_all_atoms, q_coord, title=f"{settings.structure_b} - modified")
         print(xyz)
 
-        # print(kabsch_rmsd(q_coord, p_coord, translate=True))
-        # assert False
     else:
 
         if not result_rmsd:

@@ -2,7 +2,7 @@ import copy
 
 import numpy as np
 
-import rmsd
+import rmsd as rmsdlib
 
 
 def test_reorder_distance() -> None:
@@ -16,7 +16,7 @@ def test_reorder_distance() -> None:
     np.random.seed(6)
     np.random.shuffle(q_coord)
 
-    review = rmsd.reorder_hungarian(atoms, atoms, p_coord, q_coord)
+    review = rmsdlib.reorder_hungarian(atoms, atoms, p_coord, q_coord)
 
     assert p_coord.tolist() == q_coord[review].tolist()
 
@@ -31,7 +31,7 @@ def test_reorder_brute() -> None:
     np.random.seed(6)
     np.random.shuffle(q_coord)
 
-    review = rmsd.reorder_brute(atoms, atoms, p_coord, q_coord)
+    review = rmsdlib.reorder_brute(atoms, atoms, p_coord, q_coord)
     assert p_coord.tolist() == q_coord[review].tolist()
 
 
@@ -39,7 +39,7 @@ def test_reorder_brute_ch() -> None:
 
     N = 6
     p_atoms_str = ["C"] * 3 + ["H"] * 3
-    p_atoms_int = [rmsd.int_atom(atom) for atom in p_atoms_str]
+    p_atoms_int = [rmsdlib.int_atom(atom) for atom in p_atoms_str]
     p_atoms = np.array(p_atoms_int)
     p_coord = np.arange(N * 3)
     p_coord = p_coord.reshape((N, 3))
@@ -55,7 +55,7 @@ def test_reorder_brute_ch() -> None:
     q_coord = q_coord[idx]
     q_atoms = q_atoms[idx]
 
-    review = rmsd.reorder_brute(p_atoms, q_atoms, p_coord, q_coord)
+    review = rmsdlib.reorder_brute(p_atoms, q_atoms, p_coord, q_coord)
 
     assert p_coord.tolist() == q_coord[review].tolist()
     assert p_atoms.tolist() == q_atoms[review].tolist()
@@ -72,7 +72,7 @@ def test_reorder_hungarian() -> None:
     np.random.seed(6)
     np.random.shuffle(q_coord)
 
-    review = rmsd.reorder_distance(atoms, atoms, p_coord, q_coord)
+    review = rmsdlib.reorder_distance(atoms, atoms, p_coord, q_coord)
     assert p_coord.tolist() == q_coord[review].tolist()
 
 
@@ -80,7 +80,7 @@ def test_reorder_inertia_hungarian() -> None:
 
     # coordinates of scrambled and rotated butane
     atoms = np.array(["C", "C", "C", "C", "H", "H", "H", "H", "H", "H", "H", "H", "H", "H"])
-    atoms_ = [rmsd.int_atom(atom) for atom in atoms]
+    atoms_ = [rmsdlib.int_atom(atom) for atom in atoms]
     atoms = np.array(atoms_)
 
     p_coord = np.array(
@@ -121,11 +121,11 @@ def test_reorder_inertia_hungarian() -> None:
         ]
     )
 
-    p_coord -= rmsd.centroid(p_coord)
-    q_coord -= rmsd.centroid(q_coord)
+    p_coord -= rmsdlib.centroid(p_coord)
+    q_coord -= rmsdlib.centroid(q_coord)
 
-    review = rmsd.reorder_inertia_hungarian(atoms, atoms, p_coord, q_coord)
+    review = rmsdlib.reorder_inertia_hungarian(atoms, atoms, p_coord, q_coord)
 
-    result_rmsd = rmsd.kabsch_rmsd(p_coord, q_coord[review])
+    result_rmsd = rmsdlib.kabsch_rmsd(p_coord, q_coord[review])
 
     np.testing.assert_almost_equal(0, result_rmsd, decimal=2)

@@ -1,6 +1,6 @@
 import numpy as np
 
-import rmsd
+import rmsd as rmsdlib
 
 
 def test_centroid() -> None:
@@ -9,7 +9,7 @@ def test_centroid() -> None:
     a3 = np.array([-22.018, 17.551, 26.0], dtype=float)
 
     atms = np.asarray([a1, a2, a3])
-    centroid = rmsd.centroid(atms)
+    centroid = rmsdlib.centroid(atms)
 
     assert 3 == len(centroid)
 

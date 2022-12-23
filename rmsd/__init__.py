@@ -1,34 +1,45 @@
 # flake8: noqa
-from . import calculate_rmsd
 from .calculate_rmsd import *
 from .calculate_rmsd import __doc__, __version__
 
 __all__ = [
-    "brute_permutation",
-    "centroid",
-    "check_reflections",
-    "generate_permutations",
-    "get_coordinates",
-    "get_coordinates_pdb",
-    "get_coordinates_xyz",
-    "hungarian",
+    "str_atom",
     "int_atom",
-    "kabsch",
+    "rmsd",
     "kabsch_rmsd",
     "kabsch_rotate",
     "kabsch_fit",
+    "kabsch",
+    "kabsch_weighted",
+    "kabsch_weighted_fit",
+    "kabsch_weighted_rmsd",
     "quaternion_rmsd",
-    "quaternion_rotate",
     "quaternion_transform",
-    "reorder_brute",
+    "makeW",
+    "makeQ",
+    "quaternion_rotate",
+    "centroid",
+    "hungarian_vectors",
+    "reorder_similarity",
     "reorder_distance",
+    "hungarian",
     "reorder_hungarian",
     "reorder_inertia_hungarian",
-    "reorder_similarity",
-    "rmsd",
+    "generate_permutations",
+    "brute_permutation",
+    "reorder_brute",
+    "check_reflections",
+    "rotation_matrix_vectors",
+    "get_cm",
+    "get_inertia_tensor",
+    "get_principal_axis",
     "set_coordinates",
-    "str_atom",
+    "get_coordinates",
+    "get_coordinates_pdb",
+    "get_coordinates_xyz_lines",
+    "get_coordinates_xyz",
+    "main",
 ]
 
 if __name__ == "__main__":
-    calculate_rmsd.main()  # pragma: no cover
+    main()  # pragma: no cover
