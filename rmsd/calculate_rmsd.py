@@ -7,7 +7,7 @@ For more information, usage, example and citation read more at
 https://github.com/charnley/rmsd
 """
 
-__version__ = "1.4"
+__version__ = "1.5.0"
 
 import argparse
 import copy
