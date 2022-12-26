@@ -15,7 +15,7 @@ import gzip
 import re
 import sys
 from pathlib import Path
-from typing import Any, Iterator, List, Optional, Set, Tuple, Union, Protocol
+from typing import Any, Iterator, List, Optional, Protocol, Set, Tuple, Union
 
 import numpy as np
 from numpy import ndarray
