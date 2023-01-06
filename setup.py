@@ -4,7 +4,7 @@ import os
 
 import setuptools  # type: ignore
 
-__version__ = "1.5.0"
+__version__ = "1.5.1"
 
 # Find the absolute path
 here = os.path.abspath(os.path.dirname(__file__))
