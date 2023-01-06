@@ -15,14 +15,13 @@ import gzip
 import re
 import sys
 from pathlib import Path
-from typing import Any, Iterator, List, Optional, Set, Tuple, Union
+from typing import Any, Iterator, List, Optional, Protocol, Set, Tuple, Union
 
 import numpy as np
 from numpy import ndarray
 from scipy.optimize import linear_sum_assignment  # type: ignore
 from scipy.spatial import distance_matrix  # type: ignore
 from scipy.spatial.distance import cdist  # type: ignore
-from typing_extensions import Protocol
 
 try:
     import qml  # type: ignore
