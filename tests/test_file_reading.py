@@ -118,3 +118,37 @@ def test_rmsd_xyz() -> None:
     pure_rmsd = rmsdlib.rmsd(p_coord, q_coord)
 
     np.testing.assert_almost_equal(0.33512, pure_rmsd, decimal=3)
+
+
+def test_rmsd_pdb_only_alpha() -> None:
+    """Read only alpha-carbon in a PDB file
+
+    Example, one two pdb files has same number of residues but one has
+    hydrogens and side chains
+    """
+
+    filename_1 = RESOURCE_PATH / "issue98" / "test1.pdb"
+    filename_2 = RESOURCE_PATH / "issue98" / "test2.pdb"
+
+    kwargs = dict(
+        return_atoms_as_int=True,
+        only_alpha_carbon=True,
+    )
+    p_atoms, p_coord = rmsdlib.get_coordinates_pdb(filename_1, **kwargs)
+    q_atoms, q_coord = rmsdlib.get_coordinates_pdb(filename_2, **kwargs)
+
+    # only carbons
+    assert len(np.unique(p_atoms)) == 1
+    assert len(np.unique(q_atoms)) == 1
+    assert q_atoms[0] == 6  # only Carbon
+
+    # Always translate
+    p_cent = rmsdlib.centroid(p_coord)
+    q_cent = rmsdlib.centroid(q_coord)
+    p_coord -= p_cent
+    q_coord -= q_cent
+
+    rmsd = rmsdlib.kabsch_rmsd(p_coord, q_coord)
+    print(rmsd)
+
+    np.testing.assert_almost_equal(1.94, rmsd, decimal=3)

@@ -15,7 +15,7 @@ import gzip
 import re
 import sys
 from pathlib import Path
-from typing import Any, Iterator, List, Optional, Protocol, Set, Tuple, Union
+from typing import Any, Callable, Iterable, Iterator, List, Optional, Protocol, Set, Tuple, Union
 
 import numpy as np
 from numpy import ndarray
@@ -1443,6 +1443,9 @@ def get_coordinates(
     V : array
         (N,3) where N is number of atoms
     """
+
+    get_func: Callable
+
     if fmt == "xyz":
         get_func = get_coordinates_xyz
 
@@ -1457,8 +1460,10 @@ def get_coordinates(
     return val
 
 
-def get_coordinates_pdb(
-    filename: Path, is_gzip: bool = False, return_atoms_as_int: bool = False
+def get_coordinates_pdb_lines(
+    lines: Iterable[str],
+    only_alpha_carbon: bool = True,
+    return_atoms_as_int: bool = False,
 ) -> Tuple[ndarray, ndarray]:
     """
     Get coordinates from the first chain in a pdb file
@@ -1466,14 +1471,18 @@ def get_coordinates_pdb(
 
     Parameters
     ----------
-    filename : string
-        Filename to read
+    lines : list
+        PDB format lines
+    only_alpha_carbon : bool
+        Only read Alpha carbons from PDB file
+    return_atoms_as_int : bool
+        Return atoms as integers, instead of strings
 
     Returns
     -------
-    atoms : list
-        List of atomic types
-    V : array
+    atoms : array
+        List of atoms
+    coords : array
         (N,3) where N is number of atoms
     """
 
@@ -1492,69 +1501,66 @@ def get_coordinates_pdb(
     # The most robust way to do this is probably
     # to assume that the atomtype is given in column 3.
 
-    atoms: Union[List[int], ndarray] = list()
+    atoms: Union[List[Union[int, str]], ndarray] = list()
     assert isinstance(atoms, list)
-    openfunc: Any
 
-    if is_gzip:
-        openfunc = gzip.open
-        openarg = "rt"
-    else:
-        openfunc = open
-        openarg = "r"
+    for line in lines:
 
-    with openfunc(filename, openarg) as f:
-        lines = f.readlines()
-        for line in lines:
-            if line.startswith("TER") or line.startswith("END"):
-                break
-            if line.startswith("ATOM") or line.startswith("HETATM"):
-                tokens = line.split()
-                # Try to get the atomtype
+        if line.startswith("TER") or line.startswith("END"):
+            break
+
+        if line.startswith("ATOM") or line.startswith("HETATM"):
+            tokens = line.split()
+            # Try to get the atomtype
+
+            try:
+                atom_type = tokens[2]
+
+                if only_alpha_carbon and atom_type != "CA":
+                    continue
+
+                atom = tokens[2][0]
+                if atom not in ("H", "C", "N", "O", "S", "P"):
+                    # e.g. 1HD1
+                    atom = tokens[2][1]
+                    if atom != "H":
+                        raise Exception
+
+                atoms.append(atom)
+
+            except ValueError:
+                msg = f"error: Parsing atomtype for the following line:" f" \n{line}"
+                exit(msg)
+
+            # Find coordinates
+            if x_column is None:
                 try:
-                    atom = tokens[2][0]
-                    if atom in ("H", "C", "N", "O", "S", "P"):
-                        atoms.append(atom)
-                    else:
-                        # e.g. 1HD1
-                        atom = tokens[2][1]
-                        if atom == "H":
-                            atoms.append(atom)
-                        else:
-                            raise Exception
+                    # look for x column
+                    for i, x in enumerate(tokens):
+                        if "." in x and "." in tokens[i + 1] and "." in tokens[i + 2]:
+                            x_column = i
+                            break
 
-                except ValueError:
-                    msg = f"error: Parsing atomtype for the following line:" f" \n{line}"
+                except IndexError:
+                    msg = "error: Parsing coordinates " "for the following line:" f"\n{line}"
                     exit(msg)
 
-                if x_column is None:
-                    try:
-                        # look for x column
-                        for i, x in enumerate(tokens):
-                            if "." in x and "." in tokens[i + 1] and "." in tokens[i + 2]:
-                                x_column = i
-                                break
+            assert x_column is not None
 
-                    except IndexError:
-                        msg = "error: Parsing coordinates " "for the following line:" f"\n{line}"
-                        exit(msg)
+            # Try to read the coordinates
+            try:
+                V.append(np.asarray(tokens[x_column : x_column + 3], dtype=float))
 
-                assert x_column is not None
-
-                # Try to read the coordinates
+            except ValueError:
+                # If that doesn't work, use hardcoded indices
                 try:
-                    V.append(np.asarray(tokens[x_column : x_column + 3], dtype=float))
-
+                    x = line[30:38]
+                    y = line[38:46]
+                    z = line[46:54]
+                    V.append(np.asarray([x, y, z], dtype=float))
                 except ValueError:
-                    # If that doesn't work, use hardcoded indices
-                    try:
-                        x = line[30:38]
-                        y = line[38:46]
-                        z = line[46:54]
-                        V.append(np.asarray([x, y, z], dtype=float))
-                    except ValueError:
-                        msg = f"error: Parsing input for the following line \n{line}"
-                        exit(msg)
+                    msg = f"error: Parsing input for the following line \n{line}"
+                    exit(msg)
 
     if return_atoms_as_int:
         atoms = [int_atom(str(atom)) for atom in atoms]
@@ -1567,6 +1573,46 @@ def get_coordinates_pdb(
     assert V.shape[0] == atoms.size
 
     return atoms, V
+
+
+def get_coordinates_pdb(
+    filename: Path,
+    is_gzip: bool = False,
+    only_alpha_carbon: bool = False,
+    return_atoms_as_int: bool = False,
+) -> Tuple[ndarray, ndarray]:
+    """
+    Get coordinates from the first chain in a pdb file
+    and return a vectorset with all the coordinates.
+
+    Parameters
+    ----------
+    filename : string
+        Filename to read
+
+    Returns
+    -------
+    atoms : list
+        List of atomic types
+    V : array
+        (N,3) where N is number of atoms
+    """
+
+    openfunc: Any
+
+    if is_gzip:
+        openfunc = gzip.open
+        openarg = "rt"
+    else:
+        openfunc = open
+        openarg = "r"
+
+    with openfunc(filename, openarg) as f:
+        lines = f.readlines()
+
+    return get_coordinates_pdb_lines(
+        lines, return_atoms_as_int=return_atoms_as_int, only_alpha_carbon=only_alpha_carbon
+    )
 
 
 def get_coordinates_xyz_lines(
@@ -1803,6 +1849,11 @@ See https://github.com/charnley/rmsd for citation information
         default=False,
         help=argparse.SUPPRESS,
     )
+    parser.add_argument(
+        "--only-alpha-carbon",
+        action="store_true",
+        help="For PDB format, only read Alpha carbons",
+    )
 
     parser.add_argument(
         "-p",
@@ -1872,6 +1923,11 @@ See https://github.com/charnley/rmsd for citation information
 
         args.format = ext
 
+    # Check illegal arguments
+    if args.format != "pdb" and args.only_alpha_carbon:
+        print(f"error: Cannot filter Alpha-carbons for {args.ext} file format")
+        sys.exit()
+
     return args
 
 
@@ -1882,25 +1938,42 @@ def main(args: Optional[List[str]] = None) -> None:
 
     # As default, load the extension as format
     # Parse pdb.gz and xyz.gz as pdb and xyz formats
-    p_all_atoms, p_all = get_coordinates(
-        settings.structure_a,
-        settings.format,
-        is_gzip=settings.format_is_gzip,
-        return_atoms_as_int=True,
-    )
 
-    q_all_atoms, q_all = get_coordinates(
-        settings.structure_b,
-        settings.format,
-        is_gzip=settings.format_is_gzip,
-        return_atoms_as_int=True,
-    )
+    if settings.only_alpha_carbon and settings.format == "pdb":
+        p_all_atoms, p_all = get_coordinates_pdb(
+            settings.structure_a,
+            is_gzip=settings.format_is_gzip,
+            return_atoms_as_int=True,
+            only_alpha_carbon=True,
+        )
+
+        q_all_atoms, q_all = get_coordinates_pdb(
+            settings.structure_b,
+            is_gzip=settings.format_is_gzip,
+            return_atoms_as_int=True,
+            only_alpha_carbon=True,
+        )
+
+    else:
+        p_all_atoms, p_all = get_coordinates(
+            settings.structure_a,
+            settings.format,
+            is_gzip=settings.format_is_gzip,
+            return_atoms_as_int=True,
+        )
+
+        q_all_atoms, q_all = get_coordinates(
+            settings.structure_b,
+            settings.format,
+            is_gzip=settings.format_is_gzip,
+            return_atoms_as_int=True,
+        )
 
     p_size = p_all.shape[0]
     q_size = q_all.shape[0]
 
     if not p_size == q_size:
-        print("error: Structures not same size")
+        print(f"error: Structures not same size. {p_size} != {q_size}")
         sys.exit()
 
     if np.count_nonzero(p_all_atoms != q_all_atoms) and not settings.reorder:
