@@ -1724,6 +1724,7 @@ See https://github.com/charnley/rmsd for citation information
             "Default is Kabsch."
         ),
         metavar="METHOD",
+        choices=ROTATION_METHODS,
     )
 
     # Reorder arguments
@@ -1743,6 +1744,7 @@ See https://github.com/charnley/rmsd for citation information
             f"{valid_reorder_methods}. "
             "Default is Hungarian."
         ),
+        choices=REORDER_METHODS,
     )
     parser.add_argument(
         "-ur",
