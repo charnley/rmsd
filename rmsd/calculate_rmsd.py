@@ -654,7 +654,7 @@ def kabsch_weighted_fit(
 
 def kabsch_weighted_rmsd(P: ndarray, Q: ndarray, W: Optional[ndarray] = None) -> float:
     """
-    Calculate the RMSD between P and Q with optional weighhts W
+    Calculate the RMSD between P and Q with optional weights W
 
     Parameters
     ----------
