@@ -2065,4 +2065,4 @@ https://github.com/charnley/rmsd for further examples.
 
 if __name__ == "__main__":
     result = main()  # pragma: no cover
-    print(f'result {result}')
+    print(result)
