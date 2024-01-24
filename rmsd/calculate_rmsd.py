@@ -1877,7 +1877,6 @@ See https://github.com/charnley/rmsd for citation information
     return args
 
 
-# def main(args: Optional[List[str]] = None) -> None:
 def main(args: Optional[List[str]] = None):
 
     # Parse arguments
@@ -2059,7 +2058,6 @@ https://github.com/charnley/rmsd for further examples.
         if not result_rmsd:
             result_rmsd = rmsd_method(p_coord, q_coord)
 
-        # print("{0}".format(result_rmsd))
         return result_rmsd 
 
 
