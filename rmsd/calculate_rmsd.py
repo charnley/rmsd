@@ -1877,7 +1877,8 @@ See https://github.com/charnley/rmsd for citation information
     return args
 
 
-def main(args: Optional[List[str]] = None) -> None:
+# def main(args: Optional[List[str]] = None) -> None:
+def main(args: Optional[List[str]] = None):
 
     # Parse arguments
     settings = parse_arguments(args)
@@ -2051,15 +2052,17 @@ https://github.com/charnley/rmsd for further examples.
 
         # done and done
         xyz = set_coordinates(q_all_atoms, q_coord, title=f"{settings.structure_b} - modified")
-        print(xyz)
+        return xyz
 
     else:
 
         if not result_rmsd:
             result_rmsd = rmsd_method(p_coord, q_coord)
 
-        print("{0}".format(result_rmsd))
+        # print("{0}".format(result_rmsd))
+        return result_rmsd 
 
 
 if __name__ == "__main__":
-    main()  # pragma: no cover
+    result = main()  # pragma: no cover
+    print(f'result {result}')
