@@ -24,9 +24,11 @@ from scipy.spatial import distance_matrix  # type: ignore
 from scipy.spatial.distance import cdist  # type: ignore
 
 try:
-    import qml  # type: ignore
+    import qmllib  # type: ignore
+    from qmllib.kernels import laplacian_kernel  # type: ignore
+    from qmllib.representations import generate_fchl19  # type: ignore
 except ImportError:  # pragma: no cover
-    qml = None  # pragma: no cover
+    qmllib = None  # pragma: no cover
 
 
 METHOD_KABSCH = "kabsch"
@@ -812,7 +814,7 @@ def hungarian_vectors(
 
     if use_kernel:
         # Calculate cost matrix from similarity kernel
-        K = qml.kernels.laplacian_kernel(p_vecs, q_vecs, sigma)
+        K = laplacian_kernel(p_vecs, q_vecs, sigma)
         K *= -1.0
         K += 1.0
 
@@ -858,13 +860,6 @@ def reorder_similarity(
              coordinates of the atoms
     """
 
-    if qml is None:
-        raise ImportError(  # pragma: no cover
-            "QML is not installed. Package is avaliable from"
-            "\n github.com/qmlcode/qml"
-            "\n pip install qml"
-        )
-
     elements = np.unique(p_atoms)
     n_atoms = p_atoms.shape[0]
     distance_cut = 20.0
@@ -876,9 +871,9 @@ def reorder_similarity(
         "acut": distance_cut,
     }
 
-    p_vecs = qml.representations.generate_fchl_acsf(p_atoms, p_coord, **parameters)
+    p_vecs = generate_fchl19(p_atoms, p_coord, **parameters)
 
-    q_vecs = qml.representations.generate_fchl_acsf(q_atoms, q_coord, **parameters)
+    q_vecs = generate_fchl19(q_atoms, q_coord, **parameters)
 
     # generate full view from q shape to fill in atom view on the fly
     view_reorder = np.zeros(q_atoms.shape, dtype=int)
@@ -1826,7 +1821,7 @@ See https://github.com/charnley/rmsd for citation information
             "error: Cannot reorder atoms and print structure, "
             "when excluding atoms (such as --ignore-hydrogen)"
         )
-        sys.exit()
+        sys.exit(5)
 
     if (
         args.use_reflections
@@ -1837,7 +1832,7 @@ See https://github.com/charnley/rmsd for citation information
             "error: Cannot use reflections on atoms and print, "
             "when excluding atoms (such as --ignore-hydrogen)"
         )
-        sys.exit()
+        sys.exit(5)
 
     # Check methods
     args.rotation = args.rotation.lower()
@@ -1846,7 +1841,7 @@ See https://github.com/charnley/rmsd for citation information
             f"error: Unknown rotation method: '{args.rotation}'. "
             f"Please use {valid_rotation_methods}"
         )
-        sys.exit()
+        sys.exit(5)
 
     # Check reorder methods
     args.reorder_method = args.reorder_method.lower()
@@ -1855,7 +1850,7 @@ See https://github.com/charnley/rmsd for citation information
             f'error: Unknown reorder method: "{args.reorder_method}". '
             f"Please use {valid_reorder_methods}"
         )
-        sys.exit()
+        sys.exit(5)
 
     # Check fileformat
     if args.format is None:
@@ -1873,6 +1868,13 @@ See https://github.com/charnley/rmsd for citation information
             ext = suffixes[-1].strip(".")
 
         args.format = ext
+
+    # Check QML is installed
+    if args.reorder_method == REORDER_QML and qmllib is None:
+        print(
+            "'qmllib' is not installed. Package is avaliable from: github.com/qmlcode/qmllib or pip install qmllib."
+        )
+        sys.exit(1)
 
     return args
 
@@ -1925,8 +1927,8 @@ https://github.com/charnley/rmsd for further examples.
     q_view: Optional[ndarray] = None
 
     if settings.ignore_hydrogen:
-        assert type(p_all_atoms[0]) != str
-        assert type(q_all_atoms[0]) != str
+        assert not isinstance(p_all_atoms[0], str)
+        assert not isinstance(q_all_atoms[0], str)
         p_view = np.where(p_all_atoms != 1)  # type: ignore
         q_view = np.where(q_all_atoms != 1)  # type: ignore
 
@@ -2058,7 +2060,7 @@ https://github.com/charnley/rmsd for further examples.
         if not result_rmsd:
             result_rmsd = rmsd_method(p_coord, q_coord)
 
-        return result_rmsd 
+        return result_rmsd
 
 
 if __name__ == "__main__":
