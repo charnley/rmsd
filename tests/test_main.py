@@ -5,6 +5,7 @@ import pytest
 from context import RESOURCE_PATH, call_main
 
 import rmsd as rmsdlib
+from rmsd.calculate_rmsd import get_coordinates_xyz, get_coordinates_xyz_lines
 
 
 def test_print_reflection_reorder() -> None:
@@ -136,3 +137,29 @@ def test_ignore() -> None:
     rmsdlib.main(f"{filename_a} {filename_b} --remove-idx 0 5".split())
 
     rmsdlib.main(f"{filename_a} {filename_b} --add-idx 0 1 2 3 4".split())
+
+
+def test_print_no_hydrogen() -> None:
+
+    filename_a = RESOURCE_PATH / "CHEMBL3039407.xyz"
+    filename_b = RESOURCE_PATH / "CHEMBL3039407.xyz"
+
+    out = rmsdlib.main(f"--no-hydrogen --print {filename_a} {filename_b}".split()).split("\n")
+    atoms1, coord1 = get_coordinates_xyz_lines(out)
+
+    print(atoms1)
+    print(len(atoms1))
+
+    assert len(atoms1) == 30
+    assert coord1.shape
+    assert "H" not in atoms1
+
+    out = rmsdlib.main(f"--print {filename_a} {filename_b}".split()).split("\n")
+    atoms2, coord2 = get_coordinates_xyz_lines(out)
+
+    print(atoms2)
+    print(len(atoms2))
+
+    assert len(atoms2) == 60
+    assert coord2.shape
+    assert "H" in atoms2
