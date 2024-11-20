@@ -32,7 +32,7 @@ def test_reorder_print_and_rmsd() -> None:
 
     # Pull Request 111, problem with printed structure after selection of atoms
     # with --no-hydrogens.
-    # Here a pair of ethane structures with hydrogens and withoud hydrogens are
+    # Here pairs of ethane structures with and without hydrogen atoms are
     # used to test the problem.
     # The following steps are performed and results are compared:
     # - calculate_rmsd --no-hydrogen --print (structure a1 and b1 with hydrogens)
