@@ -335,6 +335,22 @@ class RmsdCallable(Protocol):
         ...  # pragma: no cover
 
 
+class RotationCallable(Protocol):
+    def __call__(
+        self,
+        P: ndarray,
+        Q: ndarray,
+        **kwargs: Any,
+    ) -> ndarray:
+        """
+        Protocol for a rotation callable function
+
+        return:
+            rotation matrix
+        """
+        ...  # pragma: no cover
+
+
 def str_atom(atom: int) -> str:
     """
     Convert atom type from integer to string
@@ -1412,6 +1428,9 @@ def set_coordinates(atoms: ndarray, V: ndarray, title: str = "", decimals: int =
     """
     N, D = V.shape
 
+    if N != len(atoms):
+        raise ValueError("Mismatch between expected atoms and coordinate size")
+
     fmt = "{:<2}" + (" {:15." + str(decimals) + "f}") * 3
 
     out = list()
@@ -1818,6 +1837,14 @@ See https://github.com/charnley/rmsd for citation information
         ),
     )
 
+    parser.add_argument(
+        "--print-only-rmsd-atoms",
+        action="store_true",
+        help=(
+            "Print only atoms used in finding optimal RMSD calculation (relevant if filtering e.g. Hydrogens)"
+        ),
+    )
+
     args = parser.parse_args(arguments)
 
     # Check illegal combinations
@@ -1877,35 +1904,35 @@ See https://github.com/charnley/rmsd for citation information
     return args
 
 
-def main(args: Optional[List[str]] = None):
+def main(args: Optional[List[str]] = None) -> str:
 
     # Parse arguments
     settings = parse_arguments(args)
 
     # As default, load the extension as format
     # Parse pdb.gz and xyz.gz as pdb and xyz formats
-    p_all_atoms, p_all = get_coordinates(
+    p_atoms, p_coord = get_coordinates(
         settings.structure_a,
         settings.format,
         is_gzip=settings.format_is_gzip,
         return_atoms_as_int=True,
     )
 
-    q_all_atoms, q_all = get_coordinates(
+    q_atoms, q_coord = get_coordinates(
         settings.structure_b,
         settings.format,
         is_gzip=settings.format_is_gzip,
         return_atoms_as_int=True,
     )
 
-    p_size = p_all.shape[0]
-    q_size = q_all.shape[0]
+    p_size = p_coord.shape[0]
+    q_size = q_coord.shape[0]
 
     if not p_size == q_size:
         print("error: Structures not same size")
         sys.exit()
 
-    if np.count_nonzero(p_all_atoms != q_all_atoms) and not settings.reorder:
+    if np.count_nonzero(p_atoms != q_atoms) and not settings.reorder:
         msg = """
 error: Atoms are not in the same order.
 
@@ -1923,12 +1950,11 @@ https://github.com/charnley/rmsd for further examples.
     # Set local view
     p_view: Optional[ndarray] = None
     q_view: Optional[ndarray] = None
+    use_view: bool = True
 
     if settings.ignore_hydrogen:
-        assert type(p_all_atoms[0]) != str
-        assert type(q_all_atoms[0]) != str
-        p_view = np.where(p_all_atoms != 1)  # type: ignore
-        q_view = np.where(q_all_atoms != 1)  # type: ignore
+        p_view = np.where(p_atoms != 1)  # type: ignore
+        q_view = np.where(q_atoms != 1)  # type: ignore
 
     elif settings.remove_idx:
         index = np.array(list(set(range(p_size)) - set(settings.remove_idx)))
@@ -1939,26 +1965,27 @@ https://github.com/charnley/rmsd for further examples.
         p_view = settings.add_idx
         q_view = settings.add_idx
 
+    else:
+        use_view = False
+
     # Set local view
-    if p_view is None:
-        p_coord = copy.deepcopy(p_all)
-        q_coord = copy.deepcopy(q_all)
-        p_atoms = copy.deepcopy(p_all_atoms)
-        q_atoms = copy.deepcopy(q_all_atoms)
+    if use_view:
+        p_coord_sub = copy.deepcopy(p_coord[p_view])
+        q_coord_sub = copy.deepcopy(q_coord[q_view])
+        p_atoms_sub = copy.deepcopy(p_atoms[p_view])
+        q_atoms_sub = copy.deepcopy(q_atoms[q_view])
 
     else:
-        assert p_view is not None
-        assert q_view is not None
-        p_coord = copy.deepcopy(p_all[p_view])
-        q_coord = copy.deepcopy(q_all[q_view])
-        p_atoms = copy.deepcopy(p_all_atoms[p_view])
-        q_atoms = copy.deepcopy(q_all_atoms[q_view])
+        p_coord_sub = copy.deepcopy(p_coord)
+        q_coord_sub = copy.deepcopy(q_coord)
+        p_atoms_sub = copy.deepcopy(p_atoms)
+        q_atoms_sub = copy.deepcopy(q_atoms)
 
     # Recenter to centroid
-    p_cent = centroid(p_coord)
-    q_cent = centroid(q_coord)
-    p_coord -= p_cent
-    q_coord -= q_cent
+    p_cent_sub = centroid(p_coord_sub)
+    q_cent_sub = centroid(q_coord_sub)
+    p_coord_sub -= p_cent_sub
+    q_coord_sub -= q_cent_sub
 
     rmsd_method: RmsdCallable
     reorder_method: Optional[ReorderCallable]
@@ -1985,7 +2012,7 @@ https://github.com/charnley/rmsd for further examples.
         reorder_method = reorder_distance
 
     # Save the resulting RMSD
-    result_rmsd = None
+    result_rmsd: Optional[float] = None
 
     # Collect changes to be done on q coords
     q_swap = None
@@ -1995,10 +2022,10 @@ https://github.com/charnley/rmsd for further examples.
     if settings.use_reflections:
 
         result_rmsd, q_swap, q_reflection, q_review = check_reflections(
-            p_atoms,
-            q_atoms,
-            p_coord,
-            q_coord,
+            p_atoms_sub,
+            q_atoms_sub,
+            p_coord_sub,
+            q_coord_sub,
             reorder_method=reorder_method,
             rmsd_method=rmsd_method,
         )
@@ -2006,10 +2033,10 @@ https://github.com/charnley/rmsd for further examples.
     elif settings.use_reflections_keep_stereo:
 
         result_rmsd, q_swap, q_reflection, q_review = check_reflections(
-            p_atoms,
-            q_atoms,
-            p_coord,
-            q_coord,
+            p_atoms_sub,
+            q_atoms_sub,
+            p_coord_sub,
+            q_coord_sub,
             reorder_method=reorder_method,
             rmsd_method=rmsd_method,
             keep_stereo=True,
@@ -2023,16 +2050,45 @@ https://github.com/charnley/rmsd for further examples.
     # If there is a reorder, then apply before print
     if q_review is not None:
 
-        q_all_atoms = q_all_atoms[q_review]
-        q_atoms = q_atoms[q_review]
-        q_coord = q_coord[q_review]
+        q_atoms_sub = q_atoms_sub[q_review]
+        q_coord_sub = q_coord_sub[q_review]
 
         assert all(
-            p_atoms == q_atoms
+            p_atoms_sub == q_atoms_sub
         ), "error: Structure not aligned. Please submit bug report at http://github.com/charnley/rmsd"
+
+    # Calculate the RMSD value
+    if result_rmsd is None:
+        result_rmsd = rmsd_method(p_coord_sub, q_coord_sub)
 
     # print result
     if settings.output:
+
+        if q_swap is not None:
+            q_coord_sub = q_coord_sub[:, q_swap]
+
+        if q_reflection is not None:
+            q_coord_sub = np.dot(q_coord_sub, np.diag(q_reflection))
+
+        # q_coord -= q_coord
+
+        # Rotate q coordinates
+        # TODO Should actually follow rotation method
+        # q_coord = kabsch_rotate(q_coord, p_coord)
+        # rotation_matrix = kabsch(q_coord, p_coord)
+        U = kabsch(q_coord_sub, p_coord_sub)
+
+        # done and done
+        if settings.print_only_rmsd_atoms or not use_view:
+            q_coord_sub = np.dot(q_coord_sub, U)
+            q_coord_sub += p_cent_sub
+            return set_coordinates(
+                q_atoms_sub,
+                q_coord_sub,
+                title=f"Rotated {settings.structure_b} to match {settings.structure_a}, with RMSD of {result_rmsd:.8f}",
+            )
+
+        q_coord -= q_cent_sub
 
         if q_swap is not None:
             q_coord = q_coord[:, q_swap]
@@ -2040,25 +2096,15 @@ https://github.com/charnley/rmsd for further examples.
         if q_reflection is not None:
             q_coord = np.dot(q_coord, np.diag(q_reflection))
 
-        q_coord -= centroid(q_coord)
+        q_coord = np.dot(q_coord, U)
+        q_coord += p_cent_sub
+        return set_coordinates(
+            q_atoms,
+            q_coord,
+            title=f"Rotated {settings.structure_b} to match {settings.structure_a}, with RMSD of {result_rmsd:.8f}",
+        )
 
-        # Rotate q coordinates
-        # TODO Should actually follow rotation method
-        q_coord = kabsch_rotate(q_coord, p_coord)
-
-        # center q on p's original coordinates
-        q_coord += p_cent
-
-        # done and done
-        xyz = set_coordinates(q_atoms, q_coord, title=f"{settings.structure_b} - modified")
-        return xyz
-
-    else:
-
-        if not result_rmsd:
-            result_rmsd = rmsd_method(p_coord, q_coord)
-
-        return result_rmsd 
+    return str(result_rmsd)
 
 
 if __name__ == "__main__":
