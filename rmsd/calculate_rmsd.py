@@ -2050,7 +2050,7 @@ https://github.com/charnley/rmsd for further examples.
         q_coord += p_cent
 
         # done and done
-        xyz = set_coordinates(q_all_atoms, q_coord, title=f"{settings.structure_b} - modified")
+        xyz = set_coordinates(q_atoms, q_coord, title=f"{settings.structure_b} - modified")
         return xyz
 
     else:
