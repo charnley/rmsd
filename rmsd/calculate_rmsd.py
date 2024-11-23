@@ -2054,24 +2054,18 @@ https://github.com/charnley/rmsd for further examples.
         if q_reflection is not None:
             q_coord_sub = np.dot(q_coord_sub, np.diag(q_reflection))
 
-        # q_coord -= q_coord
-
-        # Rotate q coordinates
-        # TODO Should actually follow rotation method
-        # q_coord = kabsch_rotate(q_coord, p_coord)
-        # rotation_matrix = kabsch(q_coord, p_coord)
         U = kabsch(q_coord_sub, p_coord_sub)
 
-        # done and done
         if settings.print_only_rmsd_atoms or not use_view:
             q_coord_sub = np.dot(q_coord_sub, U)
             q_coord_sub += p_cent_sub
             return set_coordinates(
                 q_atoms_sub,
                 q_coord_sub,
-                title=f"Rotated {settings.structure_b} to match {settings.structure_a}, with RMSD of {result_rmsd:.8f}",
+                title=f"Rotated '{settings.structure_b}' to match '{settings.structure_a}', with a RMSD of {result_rmsd:.8f}",
             )
 
+        # Swap, reflect, rotate and re-center on the full atom and coordinate set
         q_coord -= q_cent_sub
 
         if q_swap is not None:
