@@ -335,22 +335,6 @@ class RmsdCallable(Protocol):
         ...  # pragma: no cover
 
 
-class RotationCallable(Protocol):
-    def __call__(
-        self,
-        P: ndarray,
-        Q: ndarray,
-        **kwargs: Any,
-    ) -> ndarray:
-        """
-        Protocol for a rotation callable function
-
-        return:
-            rotation matrix
-        """
-        ...  # pragma: no cover
-
-
 def str_atom(atom: int) -> str:
     """
     Convert atom type from integer to string
