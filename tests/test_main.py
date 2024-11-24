@@ -181,3 +181,37 @@ def test_print_match_no_hydrogen() -> None:
     assert len(atoms1) == 30
     assert coord1.shape
     assert "H" not in atoms1
+
+
+def test_only_alpha_carbons() -> None:
+
+    filename_a = RESOURCE_PATH / "ci2_1.pdb"
+    filename_b = RESOURCE_PATH / "ci2_2.pdb"
+
+    cmd = f"--only-alpha-carbons --print {filename_a} {filename_b}"
+    print(cmd)
+    out = rmsdlib.main(cmd.split()).split("\n")
+    atoms1, _ = get_coordinates_xyz_lines(out)
+
+    print(atoms1)
+    print(len(atoms1))
+
+    assert len(atoms1) == 64
+    assert len(np.unique(atoms1)) == 1
+    assert set(atoms1) == set(["C"])
+
+    cmd2 = f"{filename_a} {filename_b}"
+    print(cmd)
+    out2 = rmsdlib.main(cmd2.split())
+    rmsd2 = float(out2)
+    assert isinstance(rmsd2, float)
+
+    cmd3 = f"--only-alpha-carbons {filename_a} {filename_b}"
+    print(cmd)
+    out3 = rmsdlib.main(cmd3.split())
+    rmsd3 = float(out3)
+    assert isinstance(rmsd3, float)
+
+    print(rmsd2)
+    print(rmsd3)
+    assert rmsd2 > rmsd3

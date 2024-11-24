@@ -18,7 +18,7 @@ format:
 	${python} -m pre_commit run --all-files
 
 test:
-	${python} -m pytest -rs ./tests
+	${python} -m pytest ./tests
 
 test-dist:
 	${python} -m twine check dist/*

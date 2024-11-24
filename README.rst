@@ -111,7 +111,8 @@ Hungarian_ (default), distance (very approximate) and brute force (slow).
     calculate_rmsd --reorder tests/water_16.xyz tests/water_16_idx.xyz
 
 
-It is also possible to use RMSD as a library in other scripts, see `example.py` for example usage.
+It is also possible to use RMSD as a library in other scripts, see
+``example.py`` and ``tests/*`` for example usage.
 
 
 Problems?
@@ -120,21 +121,14 @@ Problems?
 Submit issues or pull requests on GitHub.
 
 
-Contributions
+A note on PDB
 -------------
 
-Please note that we are using ``black`` with line length of 99. Easiest way to
-abide to the code standard is to install the following package.
+Protein Data Bank format (PDB) is a column based format, however, there are
+countless examples of non-standard ``.pdb`` files. We try our best to read
+them, but if you have trouble reading the file, maybe check if the file format
+is correct.
 
-.. code-block:: bash
-
-    pip install pre-commit
-
-and run the following command in your repository
-
-.. code-block:: bash
-
-    pre-commit install
-
-This will install a hook in your git and re-format your code to adhere to the standard.
-As well as check for code quality.
+- https://cdn.rcsb.org/wwpdb/docs/documentation/file-format/PDB_format_1992.pdf
+- http://www.rcsb.org/pdb/docs/format/pdbguide2.2/guide2.2_frame.html (Deprecated link)
+- https://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM

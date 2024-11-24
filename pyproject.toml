@@ -26,8 +26,11 @@ Homepage = "https://github.com/charnley/rmsd"
 [options.packages.find]
 where="."
 
+[project.scripts]
+calculate_rmsd = "rmsd.calculate_rmsd:main"
+
 [tool.setuptools]
 include-package-data = true
 
 [tool.setuptools.dynamic]
-version = {attr = "rmsd.__version__"}
+version = {attr = "rmsd.version.__version__"}

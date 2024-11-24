@@ -14,6 +14,7 @@ import copy
 import gzip
 import re
 import sys
+from functools import partial
 from pathlib import Path
 from typing import Any, Iterator, List, Optional, Protocol, Set, Tuple, Union
 
@@ -36,7 +37,6 @@ METHOD_QUATERNION = "quaternion"
 METHOD_NOROTATION = "none"
 ROTATION_METHODS = [METHOD_KABSCH, METHOD_QUATERNION, METHOD_NOROTATION]
 
-
 REORDER_NONE = "none"
 REORDER_QML = "qml"
 REORDER_HUNGARIAN = "hungarian"
@@ -52,6 +52,9 @@ REORDER_METHODS = [
     REORDER_DISTANCE,
 ]
 
+FORMAT_XYZ = "xyz"
+FORMAT_PDB = "pdb"
+FORMATS = [FORMAT_XYZ, FORMAT_PDB]
 
 AXIS_SWAPS = np.array([[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 1, 0], [2, 0, 1]])
 
@@ -1455,8 +1458,161 @@ def get_coordinates(
     return val
 
 
+def _parse_pdb_alphacarbon_line(line: str) -> bool:
+
+    tokens = line.split()
+    atom: str = tokens[2]
+
+    if atom == "CA":
+        return True
+
+    return False
+
+
+def _parse_pdb_atom_line(line: str) -> Optional[str]:
+    """
+    Will try it best to find atom from an atom-line. The standard of PDB
+    *should* be column based, however, there are many examples of non-standard
+    files. We try our best to have a minimal reader.
+
+    From PDB Format 1992 pdf:
+
+        ATOM Atomic coordinate records for "standard" groups
+        HETATM Atomic coordinate records for "non-standard" groups
+
+        Cols. 1 - 4  ATOM
+           or 1 - 6  HETATM
+
+              7 - 11 Atom serial number(i)
+             13 - 16 Atom name(ii)
+             17      Alternate location indicator(iii)
+             18 - 20 Residue name(iv,v)
+             22      Chain identifier, e.g., A for hemoglobin α chain
+             23 - 26 Residue seq. no.
+             27      Code for insertions of residues, e.g., 66A, 66B, etc.
+             31 - 38 X
+             39 - 46 Y Orthogonal Å coordinates
+             47 - 54 Z
+             55 - 60 Occupancy
+             61 - 66 Temperature factor(vi)
+             68 - 70 Footnote number
+
+        For (II)
+
+        Within each residue the atoms occur in the order specified by the
+        superscripts. The extra oxygen atom of the carboxy terminal amino acid
+        is designated OXT
+
+        Four characters are reserved for these atom names. They are assigned as
+        follows:
+
+        1-2 Chemical symbol - right justified
+        3 Remoteness indicator (alphabetic)
+        4 Branch designator (numeric)
+
+        For protein coordinate sets containing hydrogen atoms, the IUPAC-IUB
+        rules1 have been followed. Recommendation rule number 4.4 has been
+        modified as follows: When more than one hydrogen atom is bonded to a
+        single non-hydrogen atom, the hydrogen atom number designation is given
+        as the first character of the atom name rather than as the last
+        character (e.g. Hβ1 is denoted as 1HB). Exceptions to these rules may
+        occur in certain data sets at the depositors’ request. Any such
+        exceptions will be delineated clearly in FTNOTE and REMARK records
+
+    but, from [PDB Format Version 2.1]
+
+        In large het groups it sometimes is not possible to follow the
+        convention of having the first two characters be the chemical symbol
+        and still use atom names that are meaningful to users. A example is
+        nicotinamide adenine dinucleotide, atom names begin with an A or N,
+        depending on which portion of the molecule they appear in, e.g., AC6 or
+        NC6, AN1 or NN1.
+
+        Hydrogen naming sometimes conflicts with IUPAC conventions. For
+        example, a hydrogen named HG11 in columns 13 - 16 is differentiated
+        from a mercury atom by the element symbol in columns 77 - 78. Columns
+        13 - 16 present a unique name for each atom.
+
+    """
+
+    atom_col = line[12:16]
+    atom = atom_col[0:2]
+    atom = re.sub(r"\d", " ", atom)
+    atom = atom.strip()
+    atom = atom.capitalize()
+
+    # Highly unlikely that it is Mercury, Helium, Hafnium etc. See comment in
+    # function description. [PDB Format v2.1]
+    if len(atom) == 2 and atom[0] == "H":
+        atom = "H"
+
+    if atom in NAMES_ELEMENT.keys():
+        return atom
+
+    tokens = line.split()
+    atom = tokens[2][0]
+    if atom in NAMES_ELEMENT.keys():
+        return atom
+
+    # e.g. 1HD1
+    atom = tokens[2][1]
+    if atom.upper() == "H":
+        return atom
+
+    return None
+
+
+def _parse_pdb_coord_line(line: str):
+    """
+    Try my best to coordinates from a PDB ATOM or HETATOM line
+
+    The coordinates should be located in
+        31 - 38 X
+        39 - 46 Y
+        47 - 54 Z
+
+    as defined in PDB, ATOMIC COORDINATE AND BIBLIOGRAPHIC ENTRY FORMAT DESCRIPTION, Feb, 1992
+    """
+
+    # If that doesn't work, use hardcoded indices
+    try:
+        x = line[30:38]
+        y = line[38:46]
+        z = line[46:54]
+        coord = np.asarray([x, y, z], dtype=float)
+        return coord
+
+    except ValueError:
+        coord = None
+
+    tokens = line.split()
+
+    x_column: Optional[int] = None
+
+    # look for x column
+    for i, x in enumerate(tokens):
+        if "." in x and "." in tokens[i + 1] and "." in tokens[i + 2]:
+            x_column = i
+            break
+
+    if x_column is None:
+        return None
+
+    # Try to read the coordinates
+    try:
+        coord = np.asarray(tokens[x_column : x_column + 3], dtype=float)
+        return coord
+    except ValueError:
+        coord = None
+
+    return None
+
+
 def get_coordinates_pdb(
-    filename: Path, is_gzip: bool = False, return_atoms_as_int: bool = False
+    filename: Path,
+    is_gzip: bool = False,
+    return_atoms_as_int: bool = False,
+    only_alpha_carbon: bool = False,
 ) -> Tuple[ndarray, ndarray]:
     """
     Get coordinates from the first chain in a pdb file
@@ -1482,7 +1638,6 @@ def get_coordinates_pdb(
     # Since the format doesn't require a space between columns, we use the
     # above column indices as a fallback.
 
-    x_column: Optional[int] = None
     V: Union[List[ndarray], ndarray] = list()
     assert isinstance(V, list)
 
@@ -1490,7 +1645,8 @@ def get_coordinates_pdb(
     # The most robust way to do this is probably
     # to assume that the atomtype is given in column 3.
 
-    atoms: Union[List[int], ndarray] = list()
+    atoms: List[str] = list()
+    alpha_carbons: List[bool] = list()
     assert isinstance(atoms, list)
     openfunc: Any
 
@@ -1504,67 +1660,49 @@ def get_coordinates_pdb(
     with openfunc(filename, openarg) as f:
         lines = f.readlines()
         for line in lines:
+
             if line.startswith("TER") or line.startswith("END"):
                 break
-            if line.startswith("ATOM") or line.startswith("HETATM"):
-                tokens = line.split()
-                # Try to get the atomtype
-                try:
-                    atom = tokens[2][0]
-                    if atom in ("H", "C", "N", "O", "S", "P"):
-                        atoms.append(atom)
-                    else:
-                        # e.g. 1HD1
-                        atom = tokens[2][1]
-                        if atom == "H":
-                            atoms.append(atom)
-                        else:
-                            raise Exception
 
-                except ValueError:
-                    msg = f"error: Parsing atomtype for the following line:" f" \n{line}"
-                    exit(msg)
+            if not (line.startswith("ATOM") or line.startswith("HETATM")):
+                continue
 
-                if x_column is None:
-                    try:
-                        # look for x column
-                        for i, x in enumerate(tokens):
-                            if "." in x and "." in tokens[i + 1] and "." in tokens[i + 2]:
-                                x_column = i
-                                break
+            atom = _parse_pdb_atom_line(line)
+            if atom is None:
+                raise ValueError(f"error: Parsing for atom line: {line}")
+            atoms.append(atom)
 
-                    except IndexError:
-                        msg = "error: Parsing coordinates " "for the following line:" f"\n{line}"
-                        exit(msg)
+            coord = _parse_pdb_coord_line(line)
+            if coord is None:
+                raise ValueError(f"error: Parsing coordinates for line: {line}")
+            V.append(coord)
 
-                assert x_column is not None
-
-                # Try to read the coordinates
-                try:
-                    V.append(np.asarray(tokens[x_column : x_column + 3], dtype=float))
-
-                except ValueError:
-                    # If that doesn't work, use hardcoded indices
-                    try:
-                        x = line[30:38]
-                        y = line[38:46]
-                        z = line[46:54]
-                        V.append(np.asarray([x, y, z], dtype=float))
-                    except ValueError:
-                        msg = f"error: Parsing input for the following line \n{line}"
-                        exit(msg)
+            # Check if alpha-carbon
+            is_alpha = _parse_pdb_alphacarbon_line(line)
+            alpha_carbons.append(is_alpha)
 
     if return_atoms_as_int:
-        atoms = [int_atom(str(atom)) for atom in atoms]
+        _atoms = np.asarray([int_atom(str(atom)) for atom in atoms])
+    else:
+        _atoms = np.asarray(atoms)
 
     V = np.asarray(V)
     assert isinstance(V, ndarray)
 
-    atoms = np.asarray(atoms)
-    assert isinstance(atoms, ndarray)
-    assert V.shape[0] == atoms.size
+    assert isinstance(_atoms, ndarray)
+    assert V.shape[0] == _atoms.size
 
-    return atoms, V
+    if only_alpha_carbon:
+        # Check that any alpha carbons were found
+        if not sum(alpha_carbons):
+            raise ValueError("Trying to filter for alpha carbons, but couldn't find any")
+
+        _alpha_carbons = np.asarray(alpha_carbons, dtype=bool)
+
+        V = V[_alpha_carbons, :]
+        _atoms = _atoms[_alpha_carbons]
+
+    return _atoms, V
 
 
 def get_coordinates_xyz_lines(
@@ -1770,6 +1908,11 @@ See https://github.com/charnley/rmsd for citation information
     # Filter
     index_group = parser.add_mutually_exclusive_group()
     index_group.add_argument(
+        "--only-alpha-carbons",
+        action="store_true",
+        help="use only alpha carbons (only for pdb)",
+    )
+    index_group.add_argument(
         "-nh",
         "--ignore-hydrogen",
         "--no-hydrogen",
@@ -1794,7 +1937,7 @@ See https://github.com/charnley/rmsd for citation information
     parser.add_argument(
         "--format",
         action="store",
-        help="format of input files. valid format are xyz and pdb",
+        help=f"format of input files. valid format are {", ".join(FORMATS)}.",
         metavar="FMT",
     )
     parser.add_argument(
@@ -1810,9 +1953,7 @@ See https://github.com/charnley/rmsd for citation information
         "--print",
         action="store_true",
         help=(
-            "print out structure B, "
-            "centered and rotated unto structure A's coordinates "
-            "in XYZ format"
+            "print out structure B, centered and rotated unto structure A's coordinates in XYZ format"
         ),
     )
 
@@ -1829,8 +1970,7 @@ See https://github.com/charnley/rmsd for citation information
     # Check illegal combinations
     if args.output and args.reorder and (args.ignore_hydrogen or args.add_idx or args.remove_idx):
         print(
-            "error: Cannot reorder atoms and print structure, "
-            "when excluding atoms (such as --ignore-hydrogen)"
+            "error: Cannot reorder atoms and print structure, when excluding atoms (such as --ignore-hydrogen)"
         )
         sys.exit(5)
 
@@ -1880,6 +2020,16 @@ See https://github.com/charnley/rmsd for citation information
 
         args.format = ext
 
+    # Check if format exist
+    if args.format not in FORMATS:
+        print(f"error: Format not supported {args.format}")
+        sys.exit(5)
+
+    # Check illegal argument
+    if args.format != FORMAT_PDB and args.only_alpha_carbons:
+        print("Alpha carbons only exist in pdb files")
+        sys.exit(5)
+
     # Check QML is installed
     if args.reorder_method == REORDER_QML and qmllib is None:
         print(
@@ -1895,20 +2045,31 @@ def main(args: Optional[List[str]] = None) -> str:
     # Parse arguments
     settings = parse_arguments(args)
 
+    # Define the read function
+    if settings.format == FORMAT_XYZ:
+        get_coordinates = partial(
+            get_coordinates_xyz, is_gzip=settings.format_is_gzip, return_atoms_as_int=True
+        )
+
+    elif settings.format == FORMAT_PDB:
+        get_coordinates = partial(
+            get_coordinates_pdb,
+            is_gzip=settings.format_is_gzip,
+            return_atoms_as_int=True,
+            only_alpha_carbon=settings.only_alpha_carbons,
+        )
+    else:
+        print(f"Unknown format: {settings.format}")
+        sys.exit(1)
+
     # As default, load the extension as format
     # Parse pdb.gz and xyz.gz as pdb and xyz formats
     p_atoms, p_coord = get_coordinates(
         settings.structure_a,
-        settings.format,
-        is_gzip=settings.format_is_gzip,
-        return_atoms_as_int=True,
     )
 
     q_atoms, q_coord = get_coordinates(
         settings.structure_b,
-        settings.format,
-        is_gzip=settings.format_is_gzip,
-        return_atoms_as_int=True,
     )
 
     p_size = p_coord.shape[0]

@@ -38,14 +38,7 @@ repos:
     hooks:
       - id: isort
         name: sorts imports
-        args: [
-          # Align isort with black formatting
-          "--multi-line=3",
-          "--trailing-comma",
-          "--force-grid-wrap=0",
-          "--use-parentheses",
-          "--line-width=99",
-        ]
+        args: ["--profile", "black", "--filter-files", "--line-width=99"]
 
 
   - repo: https://github.com/psf/black

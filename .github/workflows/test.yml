@@ -30,6 +30,8 @@ jobs:
           pwd
           which python
           conda info
+      - run: pip install .
+      - run: which calculate_rmsd
       - run: |
           make test python=python
       - run: |
