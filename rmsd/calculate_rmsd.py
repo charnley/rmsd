@@ -1937,7 +1937,7 @@ See https://github.com/charnley/rmsd for citation information
     parser.add_argument(
         "--format",
         action="store",
-        help=f"format of input files. valid format are {", ".join(FORMATS)}.",
+        help=f"format of input files. valid format are {', '.join(FORMATS)}.",
         metavar="FMT",
     )
     parser.add_argument(
