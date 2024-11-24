@@ -1,9 +1,11 @@
 python=./env/bin/python
+pytest=./env/bin/pytest
+package=rmsd
 
 ## Setup
 
 env:
-	conda env create -f ./environment.yaml -p ./env --quiet
+	conda env create -f ./environment.yml -p ./env --quiet
 	${python} -m pre_commit install
 	${python} -m pip install -e .
 
@@ -23,10 +25,10 @@ test-dist:
 
 types:
 	${python} -m monkeytype run $$(which ${pytest}) ./tests
-	${python} -m monkeytype list-modules | grep ${pkg} | parallel -j${j} "${python} -m monkeytype apply {} > /dev/null && echo {}"
+	${python} -m monkeytype list-modules | grep ${package} | parallel -j1 "${python} -m monkeytype apply {} > /dev/null && echo {}"
 
 cov:
-	${python} -m pytest --cov=${pkg} --cov-config .coveragerc --cov-report html tests
+	${python} -m pytest --cov=${package} --cov-config .coveragerc --cov-report html tests
 
 compile:
 	${python} _compile.py

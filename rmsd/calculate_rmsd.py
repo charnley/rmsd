@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 __doc__ = """
 Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ
 or PDB format, using transformation and rotation.
@@ -19,16 +19,16 @@ from typing import Any, Iterator, List, Optional, Protocol, Set, Tuple, Union
 
 import numpy as np
 from numpy import ndarray
-from scipy.optimize import linear_sum_assignment  # type: ignore
-from scipy.spatial import distance_matrix  # type: ignore
-from scipy.spatial.distance import cdist  # type: ignore
+from scipy.optimize import linear_sum_assignment
+from scipy.spatial import distance_matrix
+from scipy.spatial.distance import cdist
 
 try:
     import qmllib  # type: ignore
     from qmllib.kernels import laplacian_kernel  # type: ignore
     from qmllib.representations import generate_fchl19  # type: ignore
-except ImportError:  # pragma: no cover
-    qmllib = None  # pragma: no cover
+except ImportError:
+    qmllib = None
 
 
 METHOD_KABSCH = "kabsch"
@@ -1939,8 +1939,8 @@ https://github.com/charnley/rmsd for further examples.
     use_view: bool = True
 
     if settings.ignore_hydrogen:
-        p_view = np.where(p_atoms != 1)  # type: ignore
-        q_view = np.where(q_atoms != 1)  # type: ignore
+        (p_view,) = np.where(p_atoms != 1)
+        (q_view,) = np.where(q_atoms != 1)
 
     elif settings.remove_idx:
         index = np.array(list(set(range(p_size)) - set(settings.remove_idx)))
@@ -2088,5 +2088,5 @@ https://github.com/charnley/rmsd for further examples.
 
 
 if __name__ == "__main__":
-    result = main()  # pragma: no cover
+    result = main()
     print(result)
