@@ -11,5 +11,4 @@ pytest-cov
 qmllib
 scipy
 scipy
-scipy-stubs
 twine
