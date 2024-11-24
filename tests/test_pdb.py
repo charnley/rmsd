@@ -14,7 +14,7 @@ def test_pdb_only_carbon_possible() -> None:
         cmd = f"{filename_a} {filename_b}"
         _ = rmsdlib.main(cmd.split())
 
-    cmd = f"--reorder --only-alpha-carbons {filename_a} {filename_b}"
+    cmd = f"--reorder --reorder-method qml --only-alpha-carbons {filename_a} {filename_b}"
     out = rmsdlib.main(cmd.split())
 
     print(out)
