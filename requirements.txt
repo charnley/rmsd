@@ -1,2 +1,13 @@
 numpy
 scipy
+matplotlib
+qmllib
+mypy
+numpy
+pre-commit
+pylint
+pytest
+pytest-cov
+scipy
+build
+twine

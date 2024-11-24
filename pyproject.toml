@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rmsd"
+dynamic = ["version"]
+authors = []
+requires-python = ">=3.9"
+readme="README.rst"
+description="Calculate Root-mean-square deviation (RMSD) of two molecules, using rotation, in xyz or pdb format "
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python",
+    "Topic :: Scientific/Engineering :: Chemistry",
+]
+keywords = ["pdb", "atoms", "kabsch", "reordering", "rotation", "xyz", "rmsd"]
+dependencies=["numpy", "scipy"]
+
+[project.urls]
+Homepage = "https://github.com/charnley/rmsd"
+
+[options.packages.find]
+where="."
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = {attr = "rmsd.__version__"}
