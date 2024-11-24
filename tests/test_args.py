@@ -13,7 +13,7 @@ def test_formats() -> None:
 
 def test_legal_arguments() -> None:
 
-    args_ = "--rotation kabsch --ignore-hydrogen FILE_A FILE_B".split()
+    args_ = "--rotation kabsch --ignore-hydrogen --format xyz FILE_A FILE_B".split()
     args = calculate_rmsd.parse_arguments(args_)
 
     assert args.reorder is False

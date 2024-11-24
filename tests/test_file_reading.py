@@ -118,3 +118,17 @@ def test_rmsd_xyz() -> None:
     pure_rmsd = rmsdlib.rmsd(p_coord, q_coord)
 
     np.testing.assert_almost_equal(0.33512, pure_rmsd, decimal=3)
+
+
+def test_pdb_alpha_carbons() -> None:
+
+    filename_1 = RESOURCE_PATH / "ci2_1.pdb"
+
+    atoms, coord = rmsdlib.get_coordinates_pdb(filename_1, only_alpha_carbon=False)
+    print(list(atoms))
+
+    assert len(atoms) == 1064
+
+    atoms, coord = rmsdlib.get_coordinates_pdb(filename_1, only_alpha_carbon=True)
+    assert len(atoms) == 64
+    assert len(np.unique(atoms)) == 1

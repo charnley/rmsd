@@ -25,24 +25,10 @@ short_description = (
 setuptools.setup(
     name="rmsd",
     version=__version__,
-    maintainer="Jimmy Kromann",
-    maintainer_email="jimmy@charnley.dk",
-    description=short_description,
-    long_description=long_description,
     url="https://github.com/charnley/rmsd",
-    license="BSD-2-Clause",
     python_requires=">=3.8",
-    install_requires=[
-        "numpy",
-        "scipy",
-    ],
+    install_requires=[],
     packages=["rmsd"],
     entry_points={"console_scripts": ["calculate_rmsd=rmsd.calculate_rmsd:main"]},
-    classifiers=[
-        "Development Status :: 5 - Production/Stable",
-        "Environment :: Console",
-        "Intended Audience :: End Users/Desktop",
-        "License :: OSI Approved :: BSD License",
-        "Programming Language :: Python :: 3",
-    ],
+    classifiers=[],
 )
