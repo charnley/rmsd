@@ -119,6 +119,10 @@ def test_reorder_methods() -> None:
     for method in methods:
         rmsdlib.main(f"--reorder --reorder-method {method} {filename_a} {filename_b}".split())
 
+    rmsdlib.main(
+        f"--no-hydrogen --reorder --reorder-method hungarian {filename_a} {filename_b}".split()
+    )
+
 
 def test_reflections() -> None:
 
