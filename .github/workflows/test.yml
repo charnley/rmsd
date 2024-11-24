@@ -31,6 +31,6 @@ jobs:
           which python
           conda info
       - run: |
-          make test
+          make test python=python
       - run: |
-          pre-commit run --all-files
+          make format python=python

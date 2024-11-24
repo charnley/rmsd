@@ -11,3 +11,4 @@ pytest-cov
 scipy
 build
 twine
+monkeytype
