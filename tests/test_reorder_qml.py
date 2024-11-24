@@ -104,3 +104,16 @@ def test_reorder_qml_distmat() -> None:
 
     # Assert this is the same molecule
     pytest.approx(0.0) == _rmsd
+
+
+def test_pdb_only_carbon_possible() -> None:
+
+    filename_a = RESOURCE_PATH / "issue98" / "test1.pdb"
+    filename_b = RESOURCE_PATH / "issue98" / "test2.pdb"
+
+    cmd = f"--reorder --reorder-method qml --only-alpha-carbons {filename_a} {filename_b}"
+    out = rmsdlib.main(cmd.split())
+
+    print(out)
+    rmsd = float(out)
+    assert isinstance(rmsd, float)
