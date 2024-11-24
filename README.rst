@@ -124,11 +124,8 @@ Submit issues or pull requests on GitHub.
 A note on PDB
 -------------
 
-Protein Data Bank format (PDB) is a column based format, however, there are
-countless examples of non-standard ``.pdb`` files. We try our best to read
-them, but if you have trouble reading the file, maybe check if the file format
-is correct.
+Protein Data Bank format (PDB) is column-based; however, countless examples of non-standard ``.pdb`` files exist.
+We try to read them, but if you have trouble reading the file, check if the file format is compliant with PDB.
+For example, some hydrogens are noted as ``HG11``, which we assume is not mercury.
 
-- https://cdn.rcsb.org/wwpdb/docs/documentation/file-format/PDB_format_1992.pdf
-- http://www.rcsb.org/pdb/docs/format/pdbguide2.2/guide2.2_frame.html (Deprecated link)
 - https://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM
