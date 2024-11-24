@@ -1459,11 +1459,16 @@ def get_coordinates(
 
 
 def _parse_pdb_alphacarbon_line(line: str) -> bool:
+    """Try to read Alpha carbons based on PDB column-based format"""
 
-    tokens = line.split()
-    atom: str = tokens[2]
+    atom_col = line[12:16]
+    atom = atom_col[0:2]
+    atom = re.sub(r"\d", " ", atom)
+    atom = atom.strip()
+    atom = atom.capitalize()
+    location = atom_col[2]
 
-    if atom == "CA":
+    if atom == "C" and location == "A":
         return True
 
     return False
