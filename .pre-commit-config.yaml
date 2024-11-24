@@ -20,22 +20,24 @@ repos:
       - id: check-added-large-files
         args: ['--maxkb=3000']
 
+
   - repo: https://github.com/myint/autoflake
     rev: v2.3.1
     hooks:
       - id: autoflake
-        name: Removes unused variables
+        name: removes unused variables
         args:
           - --in-place
           - --remove-all-unused-imports
           - --expand-star-imports
           - --ignore-init-module-imports
 
+
   - repo: https://github.com/pre-commit/mirrors-isort
     rev: v5.10.1
     hooks:
       - id: isort
-        name: Sorts imports
+        name: sorts imports
         args: [
           # Align isort with black formatting
           "--multi-line=3",
@@ -45,11 +47,12 @@ repos:
           "--line-width=99",
         ]
 
+
   - repo: https://github.com/psf/black
     rev: 24.10.0
     hooks:
       - id: black
-        name: Fixes formatting
+        name: fixes formatting
         language_version: python3
         args: ["--line-length=99"]
 
@@ -58,7 +61,7 @@ repos:
     rev: 7.1.1
     hooks:
       - id: flake8
-        name: Checks pep8 style
+        name: checks pep8 style
         args: [
           "--max-line-length=99",
           # Ignore imports in init files
@@ -69,16 +72,11 @@ repos:
           "--ignore=E501,E203,W503",
         ]
 
-  # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: v0.782
-  #   hooks:
-  #   - id: mypy
-  #     args: [--ignore-missing-imports]
 
   - repo: local
     hooks:
       - id: mypy
-        name: Checking types
+        name: checking types
         entry: mypy
         language: system
         types: [ python ]
@@ -86,12 +84,6 @@ repos:
 
   - repo: local
     hooks:
-
-      # - id: mypy
-      #   name: Static type checking
-      #   entry: mypy
-      #   files: \.py$
-      #   language: python
 
       - id: jupyisort
         name: Sorts ipynb imports

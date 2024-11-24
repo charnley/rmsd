@@ -19,9 +19,9 @@ from typing import Any, Iterator, List, Optional, Protocol, Set, Tuple, Union
 
 import numpy as np
 from numpy import ndarray
-from scipy.optimize import linear_sum_assignment
-from scipy.spatial import distance_matrix
-from scipy.spatial.distance import cdist
+from scipy.optimize import linear_sum_assignment  # type: ignore
+from scipy.spatial import distance_matrix  # type: ignore
+from scipy.spatial.distance import cdist  # type: ignore
 
 try:
     import qmllib  # type: ignore
