@@ -6,7 +6,7 @@ from context import RESOURCE_PATH
 
 import rmsd as rmsdlib
 
-qml = pytest.importorskip("qml")
+qmllib = pytest.importorskip("qmllib")
 
 
 def test_reorder_qml() -> None:

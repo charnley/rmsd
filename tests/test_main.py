@@ -5,7 +5,7 @@ import pytest
 from context import RESOURCE_PATH, call_main
 
 import rmsd as rmsdlib
-from rmsd.calculate_rmsd import get_coordinates_pdb, get_coordinates_xyz, get_coordinates_xyz_lines
+from rmsd.calculate_rmsd import get_coordinates_xyz_lines
 
 
 def test_print_reflection_reorder() -> None:

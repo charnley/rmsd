@@ -1,5 +1,5 @@
 import numpy as np
-from context import RESOURCE_PATH, call_main
+from context import RESOURCE_PATH
 
 import rmsd as rmsdlib
 from rmsd import get_coordinates_xyz, get_coordinates_xyz_lines
