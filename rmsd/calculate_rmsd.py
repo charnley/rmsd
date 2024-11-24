@@ -16,7 +16,7 @@ import re
 import sys
 from functools import partial
 from pathlib import Path
-from typing import Any, Callable, Iterable, Iterator, List, Optional, Protocol, Set, Tuple, Union
+from typing import Any, Iterator, List, Optional, Protocol, Set, Tuple, Union
 
 import numpy as np
 from numpy import ndarray
@@ -1444,9 +1444,6 @@ def get_coordinates(
     V : array
         (N,3) where N is number of atoms
     """
-
-    get_func: Callable
-
     if fmt == "xyz":
         get_func = get_coordinates_xyz
 
@@ -1628,18 +1625,14 @@ def get_coordinates_pdb(
 
     Parameters
     ----------
-    lines : list
-        PDB format lines
-    only_alpha_carbon : bool
-        Only read Alpha carbons from PDB file
-    return_atoms_as_int : bool
-        Return atoms as integers, instead of strings
+    filename : string
+        Filename to read
 
     Returns
     -------
-    atoms : array
-        List of atoms
-    coords : array
+    atoms : list
+        List of atomic types
+    V : array
         (N,3) where N is number of atoms
     """
 
@@ -1660,8 +1653,14 @@ def get_coordinates_pdb(
     atoms: List[str] = list()
     alpha_carbons: List[bool] = list()
     assert isinstance(atoms, list)
+    openfunc: Any
 
-    for line in lines:
+    if is_gzip:
+        openfunc = gzip.open
+        openarg = "rt"
+    else:
+        openfunc = open
+        openarg = "r"
 
     with openfunc(filename, openarg) as f:
         lines = f.readlines()
@@ -1709,46 +1708,6 @@ def get_coordinates_pdb(
         _atoms = _atoms[_alpha_carbons]
 
     return _atoms, V
-
-
-def get_coordinates_pdb(
-    filename: Path,
-    is_gzip: bool = False,
-    only_alpha_carbon: bool = False,
-    return_atoms_as_int: bool = False,
-) -> Tuple[ndarray, ndarray]:
-    """
-    Get coordinates from the first chain in a pdb file
-    and return a vectorset with all the coordinates.
-
-    Parameters
-    ----------
-    filename : string
-        Filename to read
-
-    Returns
-    -------
-    atoms : list
-        List of atomic types
-    V : array
-        (N,3) where N is number of atoms
-    """
-
-    openfunc: Any
-
-    if is_gzip:
-        openfunc = gzip.open
-        openarg = "rt"
-    else:
-        openfunc = open
-        openarg = "r"
-
-    with openfunc(filename, openarg) as f:
-        lines = f.readlines()
-
-    return get_coordinates_pdb_lines(
-        lines, return_atoms_as_int=return_atoms_as_int, only_alpha_carbon=only_alpha_carbon
-    )
 
 
 def get_coordinates_xyz_lines(
@@ -1992,11 +1951,6 @@ See https://github.com/charnley/rmsd for citation information
         default=False,
         help=argparse.SUPPRESS,
     )
-    parser.add_argument(
-        "--only-alpha-carbon",
-        action="store_true",
-        help="For PDB format, only read Alpha carbons",
-    )
 
     parser.add_argument(
         "-p",
@@ -2127,7 +2081,7 @@ def main(args: Optional[List[str]] = None) -> str:
     q_size = q_coord.shape[0]
 
     if not p_size == q_size:
-        print(f"error: Structures not same size. {p_size} != {q_size}")
+        print("error: Structures not same size")
         sys.exit()
 
     if np.count_nonzero(p_atoms != q_atoms) and not settings.reorder:
