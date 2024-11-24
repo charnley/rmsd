@@ -1,6 +1,7 @@
 # dev
 .vim
 env
+*.sqlite3
 
 *.py[cod]
 

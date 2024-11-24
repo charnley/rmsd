@@ -5,6 +5,7 @@ import pytest
 from context import RESOURCE_PATH, call_main
 
 import rmsd as rmsdlib
+from rmsd.calculate_rmsd import get_coordinates_xyz_lines
 
 
 def test_print_reflection_reorder() -> None:
@@ -59,16 +60,19 @@ def test_print_reflection_reorder() -> None:
 
     # Main call print, check rmsd is still the same
     # Note, that --print is translating b to a center
-    args = f"--use-reflections --reorder --print {filename_a} {filename_b}"
-    stdout = call_main(args.split())
-    _, coord = rmsdlib.get_coordinates_xyz_lines(stdout)
+    _args = f"--use-reflections --reorder --print {filename_a} {filename_b}"
+    _stdout: str = rmsdlib.main(_args.split())
+    atoms, coord = rmsdlib.get_coordinates_xyz_lines(_stdout.split("\n"), return_atoms_as_int=True)
     coord -= rmsdlib.centroid(coord)  # fix translation
     print(coord)
+    print(atoms)
+    print(atoms_b)
 
     rmsd_check1 = rmsdlib.kabsch_rmsd(coord, coord_a)
     rmsd_check2 = rmsdlib.rmsd(coord, coord_a)
     print(rmsd_check1)
     print(rmsd_check2)
+    print(result_rmsd)
     np.testing.assert_almost_equal(rmsd_check2, rmsd_check1)
     np.testing.assert_almost_equal(rmsd_check2, result_rmsd)
 
@@ -136,3 +140,78 @@ def test_ignore() -> None:
     rmsdlib.main(f"{filename_a} {filename_b} --remove-idx 0 5".split())
 
     rmsdlib.main(f"{filename_a} {filename_b} --add-idx 0 1 2 3 4".split())
+
+
+def test_print_match_no_hydrogen() -> None:
+
+    filename_a = RESOURCE_PATH / "CHEMBL3039407_order.xyz"
+    filename_b = RESOURCE_PATH / "CHEMBL3039407_order.xyz"
+
+    cmd = f"--no-hydrogen --print {filename_a} {filename_b}"
+    print(cmd)
+    out = rmsdlib.main(cmd.split()).split("\n")
+    atoms1, coord1 = get_coordinates_xyz_lines(out)
+
+    print(atoms1)
+    print(len(atoms1))
+
+    assert len(atoms1) == 60
+    assert coord1.shape
+    assert "H" in atoms1
+
+    cmd = f"--print {filename_a} {filename_b}"
+    out = rmsdlib.main(cmd.split()).split("\n")
+    atoms2, coord2 = get_coordinates_xyz_lines(out)
+
+    print(atoms2)
+    print(len(atoms2))
+
+    assert len(atoms2) == 60
+    assert coord2.shape
+    assert "H" in atoms2
+
+    out = rmsdlib.main(
+        f"--no-hydrogen --print --print-only-rmsd-atoms {filename_a} {filename_b}".split()
+    ).split("\n")
+    atoms1, coord1 = get_coordinates_xyz_lines(out)
+
+    print(atoms1)
+    print(len(atoms1))
+
+    assert len(atoms1) == 30
+    assert coord1.shape
+    assert "H" not in atoms1
+
+
+def test_only_alpha_carbons() -> None:
+
+    filename_a = RESOURCE_PATH / "ci2_1.pdb"
+    filename_b = RESOURCE_PATH / "ci2_2.pdb"
+
+    cmd = f"--only-alpha-carbons --print {filename_a} {filename_b}"
+    print(cmd)
+    out = rmsdlib.main(cmd.split()).split("\n")
+    atoms1, _ = get_coordinates_xyz_lines(out)
+
+    print(atoms1)
+    print(len(atoms1))
+
+    assert len(atoms1) == 64
+    assert len(np.unique(atoms1)) == 1
+    assert set(atoms1) == set(["C"])
+
+    cmd2 = f"{filename_a} {filename_b}"
+    print(cmd)
+    out2 = rmsdlib.main(cmd2.split())
+    rmsd2 = float(out2)
+    assert isinstance(rmsd2, float)
+
+    cmd3 = f"--only-alpha-carbons {filename_a} {filename_b}"
+    print(cmd)
+    out3 = rmsdlib.main(cmd3.split())
+    rmsd3 = float(out3)
+    assert isinstance(rmsd3, float)
+
+    print(rmsd2)
+    print(rmsd3)
+    assert rmsd2 > rmsd3

@@ -17,7 +17,7 @@ jobs:
         shell: bash -l {0}
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
     steps:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
@@ -26,13 +26,13 @@ jobs:
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
       - run: |
-          pip install git+https://github.com/qmlcode/qml@develop
-      - run: |
           ls
           pwd
           which python
           conda info
+      - run: pip install .
+      - run: which calculate_rmsd
       - run: |
-          make test
+          make test python=python
       - run: |
-          pre-commit run --all-files
+          make format python=python
