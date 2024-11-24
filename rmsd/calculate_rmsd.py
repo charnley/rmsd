@@ -2197,7 +2197,7 @@ https://github.com/charnley/rmsd for further examples.
     elif settings.reorder:
 
         assert reorder_method is not None, "Cannot reorder without selecting --reorder method"
-        q_review = reorder_method(p_atoms, q_atoms, p_coord, q_coord)
+        q_review = reorder_method(p_atoms_sub, q_atoms_sub, p_coord_sub, q_coord_sub)
 
     # If there is a reorder, then apply before print
     if q_review is not None:
