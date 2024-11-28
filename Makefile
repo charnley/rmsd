@@ -1,3 +1,5 @@
+.PHONY: update-format format test test-dist build types upload cov
+
 python=./env/bin/python
 pytest=./env/bin/pytest
 package=rmsd

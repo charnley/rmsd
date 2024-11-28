@@ -27,11 +27,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: pip install .
       - run: which calculate_rmsd
-      - run: |
-          make test python=python
-      - run: |
-          make format python=python
-      - run: |
-          make build python=python
-          make test-dist python=python
-          pip install dist/*
+      - run: make test python=python
+      - run: make format python=python
+      - run: make build python=python
+      - run: make test-dist python=python
+      - run: pip install dist/*
