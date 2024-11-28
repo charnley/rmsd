@@ -32,3 +32,4 @@ jobs:
       - run: make build python=python
       - run: make test-dist python=python
       - run: pip install dist/*
+      - run: pip install $(find dist)[qml]
