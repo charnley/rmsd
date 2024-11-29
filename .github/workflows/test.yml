@@ -31,6 +31,6 @@ jobs:
       - run: make format python=python
       - run: make build python=python
       - run: make test-dist python=python
-      - run: pip uninstall rmsd && pip install dist/*
-      - run: pip uninstall rmsd && pip install $(find dist | tail -n 1)[qml]
+      - run: pip uninstall -y rmsd && pip install dist/*
+      - run: pip uninstall -y rmsd && pip install $(find dist | tail -n 1)[qml]
       - run: which calculate_rmsd
