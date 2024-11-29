@@ -1,4 +1,6 @@
 build
+jupyter-lab
+jupytext
 matplotlib
 monkeytype
 mypy

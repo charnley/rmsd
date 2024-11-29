@@ -30,14 +30,14 @@ types:
 cov:
 	${python} -m pytest --cov=${package} --cov-config .coveragerc --cov-report html tests
 
-compile:
-	${python} _compile.py
-
 build:
 	${python} -m build --sdist --skip-dependency-check  .
 
 upload:
 	${python} -m twine upload ./dist/*.tar.gz
+
+start-jupyter:
+	${python} -m jupyterlab
 
 ## Version
 

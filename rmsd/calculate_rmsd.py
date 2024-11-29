@@ -1362,6 +1362,17 @@ def get_inertia_tensor(atoms: ndarray, V: ndarray) -> ndarray:
         Ixz += -amass * acoord[0] * acoord[2]
         Iyz += -amass * acoord[1] * acoord[2]
 
+    coordinates = V
+    com = get_cm(atoms, V)
+
+    atomic_masses = np.asarray([ELEMENT_WEIGHTS[a] for a in atoms])
+    coordinates -= com
+
+    mass_matrix = np.diag(atomic_masses)
+    helper = coordinates.T.dot(mass_matrix).dot(coordinates)
+    inertia_tensor: np.ndarray = np.diag(np.ones(3)) * helper.trace() - helper
+    return inertia_tensor
+
     return np.array([[Ixx, Ixy, Ixz], [Ixy, Iyy, Iyz], [Ixz, Iyz, Izz]])
 
 
