@@ -1,5 +1,5 @@
 build
-jupyter-lab
+jupyterlab
 jupytext
 matplotlib
 monkeytype
