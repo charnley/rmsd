@@ -12,7 +12,7 @@ For more information please read RMSD_ and `Kabsch algorithm`_.
 .. _Kabsch algorithm: http://en.wikipedia.org/wiki/Kabsch_algorithm
 
 Motivation
-----------
+==========
 
 You have molecule A and B and want to calculate the structural difference
 between those two. If you just calculate the RMSD_ straight-forward you might
@@ -34,30 +34,52 @@ RMSD 2.50   RMSD 1.07    RMSD 0.25
 
 
 Citation
---------
+========
+
+Please cite this project when using it for scientific publications. And cite the relevant methods implemnted.
 
 - **Implementation**:
     Calculate Root-mean-square deviation (RMSD) of Two Molecules Using Rotation, GitHub,
     http://github.com/charnley/rmsd, <git commit hash or version number>
 
-- **Kabsch algorithm**:
-    Kabsch W., 1976,
+Rotation Methods
+----------------
+
+- **Kabsch** ``--rotation-method kabsch`` (Default):
+    Wolfgang Kabsch (1976),
     A solution for the best rotation to relate two sets of vectors,
-    Acta Crystallographica, A32:922-923,
+    Acta Crystallographica, A32:922-923
+
     doi: http://dx.doi.org/10.1107/S0567739476001873
 
-- **Quaternion algorithm**:
-    Michael W. Walker and Lejun Shao and Richard A. Volz, 1991,
+- **Quaternion** ``--rotation-method quaternion``:
+    Michael W. Walker and Lejun Shao and Richard A. Volz (1991),
     Estimating 3-D location parameters using dual number quaternions, CVGIP: Image Understanding, 54:358-367,
+
     doi: http://dx.doi.org/10.1016/1049-9660(91)90036-o
 
-Please cite this project when using it for scientific publications.
+Reorder Methods
+---------------
+
+- **Distance Hungarian Assignment** ``--reorder-method hungarian`` (Default):
+    David F.  Crouse (2016). On implementing 2D rectangular assignment algorithms. (Vol. 52, Issue 4, pp. 1679–1696). Institute of Electrical and Electronics Engineers (IEEE).
+    
+    doi: http://dx.doi.org/10.1109/TAES.2016.140952
+
+    implementation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linear_sum_assignment.html
+
+- https://en.wikipedia.org/wiki/Moment_of_inertia
+
+- **FCHL19** ``--reorder-method qml``:
+    Christensen et al, FCHL revisited: Faster and more accurate quantum machine learning, J. Chem. Phys. 152, 044107 (2020)
+    
+    doi: https://doi.org/10.1063/1.5126701
 
 
 Installation
-------------
+============
 
-Easiest is to get the program vis PyPi under the package name ``rmsd``,
+Easiest is to get the program via ``pip``.
 
 .. code-block:: bash
 
@@ -80,7 +102,7 @@ put it in your bin folder.
     chmod +x calculate_rmsd
 
 Usage examples
---------------
+==============
 
 Use ``calculate_rmsd --help`` to see all the features. Usage is pretty straight
 forward, call ``calculate_rmsd`` with two structures in either ``.xyz`` or
@@ -116,13 +138,13 @@ It is also possible to use RMSD as a library in other scripts, see
 
 
 Problems?
----------
+=========
 
 Submit issues or pull requests on GitHub.
 
 
 A note on PDB
--------------
+=============
 
 Protein Data Bank format (PDB) is column-based; however, countless examples of non-standard ``.pdb`` files exist.
 We try to read them, but if you have trouble reading the file, check if the file format is compliant with PDB.
