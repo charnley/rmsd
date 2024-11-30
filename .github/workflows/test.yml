@@ -32,5 +32,5 @@ jobs:
       - run: make build python=python
       - run: make test-dist python=python
       - run: for x in dist/*; do pip uninstall -y rmsd && pip install $x; done
-      - run: pip uninstall -y rmsd && pip install $(find -name "*.whl" dist | tail -n 1)[qml]
+      - run: pip uninstall -y rmsd && pip install $(find dist -name "*.whl" | tail -n 1)[qml]
       - run: which calculate_rmsd
