@@ -2,8 +2,7 @@ name: Deploy PyPi Python Package on GitHub Releases
 
 on:
   release:
-    branches:
-      - master
+    types: [published]
 
 jobs:
 
