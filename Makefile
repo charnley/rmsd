@@ -42,10 +42,10 @@ cov:
 	${python} -m pytest --cov=${package} --cov-config .coveragerc --cov-report html tests
 
 build:
-	${python} -m build --sdist --skip-dependency-check  .
+	${python} -m build --skip-dependency-check  .
 
 upload:
-	${python} -m twine upload ./dist/*.tar.gz
+	${python} -m twine upload ./dist/*
 
 ## Version
 
