@@ -14,11 +14,10 @@ For more information please read RMSD_ and `Kabsch algorithm`_.
 Motivation
 ==========
 
-You have molecule A and B and want to calculate the structural difference
-between those two. If you just calculate the RMSD_ straight-forward you might
-get a too big of a value as seen below. You would need to first recenter the
-two molecules and then rotate them unto each other to get the true minimal
-RMSD. This is what this script does.
+I want to know the minimal RMSD between two molecules
+-----------------------------------------------------
+
+You have two molecules, A and B, and want to calculate the structural difference between them. If you just calculate the RMSD straight-forward, you might get too big a value, as seen below. You need to recenter and rotate the two molecules to get the true minimal RMSD. This is what this code does.
 
 ==========  ===========  ==========
 No Changes  Re-centered  Rotated
@@ -31,6 +30,14 @@ RMSD 2.50   RMSD 1.07    RMSD 0.25
 .. |begin| image:: https://raw.githubusercontent.com/charnley/rmsd/master/img/plot_beginning.png
 .. |translate| image:: https://raw.githubusercontent.com/charnley/rmsd/master/img/plot_translated.png
 .. |rotate| image:: https://raw.githubusercontent.com/charnley/rmsd/master/img/plot_rotated.png
+
+
+I do not know the order of the atoms
+------------------------------------
+
+If atoms in molecules A and B are not in the same order, you will need to reorder the atoms first to get the correct rotation for minimal RMSD.
+
+....
 
 
 Citation
