@@ -139,6 +139,13 @@ Hungarian_ (default), distance (very approximate) and brute force (slow).
 
     calculate_rmsd --reorder tests/water_16.xyz tests/water_16_idx.xyz
 
+I want to run multiple calculations at the same time. Not everything should be solved by the script, I would recommend that you use GNU Parallel for this use case. For example
+
+.. code-block:: bash
+
+    find tests/resources -name "ethane_*xyz" | parallel -j2 "echo -n '{} ' && calculate_rmsd --reorder --no-hydrogen tests/resources/ethane.xyz {}"
+
+will use two cores and compare all ``ethane_*``molecules. Printing one file and the RMSD per line. Bash is good for stuff like that
 
 It is also possible to use RMSD as a library in other scripts, see
 ``example.py`` and ``tests/*`` for example usage.
