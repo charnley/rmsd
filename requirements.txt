@@ -14,3 +14,4 @@ qmllib
 scipy
 scipy
 twine
+ipympl

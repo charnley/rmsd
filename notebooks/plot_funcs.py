@@ -86,7 +86,7 @@ def get_plot(n_ax=1, size=8):
     fig, axs = plt.subplots(1, n_ax, sharey=True, sharex=True, figsize=(size * n_ax, size))
 
     fig.tight_layout()
-    fig.subplots_adjust(hspace=0)
+    fig.subplots_adjust(hspace=0, wspace=0)
     return fig, axs
 
 
