@@ -1,6 +1,7 @@
 import copy
 
 import numpy as np
+from numpy import ndarray
 
 import rmsd as rmsdlib
 
@@ -9,9 +10,9 @@ def test_reorder_distance() -> None:
 
     N = 5
     atoms = np.array(["H"] * N)
-    p_coord = np.arange(N * 3)
+    p_coord: ndarray = np.arange(N * 3)
     p_coord = p_coord.reshape((5, 3))
-    q_coord = copy.deepcopy(p_coord)
+    q_coord = np.array(p_coord, copy=True)
 
     np.random.seed(6)
     np.random.shuffle(q_coord)

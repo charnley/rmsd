@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 __doc__ = """
 Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ
 or PDB format, using transformation and rotation.
@@ -1567,7 +1568,7 @@ def _parse_pdb_atom_line(line: str) -> Optional[str]:
     return None
 
 
-def _parse_pdb_coord_line(line: str):
+def _parse_pdb_coord_line(line: str) -> Optional[ndarray]:
     """
     Try my best to coordinates from a PDB ATOM or HETATOM line
 
