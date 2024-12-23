@@ -2,13 +2,11 @@ build
 matplotlib
 monkeytype
 mypy
-numpy
-numpy
+numpy==2.1.3
 pre-commit
 pylint
 pytest
 pytest-cov
 qmllib
-scipy
 scipy
 twine
