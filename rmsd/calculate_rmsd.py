@@ -2227,8 +2227,9 @@ https://github.com/charnley/rmsd for further examples.
         if settings.print_only_rmsd_atoms or not use_view:
             q_coord_sub = np.dot(q_coord_sub, U)
             q_coord_sub += p_cent_sub
+            _atoms = np.asarray([str_atom(atom) for atom in q_atoms_sub])
             return set_coordinates(
-                q_atoms_sub,
+                _atoms,
                 q_coord_sub,
                 title=f"Rotated '{settings.structure_b}' to match '{settings.structure_a}', with a RMSD of {result_rmsd:.8f}",
             )
@@ -2244,8 +2245,9 @@ https://github.com/charnley/rmsd for further examples.
 
         q_coord = np.dot(q_coord, U)
         q_coord += p_cent_sub
+        _atoms = np.asarray([str_atom(atom) for atom in q_atoms])
         return set_coordinates(
-            q_atoms,
+            _atoms,
             q_coord,
             title=f"Rotated {settings.structure_b} to match {settings.structure_a}, with RMSD of {result_rmsd:.8f}",
         )
