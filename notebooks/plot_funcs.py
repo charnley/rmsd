@@ -6,7 +6,12 @@ from qmllib.representations import generate_fchl19  # type: ignore
 
 import rmsd as rmsdlib
 
-outline = patheffects.withStroke(linewidth=6, foreground="w")
+outline = patheffects.withStroke(linewidth=5, foreground="w")
+
+FIGURE_SIZE = 4
+MARKER_SIZE = 400
+REP_SIZE = 0.1
+REP_HEIGHT = 0.15
 
 
 def plot_molecule(ax, atoms, coords, hatch="/////"):
@@ -19,7 +24,7 @@ def plot_molecule(ax, atoms, coords, hatch="/////"):
     ax.scatter(
         X,
         Y,
-        s=500.0,
+        s=MARKER_SIZE,
         hatch=hatch,
         facecolor="#fff",
         edgecolor="#000",
@@ -71,7 +76,7 @@ def plot_representation(ax, atoms, coord):
         x, y = ax.transLimits.transform(c)
 
         ins3 = ax.inset_axes(
-            [x, y, 0.02, 0.1],
+            [x, y, REP_SIZE, REP_HEIGHT],
         )
         ins3.imshow(np.expand_dims(vecs[idx], axis=1), cmap="gray")
         ins3.xaxis.set_ticks([])
@@ -100,14 +105,30 @@ def plot_representation(ax, atoms, coord):
 #     ax.add_artist(arrow)
 
 
-def set_axis_default(ax, lim=2.0):
+def set_axis_default(ax, lim=2.0, use_grid=True):
 
+    ax.set_box_aspect(1)
     ax.set_xlim(-lim, lim)
     ax.set_ylim(-lim, lim)
-    ax.grid(True)
+    ax.grid(use_grid)
 
-    ax.tick_params(width=0, length=0)
     ax.tick_params(axis="both", which="major", labelsize=0)
+
+    for tick in ax.xaxis.get_major_ticks():
+
+        tick.tick1line.set_visible(False)
+        tick.tick2line.set_visible(False)
+
+        tick.label1.set_visible(False)
+        tick.label2.set_visible(False)
+
+    for tick in ax.yaxis.get_major_ticks():
+
+        tick.tick1line.set_visible(False)
+        tick.tick2line.set_visible(False)
+
+        tick.label1.set_visible(False)
+        tick.label2.set_visible(False)
 
 
 def set_global_style():
@@ -122,7 +143,7 @@ def set_global_style():
     # matplotlib.rcParams["ytick.major.width"] = 2
 
 
-def get_plot(n_ax=1, size=5):
+def get_plot(n_ax=1, size=FIGURE_SIZE):
     """Get a jupyter-sized plot"""
     fig, axs = plt.subplots(1, n_ax, sharey=True, sharex=True, figsize=(size * n_ax, size))
 
@@ -156,8 +177,6 @@ def fix_borders(ax, visibles=[False, False, True, True], fix_bounds=True):
 
     min_y = np.min(yticks)
     max_y = np.max(yticks)
-
-    # TODO Better ax.set_xlim()
 
     for direction, visible in zip(directions, visibles):
 
