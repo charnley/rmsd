@@ -11,6 +11,14 @@ For more information please read RMSD_ and `Kabsch algorithm`_.
 .. _RMSD: http://en.wikipedia.org/wiki/Root-mean-square_deviation
 .. _Kabsch algorithm: http://en.wikipedia.org/wiki/Kabsch_algorithm
 
+Features
+========
+
+- Rotation
+- Reordering
+- Reflection
+
+
 Motivation
 ==========
 
@@ -48,10 +56,18 @@ You have two molecules, A and B, and want to calculate the structural difference
 I do not know the order of the atoms
 ------------------------------------
 
-If atoms in molecules A and B are not in the same order, you will need to reorder the atoms first to get the correct rotation for minimal RMSD.
+If atoms in molecules A and B are not in the same order, you will need to reorder the atoms first to get the correct rotation for minimal RMSD. Chicken and egg problem.
 
-....
+|fig2.1|
 
+**Figure 2**: Two identical molecules, but not in the same atomic order, making it impossible to rotate correctly.
+
+|fig3.1|
+
+**Figure 3**: Using FCHL19 atomic representation, the individual atoms can be mapped. Structure dependent, but coordinate system independent.
+
+.. |fig2.1| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_reorder_problem.png
+.. |fig3.1| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_reorder_qml.png
 
 Citation
 ========
