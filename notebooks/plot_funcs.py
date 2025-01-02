@@ -3,10 +3,79 @@ import numpy as np
 from matplotlib import patheffects
 from matplotlib import pyplot as plt
 from matplotlib.patches import FancyArrowPatch
+from qmllib.representations import generate_fchl19  # type: ignore
 
 import rmsd as rmsdlib
 
-outline = patheffects.withStroke(linewidth=2, foreground="w")
+outline = patheffects.withStroke(linewidth=6, foreground="w")
+
+
+def plot_molecule(ax, atoms, coords):
+
+    X = coords[:, 0]
+    Y = coords[:, 1]
+
+    ax.plot(X, Y, "-", color="k", linewidth=1)
+
+    ax.scatter(
+        X,
+        Y,
+        s=800.0,
+        hatch="/////",
+        facecolor="#fff",
+        edgecolor="#000",
+        zorder=10,
+        path_effects=[outline],
+    )
+
+    for atom, coord in zip(atoms, coords):
+
+        ax.text(
+            *coord[:2],
+            str(atom),
+            verticalalignment="center",
+            horizontalalignment="center",
+            color="k",
+            fontsize=12,
+            fontweight="bold",
+            path_effects=[outline],
+            zorder=20,
+        )
+
+    return
+
+
+def plot_representation(ax, atoms, coord):
+
+    # qml vectors
+    parameters = {
+        "elements": np.unique(atoms),
+        "pad": len(atoms),
+        "rcut": 20,
+        "acut": 20,
+    }
+
+    vecs = generate_fchl19(atoms, coord, **parameters)
+
+    s = np.sum(vecs, axis=0)
+    (non_zero_indicies,) = np.where(s > 10**-1)
+    vecs = vecs[:, non_zero_indicies]
+
+    offset = 0.15
+
+    for idx, _ in enumerate(atoms):
+        c = coord[idx][:2]
+        c += offset
+        x, y = ax.transLimits.transform(c)
+
+        ins3 = ax.inset_axes(
+            [x, y, 0.02, 0.1],
+        )
+        ins3.imshow(np.expand_dims(vecs[idx], axis=1), cmap="gray")
+        ins3.xaxis.set_ticks([])
+        ins3.yaxis.set_ticks([])
+
+    return
 
 
 def do_dot(ax, coord1, coord2, size=24, **kwargs):

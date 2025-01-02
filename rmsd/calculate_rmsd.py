@@ -977,15 +977,15 @@ def reorder_hungarian(
     **kwargs: Any,
 ) -> ndarray:
     """
-    Re-orders the input atom list and xyz coordinates using the Hungarian
-    method (using optimized column results)
+    Re-orders the input atom array and coordinates using the Hungarian-Distance
+    sum assignment method. Returns view of q-atoms.
 
     Parameters
     ----------
     p_atoms : array
-        (N,1) matrix, where N is points holding the atoms' names
+        (N,1) matrix, where N is points holding the atom types
     p_atoms : array
-        (N,1) matrix, where N is points holding the atoms' names
+        (N,1) matrix, where N is points holding the atom types
     p_coord : array
         (N,D) matrix, where N is points and D is dimension
     q_coord : array
@@ -1010,10 +1010,10 @@ def reorder_hungarian(
         (p_atom_idx,) = np.where(p_atoms == atom)
         (q_atom_idx,) = np.where(q_atoms == atom)
 
-        A_coord = p_coord[p_atom_idx]
-        B_coord = q_coord[q_atom_idx]
+        _p_coord = p_coord[p_atom_idx]
+        _q_coord = q_coord[q_atom_idx]
 
-        view = hungarian(A_coord, B_coord)
+        view = hungarian(_p_coord, _q_coord)
         view_reorder[p_atom_idx] = q_atom_idx[view]
 
     return view_reorder
@@ -1027,9 +1027,10 @@ def reorder_inertia_hungarian(
     **kwargs: Any,
 ) -> ndarray:
     """
-    Align the principal intertia axis and then re-orders the input atom list
-    and xyz coordinates using the Hungarian method (using optimized column
-    results)
+    First, align structures with the intertia moment eignvectors, then using
+    distance hungarian, assign the best possible atom pair combinations. While
+    also checking all possible reflections of intertia moments, selecting the
+    one with minimal RMSD.
 
     Parameters
     ----------
@@ -1045,32 +1046,48 @@ def reorder_inertia_hungarian(
     Returns
     -------
     view_reorder : array
-             (N,1) matrix, reordered indexes of atom alignment based on the
+             (N,1) matrix, reordered indexes of `Q` atom alignment based on the
              coordinates of the atoms
 
     """
-    # get the principal axis of P and Q
-    p_axis = get_principal_axis(p_atoms, p_coord)
-    q_axis = get_principal_axis(q_atoms, q_coord)
 
-    # rotate Q onto P considering that the axis are parallel and antiparallel
-    U1 = rotation_matrix_vectors(p_axis, q_axis)
-    U2 = rotation_matrix_vectors(p_axis, -q_axis)
-    q_coord1 = np.dot(q_coord, U1)
-    q_coord2 = np.dot(q_coord, U2)
+    p_coord -= get_cm(p_atoms, p_coord)
+    q_coord -= get_cm(q_atoms, p_coord)
 
-    q_review1 = reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord1)
-    q_review2 = reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord2)
-    q_coord1 = q_coord1[q_review1]
-    q_coord2 = q_coord2[q_review2]
+    inertia_p = get_inertia_tensor(p_atoms, p_coord)
+    eigval_p, eigvec_p = np.linalg.eig(inertia_p)
 
-    rmsd1 = kabsch_rmsd(p_coord, q_coord1)
-    rmsd2 = kabsch_rmsd(p_coord, q_coord2)
+    eigvec_p = eigvec_p.T
+    eigvec_p = eigvec_p[np.argsort(eigval_p)]
+    eigvec_p = eigvec_p.T
 
-    if rmsd1 < rmsd2:
-        return q_review1
-    else:
-        return q_review2
+    inertia_q = get_inertia_tensor(q_atoms, q_coord)
+    eigval_q, eigvec_q = np.linalg.eig(inertia_q)
+
+    eigvec_q = eigvec_q.T
+    eigvec_q = eigvec_q[np.argsort(eigval_q)]
+    eigvec_q = eigvec_q.T
+
+    # Reset the p coords, so the inertia vectors align with axis
+    p_coord = np.dot(p_coord, eigvec_p)
+
+    best_rmsd = np.inf
+    best_review = np.arange(len(p_atoms))
+
+    for mirror in AXIS_REFLECTIONS:
+
+        tmp_eigvec = eigvec_p * mirror.T
+        tmp_coord = np.dot(q_coord, tmp_eigvec)
+        tmp_coord -= get_cm(q_atoms, tmp_coord)
+
+        test_review = reorder_hungarian(p_atoms, q_atoms, p_coord, tmp_coord)
+        test_rmsd = rmsd(tmp_coord[test_review], p_coord)
+
+        if test_rmsd < best_rmsd:
+            best_rmsd = test_rmsd
+            best_review = test_review
+
+    return best_review
 
 
 def generate_permutations(elements: List[int], n: int) -> Iterator[List[int]]:
