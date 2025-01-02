@@ -20,13 +20,19 @@ I want to know the minimal RMSD between two molecules
 You have two molecules, A and B, and want to calculate the structural difference between them. If you just calculate the RMSD straight-forward, you might get too big a value, as seen below. You need to recenter and rotate the two molecules to get the true minimal RMSD. This is what this code does.
 
 
-==========  ===========  ===========
-No change   Centered     Rotated
-----------  -----------  -----------
-RMSD = 2.2  RMSD = 0.8   RMSD = 0.2
-==========  ===========  ===========
-|fig1.1|    |fig1.2|     |fig1.3|
-==========  ===========  ===========
+
+.. list-table:: Title
+   :columns: 2
+   :header-rows: 1
+
+   * - Figure
+     -  Desc
+   * - |fig1.1| 
+     -  Nothing
+   * - |fig1.3| 
+     - Centered
+   * - |fig1.3| 
+     - Rotated
 
 
 .. |fig1.1| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_rmsd_nothing.png
