@@ -21,7 +21,7 @@ You have two molecules, A and B, and want to calculate the structural difference
 
 
 ==========  ===========  ===========
-No change   Recentered   Rotated
+No change   Centered     Rotated
 ----------  -----------  -----------
 RMSD = 2.2  RMSD = 0.8   RMSD = 0.2
 ==========  ===========  ===========
