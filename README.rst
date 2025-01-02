@@ -19,17 +19,19 @@ I want to know the minimal RMSD between two molecules
 
 You have two molecules, A and B, and want to calculate the structural difference between them. If you just calculate the RMSD straight-forward, you might get too big a value, as seen below. You need to recenter and rotate the two molecules to get the true minimal RMSD. This is what this code does.
 
-==========  ===========  ==========
-No Changes  Re-centered  Rotated
-----------  -----------  ----------
-|begin|     |translate|  |rotate|
-==========  ===========  ==========
-RMSD 2.50   RMSD 1.07    RMSD 0.25
-==========  ===========  ==========
 
-.. |begin| image:: https://raw.githubusercontent.com/charnley/rmsd/master/img/plot_beginning.png
-.. |translate| image:: https://raw.githubusercontent.com/charnley/rmsd/master/img/plot_translated.png
-.. |rotate| image:: https://raw.githubusercontent.com/charnley/rmsd/master/img/plot_rotated.png
+==========  ===========  ===========
+No change   Recentered   Rotated
+----------  -----------  -----------
+RMSD = 2.2  RMSD = 0.8   RMSD = 0.2
+==========  ===========  ===========
+|fig1.1|    |fig1.2|     |fig1.3|
+==========  ===========  ===========
+
+
+.. |fig1.1| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_rmsd_nothing.png
+.. |fig1.2| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_rmsd_recentered.png
+.. |fig1.3| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_rmsd_rotated.png
 
 
 I do not know the order of the atoms
