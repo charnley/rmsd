@@ -21,18 +21,23 @@ You have two molecules, A and B, and want to calculate the structural difference
 
 
 
-.. list-table:: Title
-   :columns: 2
+.. list-table:: 
+   :columns: 3
    :header-rows: 1
 
-   * - Figure
-     -  Desc
+   * - A
+     - B
+     - C
+
    * - |fig1.1| 
-     -  Nothing
-   * - |fig1.3| 
-     - Centered
-   * - |fig1.3| 
-     - Rotated
+     - |fig1.2| 
+     - |fig1.3|
+
+   * - RMSD = 2.8
+     - RMSD = 0.8
+     - RMSD = 0.2
+
+**Figure 1**: **A** shows two molecules in space, unchanged. **B** shows the molecule re-centered (translated) ontop of eachother. **C** shows the molecules rotated to fit each other, with the true RMSD.
 
 
 .. |fig1.1| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_rmsd_nothing.png
