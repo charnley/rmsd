@@ -3,6 +3,30 @@ __doc__ = """
 Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ
 or PDB format, using transformation and rotation.
 
+Rotation methods:
+
+    - Kabsch (Default)
+
+    - Quaternion
+
+Reorder methods:
+
+    - Brute
+
+        Brute-force enumeration of all atom-atom pair combinations
+
+    - Distance
+
+        Assign atom-atom pair based on the shortest distance
+
+    - Hungarian
+
+        Assign atom-atom pair based on linear-sum assignment of the distance combination
+
+    - Inertia + Hungarian (Default)
+
+        First, align the molecules with inertia moments. Secondly, use Hungarian from above.
+
 For more information, usage, example and citation read more at
 https://github.com/charnley/rmsd
 """
@@ -1906,12 +1930,12 @@ See https://github.com/charnley/rmsd for citation information
     parser.add_argument(
         "--reorder-method",
         action="store",
-        default="hungarian",
+        default="inertia-hungarian",
         metavar="METHOD",
         help=(
             "select reorder method. Valid method are "
             f"{valid_reorder_methods}. "
-            "Default is Hungarian."
+            "Default is Inertia-Hungarian."
         ),
         choices=REORDER_METHODS,
     )

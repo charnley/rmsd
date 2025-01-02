@@ -2,7 +2,6 @@ import matplotlib
 import numpy as np
 from matplotlib import patheffects
 from matplotlib import pyplot as plt
-from matplotlib.patches import FancyArrowPatch
 from qmllib.representations import generate_fchl19  # type: ignore
 
 import rmsd as rmsdlib
@@ -10,7 +9,7 @@ import rmsd as rmsdlib
 outline = patheffects.withStroke(linewidth=6, foreground="w")
 
 
-def plot_molecule(ax, atoms, coords):
+def plot_molecule(ax, atoms, coords, hatch="/////"):
 
     X = coords[:, 0]
     Y = coords[:, 1]
@@ -20,8 +19,8 @@ def plot_molecule(ax, atoms, coords):
     ax.scatter(
         X,
         Y,
-        s=800.0,
-        hatch="/////",
+        s=500.0,
+        hatch=hatch,
         facecolor="#fff",
         edgecolor="#000",
         zorder=10,
@@ -30,9 +29,12 @@ def plot_molecule(ax, atoms, coords):
 
     for atom, coord in zip(atoms, coords):
 
+        if isinstance(atom, int):
+            atom = rmsdlib.str_atom(atom)
+
         ax.text(
             *coord[:2],
-            str(atom),
+            f"{atom}",
             verticalalignment="center",
             horizontalalignment="center",
             color="k",
@@ -78,79 +80,49 @@ def plot_representation(ax, atoms, coord):
     return
 
 
-def do_dot(ax, coord1, coord2, size=24, **kwargs):
-    ax.plot([coord1], [coord2], "o", markersize=size, linewidth=3, color="k", **kwargs)
-    return
+# def do_dot(ax, coord1, coord2, size=24, **kwargs):
+#     ax.plot([coord1], [coord2], "o", markersize=size, linewidth=3, color="k", **kwargs)
+#     return
 
 
-def do_arrow(ax, pos_start, pos_end, rad=0.0, color="k"):
-    edge_width = 2.0
-    arrowstyle = "fancy,head_length={},head_width={},tail_width={}".format(
-        2 * edge_width, 3 * edge_width, edge_width
-    )
-    arrow = FancyArrowPatch(
-        posA=pos_start,
-        posB=pos_end,
-        arrowstyle=arrowstyle,
-        connectionstyle=f"arc3,rad=-{rad:f}",
-        color=color,
-    )
-    ax.add_artist(arrow)
+# def do_arrow(ax, pos_start, pos_end, rad=0.0, color="k"):
+#     edge_width = 2.0
+#     arrowstyle = "fancy,head_length={},head_width={},tail_width={}".format(
+#         2 * edge_width, 3 * edge_width, edge_width
+#     )
+#     arrow = FancyArrowPatch(
+#         posA=pos_start,
+#         posB=pos_end,
+#         arrowstyle=arrowstyle,
+#         connectionstyle=f"arc3,rad=-{rad:f}",
+#         color=color,
+#     )
+#     ax.add_artist(arrow)
 
 
-def plot_coord(ax, atoms, coords, color="k", show_hydrogens=False):
+def set_axis_default(ax, lim=2.0):
 
-    offset = 0.25
+    ax.set_xlim(-lim, lim)
+    ax.set_ylim(-lim, lim)
+    ax.grid(True)
 
-    for idx, (atom, coord) in enumerate(zip(atoms, coords)):
-
-        _atom = rmsdlib.str_atom(atom)
-
-        if not show_hydrogens and _atom == "H":
-            continue
-
-        ax.plot([coord[0]], [coord[1]], "o", markersize=20, linewidth=0, color=color)
-
-        if _atom != "C":
-            ax.text(
-                coord[0],
-                coord[1],
-                _atom,
-                verticalalignment="center",
-                horizontalalignment="center",
-                color="w",
-                fontsize=12,
-                fontweight="bold",
-            )
-
-        ax.text(
-            coord[0] + offset,
-            coord[1] - offset,
-            idx,
-            verticalalignment="center",
-            horizontalalignment="center",
-            color="k",
-            fontsize=8,
-            fontweight="bold",
-            path_effects=[outline],
-        )
-
-    return
+    ax.tick_params(width=0, length=0)
+    ax.tick_params(axis="both", which="major", labelsize=0)
 
 
 def set_global_style():
-    font = {"weight": "bold", "size": 18}
+    font = {"weight": "bold", "size": 18, "family": "serif"}
     matplotlib.rc("font", **font)
     matplotlib.rc("axes", labelweight="bold")
 
     # Thicker spines
-    matplotlib.rcParams["axes.linewidth"] = 2
+    # matplotlib.rcParams["axes.linewidth"] = 1
 
-    matplotlib.rcParams["xtick.major.width"] = 2
-    matplotlib.rcParams["ytick.major.width"] = 2
+    # matplotlib.rcParams["xtick.major.width"] = 2
+    # matplotlib.rcParams["ytick.major.width"] = 2
 
 
-def get_plot(n_ax=1, size=8):
+def get_plot(n_ax=1, size=5):
     """Get a jupyter-sized plot"""
     fig, axs = plt.subplots(1, n_ax, sharey=True, sharex=True, figsize=(size * n_ax, size))
 
