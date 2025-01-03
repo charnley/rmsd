@@ -103,7 +103,7 @@ Usage examples
 
 Use ``calculate_rmsd --help`` to see all the features. Usage is pretty straight
 forward, call ``calculate_rmsd`` with two structures in either ``.xyz`` or
-``.pdb``. In this example Ethane has the exact same structure, but is
+``.pdb``. In this example, Ethane has the same structure but is
 translated in space, so the RMSD should be zero.
 
 .. code-block:: bash
@@ -156,7 +156,7 @@ Submit issues or pull requests on GitHub.
 Citation
 ========
 
-Please cite this project when using it for scientific publications. And cite the relevant methods implemnted.
+Please cite this project when using it for scientific publications. And cite the relevant methods implemented.
 
 **Implementation**:
 Calculate Root-mean-square deviation (RMSD) of Two Molecules Using Rotation, GitHub,
@@ -173,27 +173,26 @@ http://github.com/charnley/rmsd, <git commit hash or version number>
    * - **Kabsch** 
      - ``--rotation-method kabsch`` (Default)
      - Wolfgang Kabsch (1976),
-       A solution for the best rotation to relate two sets of vectors,
        Acta Crystallographica, A32:922-923
 
        http://dx.doi.org/10.1107/S0567739476001873
 
    * - **Quaternion** 
      - ``--rotation-method quaternion``
-     - Michael W. Walker and Lejun Shao and Richard A. Volz (1991),
-       Estimating 3-D location parameters using dual number quaternions, CVGIP: Image Understanding, 54:358-367,
+     - Walker, Shao & Volz (1991),
+       CVGIP: Image Understanding, 54:358-367,
 
        http://dx.doi.org/10.1016/1049-9660(91)90036-o
 
    * - **Distance Hungarian Assignment**
      - ``--reorder-method inertia-hungarian`` (Default)
-     - David F.  Crouse (2016). On implementing 2D rectangular assignment algorithms. (Vol. 52, Issue 4, pp. 1679–1696). Institute of Electrical and Electronics Engineers (IEEE).
+     - Crouse (2016). Vol. 52, Issue 4, pp. 1679–1696, IEEE.
 
        http://dx.doi.org/10.1109/TAES.2016.140952
 
    * - **FCHL19** 
      - ``--reorder-method qml``
-     - Christensen et al, FCHL revisited: Faster and more accurate quantum machine learning, J. Chem. Phys. 152, 044107 (2020)
+     - Christensen et al (2020), J. Chem. Phys. 152, 044107 
 
        https://doi.org/10.1063/1.5126701
 
