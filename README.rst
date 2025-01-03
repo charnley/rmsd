@@ -14,9 +14,9 @@ For more information please read RMSD_ and `Kabsch algorithm`_.
 Features
 ========
 
-- Rotation
-- Reordering
-- Reflection
+- Find the minimal RMSD by rotating molecules to fit
+- Reordering methods for finding atom-pair combinations, if input files are not in the same order
+- Conformer reflection check, filtering arguments, etc
 
 
 Motivation
@@ -30,7 +30,6 @@ You have two molecules, A and B, and want to calculate the structural difference
 
 
 .. list-table:: 
-   :columns: 3
    :header-rows: 1
 
    * - A
@@ -58,58 +57,88 @@ I do not know the order of the atoms
 
 If atoms in molecules A and B are not in the same order, you will need to reorder the atoms first to get the correct rotation for minimal RMSD. Chicken and egg problem.
 
-|fig2.1|
+.. list-table:: 
+   :header-rows: 1
 
-**Figure 2**: Two identical molecules, but not in the same atomic order, making it impossible to rotate correctly.
+   * - 2.1
+     - 2.2
+     - 2.3
 
-|fig3.1|
+   * - |fig2.1| 
+     - |fig3.1| 
+     - |fig4.1|
 
-**Figure 3**: Using FCHL19 atomic representation, the individual atoms can be mapped. Structure dependent, but coordinate system independent.
+**Figure 2.1**: Two identical molecules, but not in the same atomic order, making it impossible to rotate correctly.
+
+**Figure 2.2**: Using FCHL19 atomic representation, the individual atoms can be mapped. Structure dependent, but coordinate system independent.
+
+**Figure 2.3**: Illustrating inertia eigenvectors
+
 
 .. |fig2.1| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_reorder_problem.png
 .. |fig3.1| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_reorder_qml.png
+.. |fig4.1| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_reorder_inertia.png
 
 Citation
 ========
 
 Please cite this project when using it for scientific publications. And cite the relevant methods implemnted.
 
-- **Implementation**:
-    Calculate Root-mean-square deviation (RMSD) of Two Molecules Using Rotation, GitHub,
-    http://github.com/charnley/rmsd, <git commit hash or version number>
+**Implementation**:
+Calculate Root-mean-square deviation (RMSD) of Two Molecules Using Rotation, GitHub,
+http://github.com/charnley/rmsd, <git commit hash or version number>
 
 Rotation Methods
 ----------------
 
-- **Kabsch** ``--rotation-method kabsch`` (Default):
-    Wolfgang Kabsch (1976),
-    A solution for the best rotation to relate two sets of vectors,
-    Acta Crystallographica, A32:922-923
+.. list-table:: 
+   :header-rows: 1
 
-    doi: http://dx.doi.org/10.1107/S0567739476001873
+   * - Method
+     - Argument
+     - Citation
 
-- **Quaternion** ``--rotation-method quaternion``:
-    Michael W. Walker and Lejun Shao and Richard A. Volz (1991),
-    Estimating 3-D location parameters using dual number quaternions, CVGIP: Image Understanding, 54:358-367,
+   * - **Kabsch** 
+     - ``--rotation-method kabsch`` (Default)
+     - Wolfgang Kabsch (1976),
+       A solution for the best rotation to relate two sets of vectors,
+       Acta Crystallographica, A32:922-923
 
-    doi: http://dx.doi.org/10.1016/1049-9660(91)90036-o
+       http://dx.doi.org/10.1107/S0567739476001873
+
+   * - **Quaternion** 
+     - ``--rotation-method quaternion``
+     - Michael W. Walker and Lejun Shao and Richard A. Volz (1991),
+       Estimating 3-D location parameters using dual number quaternions, CVGIP: Image Understanding, 54:358-367,
+
+       http://dx.doi.org/10.1016/1049-9660(91)90036-o
+
 
 Reorder Methods
 ---------------
 
-- **Distance Hungarian Assignment** ``--reorder-method hungarian`` (Default):
-    David F.  Crouse (2016). On implementing 2D rectangular assignment algorithms. (Vol. 52, Issue 4, pp. 1679–1696). Institute of Electrical and Electronics Engineers (IEEE).
-    
-    doi: http://dx.doi.org/10.1109/TAES.2016.140952
+.. list-table:: 
+   :header-rows: 1
 
-    implementation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linear_sum_assignment.html
+   * - Method
+     - Argument
+     - Citation
 
-- https://en.wikipedia.org/wiki/Moment_of_inertia
+   * - **Distance Hungarian Assignment**
+     - ``--reorder-method hungarian`` (Default)
+     - David F.  Crouse (2016). On implementing 2D rectangular assignment algorithms. (Vol. 52, Issue 4, pp. 1679–1696). Institute of Electrical and Electronics Engineers (IEEE).
 
-- **FCHL19** ``--reorder-method qml``:
-    Christensen et al, FCHL revisited: Faster and more accurate quantum machine learning, J. Chem. Phys. 152, 044107 (2020)
-    
-    doi: https://doi.org/10.1063/1.5126701
+       http://dx.doi.org/10.1109/TAES.2016.140952
+
+   * - **FCHL19** 
+     - ``--reorder-method qml``
+     - Christensen et al, FCHL revisited: Faster and more accurate quantum machine learning, J. Chem. Phys. 152, 044107 (2020)
+
+       https://doi.org/10.1063/1.5126701
+
+References:
+ - https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linear_sum_assignment.html
+ - https://en.wikipedia.org/wiki/Moment_of_inertia
 
 
 Installation
@@ -174,7 +203,7 @@ I want to run multiple calculations at the same time. Not everything should be s
 
     find tests/resources -name "ethane_*xyz" | parallel -j2 "echo -n '{} ' && calculate_rmsd --reorder --no-hydrogen tests/resources/ethane.xyz {}"
 
-will use two cores and compare all ``ethane_*``molecules. Printing one file and the RMSD per line. Bash is good for stuff like that
+will use two cores and compare all ``ethane_*`` molecules. Printing one file and the RMSD per line. Bash is good for stuff like that
 
 It is also possible to use RMSD as a library in other scripts, see
 ``example.py`` and ``tests/*`` for example usage.
