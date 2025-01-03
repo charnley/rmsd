@@ -85,6 +85,69 @@ def plot_representation(ax, atoms, coord):
     return
 
 
+def plot_inertia(ax, pos, atoms, coord):
+
+    center = rmsdlib.get_cm(atoms, coord)
+    coord = coord - center
+
+    pos = center[:2]
+
+    inertia = rmsdlib.get_inertia_tensor(atoms, coord)
+    eigval, eigvec = np.linalg.eig(inertia)
+
+    eigvec = eigvec.T
+    eigvec = eigvec[np.argsort(eigval)]
+    # eigvec = eigvec.T
+
+    eigvec *= -1
+
+    print(pos)
+    print(eigvec)
+
+    arrow_options = dict(
+        zorder=10,
+        # path_effects=[outline],
+        head_width=0.1,
+        head_length=0.1,
+        fc="k",
+    )
+
+    arrow1 = ax.arrow(*pos, *eigvec[0, :2] * 0.8, **arrow_options)
+    arrow2 = ax.arrow(*pos, *eigvec[1, :2] * 0.8, **arrow_options)
+
+    arrow1.set_path_effects([outline])
+    arrow2.set_path_effects([outline])
+
+    arrow1 = ax.arrow(*pos, *eigvec[0, :2] * 0.8, **arrow_options)
+    arrow2 = ax.arrow(*pos, *eigvec[1, :2] * 0.8, **arrow_options)
+
+    ax.text(
+        pos[0] + eigvec[0, 0] / 2.5,
+        pos[1] + eigvec[0, 1] / 2.5,
+        "",
+        verticalalignment="center",
+        horizontalalignment="center",
+        color="k",
+        fontsize=12,
+        fontweight="bold",
+        path_effects=[outline],
+        zorder=20,
+    )
+
+    ax.text(
+        pos[0] + eigvec[1, 0] / 2.5,
+        pos[1] + eigvec[1, 1] / 2.5,
+        "",
+        verticalalignment="center",
+        horizontalalignment="center",
+        color="k",
+        fontsize=12,
+        fontweight="bold",
+        path_effects=[outline],
+        zorder=20,
+    )
+
+
 # def do_dot(ax, coord1, coord2, size=24, **kwargs):
 #     ax.plot([coord1], [coord2], "o", markersize=size, linewidth=3, color="k", **kwargs)
 #     return
@@ -150,47 +213,3 @@ def get_plot(n_ax=1, size=FIGURE_SIZE):
     fig.tight_layout()
     fig.subplots_adjust(hspace=0, wspace=0)
     return fig, axs
-
-
-def fix_borders(ax, visibles=[False, False, True, True], fix_bounds=True):
-    """Make border pretty"""
-
-    directions = ["top", "right", "bottom", "left"]
-
-    spines = ax.spines.items()
-    spines = dict(spines)
-
-    xticks = ax.get_xticks()
-    yticks = ax.get_yticks()
-    min_x, max_x = ax.get_xlim()
-    min_y, max_y = ax.get_ylim()
-
-    # Correct to the actual ticks
-
-    (x_idxs,) = np.where((xticks > min_x) & (xticks < max_x))
-    (y_idxs,) = np.where((yticks > min_y) & (yticks < max_y))
-    xticks = xticks[x_idxs]
-    yticks = yticks[y_idxs]
-
-    min_x = np.min(xticks)
-    max_x = np.max(xticks)
-
-    min_y = np.min(yticks)
-    max_y = np.max(yticks)
-
-    for direction, visible in zip(directions, visibles):
-
-        spine = spines[direction]
-        spine.set_visible(visible)
-
-        if not visible:
-            continue
-
-        if not fix_bounds:
-            continue
-
-        if direction == "left" or direction == "right":
-            spine.set_bounds(min_y, max_y)
-
-        else:
-            spine.set_bounds(min_x, max_x)
