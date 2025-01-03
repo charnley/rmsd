@@ -1,9 +1,9 @@
 Calculate Root-mean-square deviation (RMSD) of Two Molecules Using Rotation
 ===========================================================================
 
-The Root-Mean-Square Deviation (RMSD) is the most common metric to measure the structural similarity between two structures, typically used in molecular biology, chemistry, and computational chemistry.
+The root mean Square Deviation (RMSD) is the most common metric for measuring structural similarity between two structures. It is typically used in molecular biology, chemistry, and computational chemistry.
 
-For more information please read RMSD_ and `Kabsch algorithm`_.
+For more details, please see RMSD_ and `Kabsch algorithm`_.
 
 .. _RMSD: http://en.wikipedia.org/wiki/Root-mean-square_deviation
 .. _Kabsch algorithm: http://en.wikipedia.org/wiki/Kabsch_algorithm
@@ -14,10 +14,10 @@ For more information please read RMSD_ and `Kabsch algorithm`_.
 Features
 ========
 
-- Find the minimal RMSD by rotating molecules to fit
-- Either XYZ or PDB format
-- Reordering methods for finding atom-pair combinations if input files are not in the same order
-- Conformer reflection check, filtering arguments, etc
+- Calculate the minimal RMSD between two molecules by applying translation and rotation.
+- Supports both XYZ and PDB file formats.
+- Offers atom reordering methods when input files have mismatched atom orders.
+- Includes checks for conformer reflection and additional filtering options (Hydrogen, Alpha-carbon).
 
 Motivation
 ==========
@@ -25,15 +25,15 @@ Motivation
 I want to know the minimal RMSD between two molecules
 -----------------------------------------------------
 
-To calculate the structural difference between two molecules, you might initially compute the RMSD directly. However, this straightforward approach could give you a misleadingly large value.
-To get the true minimal RMSD, you need to adjust for translations and rotations. This process aligns the two molecules in the best possible way, ensuring the RMSD accurately reflects their structural similarity after optimal alignment. As seen in Figure 1.
+To calculate the structural difference between two molecules, you might initially compute the RMSD directly (Figure 2.A). However, this straightforward approach could give you a misleadingly large value.
+To get the true minimal RMSD, you need to adjust for translations (Figure 2.B) and rotations (Figure 2.C). This process aligns the two molecules in the best possible way, ensuring the RMSD accurately reflects their structural similarity after optimal alignment. As seen in Figure 1.
 
 .. list-table:: 
    :header-rows: 1
 
-   * - A
-     - B
-     - C
+   * - 1.A
+     - 1.B
+     - 1.C
 
    * - |fig1.1| 
      - |fig1.2| 
@@ -63,9 +63,9 @@ Each method has its limitations because finding the best atom mapping depends on
 .. list-table:: 
    :header-rows: 1
 
-   * - 2.1
-     - 2.2
-     - 2.3
+   * - 2.A
+     - 2.B
+     - 2.C
 
    * - |fig2.1| 
      - |fig2.2| 
@@ -89,14 +89,6 @@ Easiest is to get the program via ``pip``.
 .. code-block:: bash
 
     pip install rmsd
-
-
-or download the project from GitHub via
-
-.. code-block:: bash
-
-    git clone https://github.com/charnley/rmsd
-
 
 There is only one Python file, so you can also download `calculate_rmsd.py` and
 put it in your bin folder.
@@ -126,26 +118,32 @@ visual comparison. The output will be in XYZ format.
 
     calculate_rmsd --no-hydrogen --print tests/ethane.xyz tests/ethane_mini.xyz
 
-If the atoms are scrambled and not aligned you can use the ``--reorder``
-argument which will align the atoms from structure B unto A. Use
-``--reorder-method`` to select what method for reordering. Choose between
-Hungarian_ (default), distance (very approximate) and brute force (slow).
+If the atoms are scrambled and not aligned, you can use the ``--reorder``
+argument, which will align the atoms from structure B onto A.
+
+Use ``--reorder-method`` to select the reordering method.
+Choose between 
+Inertia_ aligned Hungarian_ distance (default), 
+Hungarian_ distance, 
+distance (very approximate)
+QML atomic representation (coordinate independent), 
+and brute force (don't).
 
 .. _Hungarian: https://en.wikipedia.org/wiki/Hungarian_algorithm
+
+.. _Inertia: https://en.wikipedia.org/wiki/Moment_of_inertia
 
 .. code-block:: bash
 
     calculate_rmsd --reorder tests/water_16.xyz tests/water_16_idx.xyz
 
-I want to run multiple calculations at the same time. Not everything should be solved by the script, I would recommend that you use GNU Parallel for this use case. For example
+If you want to run multiple calculations simultaneously, it's best not to rely solely on the script. Instead, you can use GNU Parallel to handle this efficiently. For example, use two cores and compare all ``ethane_*`` molecules. Printing one file and the RMSD per line. Bash is good for stuff like that.
 
 .. code-block:: bash
 
     find tests/resources -name "ethane_*xyz" | parallel -j2 "echo -n '{} ' && calculate_rmsd --reorder --no-hydrogen tests/resources/ethane.xyz {}"
 
-will use two cores and compare all ``ethane_*`` molecules. Printing one file and the RMSD per line. Bash is good for stuff like that
-
-It is also possible to use RMSD as a library in other scripts, see
+It is also possible to use RMSD as a library in other scripts; see
 ``example.py`` and ``tests/*`` for example usage.
 
 
@@ -164,8 +162,6 @@ Please cite this project when using it for scientific publications. And cite the
 Calculate Root-mean-square deviation (RMSD) of Two Molecules Using Rotation, GitHub,
 http://github.com/charnley/rmsd, <git commit hash or version number>
 
-Rotation Methods
-----------------
 
 .. list-table:: 
    :header-rows: 1
@@ -189,19 +185,8 @@ Rotation Methods
 
        http://dx.doi.org/10.1016/1049-9660(91)90036-o
 
-
-Reorder Methods
----------------
-
-.. list-table:: 
-   :header-rows: 1
-
-   * - Method
-     - Argument
-     - Citation
-
    * - **Distance Hungarian Assignment**
-     - ``--reorder-method hungarian`` (Default)
+     - ``--reorder-method inertia-hungarian`` (Default)
      - David F.  Crouse (2016). On implementing 2D rectangular assignment algorithms. (Vol. 52, Issue 4, pp. 1679–1696). Institute of Electrical and Electronics Engineers (IEEE).
 
        http://dx.doi.org/10.1109/TAES.2016.140952
@@ -212,10 +197,10 @@ Reorder Methods
 
        https://doi.org/10.1063/1.5126701
 
-References:
- - https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linear_sum_assignment.html
- - https://en.wikipedia.org/wiki/Moment_of_inertia
+References
+----------
 
+- https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linear_sum_assignment.html
 
 
 A note on PDB
