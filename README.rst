@@ -1,23 +1,23 @@
 Calculate Root-mean-square deviation (RMSD) of Two Molecules Using Rotation
 ===========================================================================
 
-The root-mean-square deviation (RMSD) is calculated, using Kabsch algorithm
-(1976) or Quaternion algorithm (1991) for rotation, between two Cartesian
-coordinates in either ``.xyz`` or ``.pdb`` format, resulting in the minimal
-RMSD.
+The Root-Mean-Square Deviation (RMSD) is the most common metric to measure the structural similarity between two structures, typically used in molecular biology, chemistry, and computational chemistry.
 
 For more information please read RMSD_ and `Kabsch algorithm`_.
 
 .. _RMSD: http://en.wikipedia.org/wiki/Root-mean-square_deviation
 .. _Kabsch algorithm: http://en.wikipedia.org/wiki/Kabsch_algorithm
 
+.. contents:: Overview
+    :depth: 1
+
 Features
 ========
 
 - Find the minimal RMSD by rotating molecules to fit
-- Reordering methods for finding atom-pair combinations, if input files are not in the same order
+- Either XYZ or PDB format
+- Reordering methods for finding atom-pair combinations if input files are not in the same order
 - Conformer reflection check, filtering arguments, etc
-
 
 Motivation
 ==========
@@ -25,9 +25,8 @@ Motivation
 I want to know the minimal RMSD between two molecules
 -----------------------------------------------------
 
-You have two molecules, A and B, and want to calculate the structural difference between them. If you just calculate the RMSD straight-forward, you might get too big a value, as seen below. You need to recenter and rotate the two molecules to get the true minimal RMSD. This is what this code does.
-
-
+To calculate the structural difference between two molecules, you might initially compute the RMSD directly. However, this straightforward approach could give you a misleadingly large value.
+To get the true minimal RMSD, you need to adjust for translations and rotations. This process aligns the two molecules in the best possible way, ensuring the RMSD accurately reflects their structural similarity after optimal alignment. As seen in Figure 1.
 
 .. list-table:: 
    :header-rows: 1
@@ -55,7 +54,11 @@ You have two molecules, A and B, and want to calculate the structural difference
 I do not know the order of the atoms
 ------------------------------------
 
-If atoms in molecules A and B are not in the same order, you will need to reorder the atoms first to get the correct rotation for minimal RMSD. Chicken and egg problem.
+Atom reordering methods can be used in cases where the atoms in the two molecules are not in the same order (Figure 2.1). These algorithms find the optimal mapping of atoms between the two structures to minimize RMSD. 
+
+Each method has its limitations because finding the best atom mapping depends on having the structures properly aligned. This is usually done by comparing atom-pair distances. If the molecules are already aligned, using the Hungarian linear sum assignment works well. If they’re not aligned, you can either align the molecules using their inertia eigenvectors (Figure 2.2) or use atomic descriptors (Figure 2.3), independent of the coordinate system, to reorder the atoms.
+
+.. _Hungarian: https://en.wikipedia.org/wiki/Hungarian_algorithm
 
 .. list-table:: 
    :header-rows: 1
@@ -65,80 +68,17 @@ If atoms in molecules A and B are not in the same order, you will need to reorde
      - 2.3
 
    * - |fig2.1| 
-     - |fig3.1| 
-     - |fig4.1|
+     - |fig2.2| 
+     - |fig2.3|
 
-**Figure 2.1**: Two identical molecules, but not in the same atomic order, making it impossible to rotate correctly.
-
-**Figure 2.2**: Using FCHL19 atomic representation, the individual atoms can be mapped. Structure dependent, but coordinate system independent.
-
-**Figure 2.3**: Illustrating inertia eigenvectors
-
+**Figure 2**:
+**2.1**) Two identical molecules, but not in the same atomic order, making it impossible to rotate correctly.
+**2.2**) Illustrating inertia eigenvectors
+**2.3**) Using FCHL19 atomic representation, the individual atoms can be mapped. Structure dependent, but coordinate system independent.
 
 .. |fig2.1| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_reorder_problem.png
-.. |fig3.1| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_reorder_qml.png
-.. |fig4.1| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_reorder_inertia.png
-
-Citation
-========
-
-Please cite this project when using it for scientific publications. And cite the relevant methods implemnted.
-
-**Implementation**:
-Calculate Root-mean-square deviation (RMSD) of Two Molecules Using Rotation, GitHub,
-http://github.com/charnley/rmsd, <git commit hash or version number>
-
-Rotation Methods
-----------------
-
-.. list-table:: 
-   :header-rows: 1
-
-   * - Method
-     - Argument
-     - Citation
-
-   * - **Kabsch** 
-     - ``--rotation-method kabsch`` (Default)
-     - Wolfgang Kabsch (1976),
-       A solution for the best rotation to relate two sets of vectors,
-       Acta Crystallographica, A32:922-923
-
-       http://dx.doi.org/10.1107/S0567739476001873
-
-   * - **Quaternion** 
-     - ``--rotation-method quaternion``
-     - Michael W. Walker and Lejun Shao and Richard A. Volz (1991),
-       Estimating 3-D location parameters using dual number quaternions, CVGIP: Image Understanding, 54:358-367,
-
-       http://dx.doi.org/10.1016/1049-9660(91)90036-o
-
-
-Reorder Methods
----------------
-
-.. list-table:: 
-   :header-rows: 1
-
-   * - Method
-     - Argument
-     - Citation
-
-   * - **Distance Hungarian Assignment**
-     - ``--reorder-method hungarian`` (Default)
-     - David F.  Crouse (2016). On implementing 2D rectangular assignment algorithms. (Vol. 52, Issue 4, pp. 1679–1696). Institute of Electrical and Electronics Engineers (IEEE).
-
-       http://dx.doi.org/10.1109/TAES.2016.140952
-
-   * - **FCHL19** 
-     - ``--reorder-method qml``
-     - Christensen et al, FCHL revisited: Faster and more accurate quantum machine learning, J. Chem. Phys. 152, 044107 (2020)
-
-       https://doi.org/10.1063/1.5126701
-
-References:
- - https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linear_sum_assignment.html
- - https://en.wikipedia.org/wiki/Moment_of_inertia
+.. |fig2.2| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_reorder_inertia.png
+.. |fig2.3| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_reorder_qml.png
 
 
 Installation
@@ -213,6 +153,69 @@ Problems?
 =========
 
 Submit issues or pull requests on GitHub.
+
+
+Citation
+========
+
+Please cite this project when using it for scientific publications. And cite the relevant methods implemnted.
+
+**Implementation**:
+Calculate Root-mean-square deviation (RMSD) of Two Molecules Using Rotation, GitHub,
+http://github.com/charnley/rmsd, <git commit hash or version number>
+
+Rotation Methods
+----------------
+
+.. list-table:: 
+   :header-rows: 1
+
+   * - Method
+     - Argument
+     - Citation
+
+   * - **Kabsch** 
+     - ``--rotation-method kabsch`` (Default)
+     - Wolfgang Kabsch (1976),
+       A solution for the best rotation to relate two sets of vectors,
+       Acta Crystallographica, A32:922-923
+
+       http://dx.doi.org/10.1107/S0567739476001873
+
+   * - **Quaternion** 
+     - ``--rotation-method quaternion``
+     - Michael W. Walker and Lejun Shao and Richard A. Volz (1991),
+       Estimating 3-D location parameters using dual number quaternions, CVGIP: Image Understanding, 54:358-367,
+
+       http://dx.doi.org/10.1016/1049-9660(91)90036-o
+
+
+Reorder Methods
+---------------
+
+.. list-table:: 
+   :header-rows: 1
+
+   * - Method
+     - Argument
+     - Citation
+
+   * - **Distance Hungarian Assignment**
+     - ``--reorder-method hungarian`` (Default)
+     - David F.  Crouse (2016). On implementing 2D rectangular assignment algorithms. (Vol. 52, Issue 4, pp. 1679–1696). Institute of Electrical and Electronics Engineers (IEEE).
+
+       http://dx.doi.org/10.1109/TAES.2016.140952
+
+   * - **FCHL19** 
+     - ``--reorder-method qml``
+     - Christensen et al, FCHL revisited: Faster and more accurate quantum machine learning, J. Chem. Phys. 152, 044107 (2020)
+
+       https://doi.org/10.1063/1.5126701
+
+References:
+ - https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linear_sum_assignment.html
+ - https://en.wikipedia.org/wiki/Moment_of_inertia
+
 
 
 A note on PDB
