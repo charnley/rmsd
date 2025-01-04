@@ -14,12 +14,12 @@ REP_SIZE = 0.1
 REP_HEIGHT = 0.15
 
 
-def plot_molecule(ax, atoms, coords, hatch="/////"):
+def plot_molecule(ax, atoms, coords, hatch="/////", zorder=0):
 
     X = coords[:, 0]
     Y = coords[:, 1]
 
-    ax.plot(X, Y, "-", color="k", linewidth=1)
+    ax.plot(X, Y, "-", color="k", linewidth=1, zorder=zorder + 30, path_effects=[outline])
 
     ax.scatter(
         X,
@@ -28,7 +28,7 @@ def plot_molecule(ax, atoms, coords, hatch="/////"):
         hatch=hatch,
         facecolor="#fff",
         edgecolor="#000",
-        zorder=10,
+        zorder=zorder + 31,
         path_effects=[outline],
     )
 
@@ -46,7 +46,7 @@ def plot_molecule(ax, atoms, coords, hatch="/////"):
             fontsize=12,
             fontweight="bold",
             path_effects=[outline],
-            zorder=20,
+            zorder=zorder + 32,
         )
 
     return
