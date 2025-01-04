@@ -52,9 +52,8 @@ def plot_molecule(ax, atoms, coords, hatch="/////", zorder=0):
     return
 
 
-def plot_representation(ax, atoms, coord):
+def plot_representation(ax, atoms, coord, zorder=100):
 
-    # qml vectors
     parameters = {
         "elements": np.unique(atoms),
         "pad": len(atoms),
@@ -75,17 +74,29 @@ def plot_representation(ax, atoms, coord):
         c += offset
         x, y = ax.transLimits.transform(c)
 
-        ins3 = ax.inset_axes(
+        axins = ax.inset_axes(
             [x, y, REP_SIZE, REP_HEIGHT],
+            zorder=zorder + 1,
         )
-        ins3.imshow(np.expand_dims(vecs[idx], axis=1), cmap="gray")
-        ins3.xaxis.set_ticks([])
-        ins3.yaxis.set_ticks([])
+
+        axins.imshow(np.expand_dims(vecs[idx], axis=1), cmap="gray")
+        axins.xaxis.set_ticks([])
+        axins.yaxis.set_ticks([])
+
+        # Add white stroke to insert axis
+        coords = ax.transAxes.inverted().transform(axins.get_tightbbox())
+        border = 0.009
+        w, h = coords[1] - coords[0] + 2 * border
+        ax.add_patch(
+            plt.Rectangle(
+                coords[0] - border, w, h, fc="white", transform=ax.transAxes, zorder=zorder
+            )
+        )
 
     return
 
 
-def plot_inertia(ax, pos, atoms, coord):
+def plot_inertia(ax, pos, atoms, coord, zorder=100):
 
     center = rmsdlib.get_cm(atoms, coord)
     coord = coord - center
@@ -97,16 +108,10 @@ def plot_inertia(ax, pos, atoms, coord):
 
     eigvec = eigvec.T
     eigvec = eigvec[np.argsort(eigval)]
-    # eigvec = eigvec.T
-
     eigvec *= -1
 
-    print(pos)
-    print(eigvec)
-
     arrow_options = dict(
-        zorder=10,
-        # path_effects=[outline],
+        zorder=zorder,
         head_width=0.1,
         head_length=0.1,
         fc="k",
@@ -148,26 +153,6 @@ def plot_inertia(ax, pos, atoms, coord):
     )
 
 
-# def do_dot(ax, coord1, coord2, size=24, **kwargs):
-#     ax.plot([coord1], [coord2], "o", markersize=size, linewidth=3, color="k", **kwargs)
-#     return
-
-
-# def do_arrow(ax, pos_start, pos_end, rad=0.0, color="k"):
-#     edge_width = 2.0
-#     arrowstyle = "fancy,head_length={},head_width={},tail_width={}".format(
-#         2 * edge_width, 3 * edge_width, edge_width
-#     )
-#     arrow = FancyArrowPatch(
-#         posA=pos_start,
-#         posB=pos_end,
-#         arrowstyle=arrowstyle,
-#         connectionstyle=f"arc3,rad=-{rad:f}",
-#         color=color,
-#     )
-#     ax.add_artist(arrow)
-
-
 def set_axis_default(ax, lim=2.0, use_grid=True):
 
     ax.set_box_aspect(1)
@@ -199,17 +184,10 @@ def set_global_style():
     matplotlib.rc("font", **font)
     matplotlib.rc("axes", labelweight="bold")
 
-    # Thicker spines
-    # matplotlib.rcParams["axes.linewidth"] = 1
-
-    # matplotlib.rcParams["xtick.major.width"] = 2
-    # matplotlib.rcParams["ytick.major.width"] = 2
-
 
 def get_plot(n_ax=1, size=FIGURE_SIZE):
     """Get a jupyter-sized plot"""
     fig, axs = plt.subplots(1, n_ax, sharey=True, sharex=True, figsize=(size * n_ax, size))
-
     fig.tight_layout()
     fig.subplots_adjust(hspace=0, wspace=0)
     return fig, axs
