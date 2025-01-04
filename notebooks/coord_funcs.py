@@ -25,5 +25,5 @@ def rotate_coord(angle, coord, axis=[0, 1]):
     U = get_rotation_matrix(angle)
     _xy = np.dot(coord[:, axis], U)
     _coord = np.array(coord, copy=True)
-    _coord[:, :2] = _xy
+    _coord[:, axis] = _xy
     return _coord
