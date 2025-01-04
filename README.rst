@@ -28,15 +28,15 @@ I want to know the minimal RMSD between two molecules
 To calculate the structural difference between two molecules, you might initially compute the RMSD directly (**Figure 2.a**). However, this straightforward approach could give you a misleadingly large value.
 To get the true minimal RMSD, you must adjust for translations (**Figure 2.b**) and rotations (**Figure 2.c**). This process aligns the two molecules in the best possible way, ensuring the RMSD accurately reflects their structural similarity after optimal alignment.
 
-.. list-table:: 
+.. list-table::
    :header-rows: 1
 
    * - 1.a
      - 1.b
      - 1.c
 
-   * - |fig1.a| 
-     - |fig1.b| 
+   * - |fig1.a|
+     - |fig1.b|
      - |fig1.c|
 
    * - RMSD = 2.8
@@ -48,27 +48,27 @@ To get the true minimal RMSD, you must adjust for translations (**Figure 2.b**) 
 I do not know the order of the atoms
 ------------------------------------
 
-Atom reordering methods can be used in cases where the atoms in the two molecules are not in the same order (Figure 2.1). These algorithms find the optimal mapping of atoms between the two structures to minimize RMSD. 
+Atom reordering methods can be used in cases where the atoms in the two molecules are not in the same order (Figure 2.1). These algorithms find the optimal mapping of atoms between the two structures to minimize RMSD.
 
 Each method has its limitations because finding the best atom mapping depends on having the structures properly aligned. This is usually done by comparing atom-pair distances. If the molecules are already aligned, using the Hungarian linear sum assignment works well. If they’re not aligned, you can either align the molecules using their inertia eigenvectors (**Figure 2.a**) or use atomic descriptors (**Figure 2.b**), independent of the coordinate system, to reorder the atoms. Note that all reordering methods have limitations and drawbacks and might not actually find the true order.
 
 .. _Hungarian: https://en.wikipedia.org/wiki/Hungarian_algorithm
 
-.. list-table:: 
+.. list-table::
    :header-rows: 1
 
    * - 2.a
      - 2.b
      - 2.c
 
-   * - |fig2.a| 
-     - |fig2.b| 
+   * - |fig2.a|
+     - |fig2.b|
      - |fig2.c|
 
 **Figure 2**:
 **a)** Two identical molecules, but not in the same atomic order, making it impossible to rotate correctly.
 **b)** Illustrating the molecular inertia vectors used to align molecules to find the atom mapping.
-**c)** Illustrating atomic representation for individual atoms. Structure-dependent but coordinate system-independent, which can be used for atom mapping. 
+**c)** Illustrating atomic representation for individual atoms. Structure-dependent but coordinate system-independent, which can be used for atom mapping.
 
 Installation
 ============
@@ -111,11 +111,11 @@ If the atoms are scrambled and not aligned, you can use the ``--reorder``
 argument, which will align the atoms from structure B onto A.
 
 Use ``--reorder-method`` to select the reordering method.
-Choose between 
-Inertia_ aligned Hungarian_ distance (default), 
-Hungarian_ distance, 
+Choose between
+Inertia_ aligned Hungarian_ distance (default),
+Hungarian_ distance,
 distance (very approximate)
-QML atomic representation (coordinate independent), 
+QML atomic representation (coordinate independent),
 and brute force (don't).
 
 .. _Hungarian: https://en.wikipedia.org/wiki/Hungarian_algorithm
@@ -152,21 +152,21 @@ Calculate Root-mean-square deviation (RMSD) of Two Molecules Using Rotation, Git
 http://github.com/charnley/rmsd, <git commit hash or version number>
 
 
-.. list-table:: 
+.. list-table::
    :header-rows: 1
 
    * - Method
      - Argument
      - Citation
 
-   * - **Kabsch** 
+   * - **Kabsch**
      - ``--rotation-method kabsch`` (Default)
      - Wolfgang Kabsch (1976),
        Acta Crystallographica, A32:922-923
 
        http://dx.doi.org/10.1107/S0567739476001873
 
-   * - **Quaternion** 
+   * - **Quaternion**
      - ``--rotation-method quaternion``
      - Walker, Shao & Volz (1991),
        CVGIP: Image Understanding, 54:358-367,
@@ -179,9 +179,9 @@ http://github.com/charnley/rmsd, <git commit hash or version number>
 
        http://dx.doi.org/10.1109/TAES.2016.140952
 
-   * - **FCHL19** 
+   * - **FCHL19**
      - ``--reorder-method qml``
-     - Christensen et al (2020), J. Chem. Phys. 152, 044107 
+     - Christensen et al (2020), J. Chem. Phys. 152, 044107
 
        https://doi.org/10.1063/1.5126701
 
@@ -207,4 +207,3 @@ For example, some hydrogens are noted as ``HG11``, which we assume is not mercur
 .. |fig2.a| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/docs/figures/fig_reorder_problem.png
 .. |fig2.b| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/docs/figures/fig_reorder_inertia.png
 .. |fig2.c| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/docs/figures/fig_reorder_qml.png
-

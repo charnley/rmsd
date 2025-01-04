@@ -2,7 +2,7 @@ import copy
 
 import numpy as np
 import pytest
-from context import RESOURCE_PATH, call_main
+from conftest import RESOURCE_PATH  # type: ignore
 
 import rmsd as rmsdlib
 from rmsd.calculate_rmsd import get_coordinates_xyz_lines
@@ -52,8 +52,8 @@ def test_print_reflection_reorder() -> None:
 
     # Main call rmsd value
     args = f"--use-reflections --reorder {filename_a} {filename_b}"
-    stdout = call_main(args.split())
-    value = float(stdout[-1])
+    print(args.split())
+    value = float(rmsdlib.main(args.split()))
     print(value)
     assert value is not None
     np.testing.assert_almost_equal(result_rmsd, value)

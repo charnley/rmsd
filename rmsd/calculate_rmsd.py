@@ -678,8 +678,8 @@ def kabsch_weighted_fit(
     PNEW: ndarray = np.dot(P, R.T) + T
     if return_rmsd:
         return (PNEW, rmsd_)
-    else:
-        return (PNEW, None)
+
+    return (PNEW, None)
 
 
 def kabsch_weighted_rmsd(P: ndarray, Q: ndarray, W: Optional[ndarray] = None) -> float:
@@ -842,20 +842,16 @@ def hungarian_vectors(
 
     if use_kernel:
         # Calculate cost matrix from similarity kernel
-        K = laplacian_kernel(p_vecs, q_vecs, sigma)
-        K *= -1.0
-        K += 1.0
+        kernel = laplacian_kernel(p_vecs, q_vecs, sigma)
+        kernel *= -1.0
+        kernel += 1.0
 
     else:
-        K = distance_matrix(p_vecs, q_vecs)
+        kernel = distance_matrix(p_vecs, q_vecs)
 
-    # Perform Hungarian analysis on distance matrix between atoms of 1st
-    # structure and trial structure
-    indices_b: ndarray
-    indices_a: ndarray
-    indices_a, indices_b = linear_sum_assignment(K)
+    _, indices_q = linear_sum_assignment(kernel)
 
-    return indices_b
+    return indices_q
 
 
 def reorder_similarity(
@@ -900,7 +896,6 @@ def reorder_similarity(
     }
 
     p_vecs = generate_fchl19(p_atoms, p_coord, **parameters)
-
     q_vecs = generate_fchl19(q_atoms, q_coord, **parameters)
 
     # generate full view from q shape to fill in atom view on the fly
@@ -975,23 +970,20 @@ def reorder_distance(
     return view_reorder
 
 
-def hungarian(A: ndarray, B: ndarray) -> ndarray:
+def _hungarian(A: ndarray, B: ndarray) -> ndarray:
     """
-    Hungarian reordering.
+    Hungarian reordering, minimizing the cost distances[winner_rows, winner_cols].sum())
 
-    Assume A and B are coordinates for atoms of SAME type only
+    Assume A and B are coordinates for atoms of SAME type only.
     """
 
-    # should be kabasch here i think
     distances = cdist(A, B, "euclidean")
 
     # Perform Hungarian analysis on distance matrix between atoms of 1st
     # structure and trial structure
-    indices_b: ndarray
-    indices_a: ndarray
-    indices_a, indices_b = linear_sum_assignment(distances)
+    winner_rows, winner_cols = linear_sum_assignment(distances)
 
-    return indices_b
+    return winner_cols
 
 
 def reorder_hungarian(
@@ -1038,7 +1030,7 @@ def reorder_hungarian(
         _p_coord = p_coord[p_atom_idx]
         _q_coord = q_coord[q_atom_idx]
 
-        view = hungarian(_p_coord, _q_coord)
+        view = _hungarian(_p_coord, _q_coord)
         view_reorder[p_atom_idx] = q_atom_idx[view]
 
     return view_reorder
@@ -1076,9 +1068,13 @@ def reorder_inertia_hungarian(
 
     """
 
+    p_coord = np.array(p_coord, copy=True)
+    q_coord = np.array(q_coord, copy=True)
+
     p_coord -= get_cm(p_atoms, p_coord)
     q_coord -= get_cm(q_atoms, p_coord)
 
+    # Calculate inertia vectors for both structures
     inertia_p = get_inertia_tensor(p_atoms, p_coord)
     eigval_p, eigvec_p = np.linalg.eig(inertia_p)
 
@@ -1101,12 +1097,11 @@ def reorder_inertia_hungarian(
 
     for mirror in AXIS_REFLECTIONS:
 
-        tmp_eigvec = eigvec_p * mirror.T
+        tmp_eigvec = eigvec_q * mirror.T
         tmp_coord = np.dot(q_coord, tmp_eigvec)
-        tmp_coord -= get_cm(q_atoms, tmp_coord)
 
         test_review = reorder_hungarian(p_atoms, q_atoms, p_coord, tmp_coord)
-        test_rmsd = rmsd(tmp_coord[test_review], p_coord)
+        test_rmsd = kabsch_rmsd(tmp_coord[test_review], p_coord)
 
         if test_rmsd < best_rmsd:
             best_rmsd = test_rmsd
@@ -1441,7 +1436,9 @@ def get_principal_axis(atoms: ndarray, V: ndarray) -> ndarray:
     return principal_axis
 
 
-def set_coordinates(atoms: ndarray, V: ndarray, title: str = "", decimals: int = 8) -> str:
+def set_coordinates(
+    atoms: ndarray, V: ndarray, title: str = "", decimals: int = 8, set_atoms_as_symbols=True
+) -> str:
     """
     Print coordinates V with corresponding atoms to stdout in XYZ format.
     Parameters
@@ -1465,6 +1462,9 @@ def set_coordinates(atoms: ndarray, V: ndarray, title: str = "", decimals: int =
 
     if N != len(atoms):
         raise ValueError("Mismatch between expected atoms and coordinate size")
+
+    if not isinstance(atoms[0], str) and set_atoms_as_symbols:
+        atoms = np.array([str_atom(atom) for atom in atoms])
 
     fmt = "{:<2}" + (" {:15." + str(decimals) + "f}") * 3
 
@@ -2280,9 +2280,8 @@ https://github.com/charnley/rmsd for further examples.
         if settings.print_only_rmsd_atoms or not use_view:
             q_coord_sub = np.dot(q_coord_sub, U)
             q_coord_sub += p_cent_sub
-            _atoms = np.asarray([str_atom(atom) for atom in q_atoms_sub])
             return set_coordinates(
-                _atoms,
+                q_atoms_sub,
                 q_coord_sub,
                 title=f"Rotated '{settings.structure_b}' to match '{settings.structure_a}', with a RMSD of {result_rmsd:.8f}",
             )
@@ -2298,9 +2297,8 @@ https://github.com/charnley/rmsd for further examples.
 
         q_coord = np.dot(q_coord, U)
         q_coord += p_cent_sub
-        _atoms = np.asarray([str_atom(atom) for atom in q_atoms])
         return set_coordinates(
-            _atoms,
+            q_atoms,
             q_coord,
             title=f"Rotated {settings.structure_b} to match {settings.structure_a}, with RMSD of {result_rmsd:.8f}",
         )
