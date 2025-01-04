@@ -25,61 +25,50 @@ Motivation
 I want to know the minimal RMSD between two molecules
 -----------------------------------------------------
 
-To calculate the structural difference between two molecules, you might initially compute the RMSD directly (Figure 2.A). However, this straightforward approach could give you a misleadingly large value.
-To get the true minimal RMSD, you need to adjust for translations (Figure 2.B) and rotations (Figure 2.C). This process aligns the two molecules in the best possible way, ensuring the RMSD accurately reflects their structural similarity after optimal alignment. As seen in Figure 1.
+To calculate the structural difference between two molecules, you might initially compute the RMSD directly (**Figure 2.a**). However, this straightforward approach could give you a misleadingly large value.
+To get the true minimal RMSD, you must adjust for translations (**Figure 2.b**) and rotations (**Figure 2.c**). This process aligns the two molecules in the best possible way, ensuring the RMSD accurately reflects their structural similarity after optimal alignment.
 
 .. list-table:: 
    :header-rows: 1
 
-   * - 1.A
-     - 1.B
-     - 1.C
+   * - 1.a
+     - 1.b
+     - 1.c
 
-   * - |fig1.1| 
-     - |fig1.2| 
-     - |fig1.3|
+   * - |fig1.a| 
+     - |fig1.b| 
+     - |fig1.c|
 
    * - RMSD = 2.8
      - RMSD = 0.8
      - RMSD = 0.2
 
-**Figure 1**: **A** shows two molecules in space, unchanged. **B** shows the molecule re-centered (translated) ontop of eachother. **C** shows the molecules rotated to fit each other, with the true RMSD.
-
-
-.. |fig1.1| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_rmsd_nothing.png
-.. |fig1.2| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_rmsd_recentered.png
-.. |fig1.3| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_rmsd_rotated.png
-
+**Figure 1**: **a)** shows two molecules in space, unchanged. **b)** shows the molecules re-centered (translated) on top of each other. **c)** shows the molecules rotated to fit each other, finding the true RMSD.
 
 I do not know the order of the atoms
 ------------------------------------
 
 Atom reordering methods can be used in cases where the atoms in the two molecules are not in the same order (Figure 2.1). These algorithms find the optimal mapping of atoms between the two structures to minimize RMSD. 
 
-Each method has its limitations because finding the best atom mapping depends on having the structures properly aligned. This is usually done by comparing atom-pair distances. If the molecules are already aligned, using the Hungarian linear sum assignment works well. If they’re not aligned, you can either align the molecules using their inertia eigenvectors (Figure 2.2) or use atomic descriptors (Figure 2.3), independent of the coordinate system, to reorder the atoms.
+Each method has its limitations because finding the best atom mapping depends on having the structures properly aligned. This is usually done by comparing atom-pair distances. If the molecules are already aligned, using the Hungarian linear sum assignment works well. If they’re not aligned, you can either align the molecules using their inertia eigenvectors (**Figure 2.a**) or use atomic descriptors (**Figure 2.b**), independent of the coordinate system, to reorder the atoms. Note that all reordering methods have limitations and drawbacks and might not actually find the true order.
 
 .. _Hungarian: https://en.wikipedia.org/wiki/Hungarian_algorithm
 
 .. list-table:: 
    :header-rows: 1
 
-   * - 2.A
-     - 2.B
-     - 2.C
+   * - 2.a
+     - 2.b
+     - 2.c
 
-   * - |fig2.1| 
-     - |fig2.2| 
-     - |fig2.3|
+   * - |fig2.a| 
+     - |fig2.b| 
+     - |fig2.c|
 
 **Figure 2**:
-**2.1**) Two identical molecules, but not in the same atomic order, making it impossible to rotate correctly.
-**2.2**) Illustrating inertia eigenvectors
-**2.3**) Using FCHL19 atomic representation, the individual atoms can be mapped. Structure dependent, but coordinate system independent.
-
-.. |fig2.1| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_reorder_problem.png
-.. |fig2.2| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_reorder_inertia.png
-.. |fig2.3| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/notebooks/fig_reorder_qml.png
-
+**a)** Two identical molecules, but not in the same atomic order, making it impossible to rotate correctly.
+**b)** Illustrating the molecular inertia vectors used to align molecules to find the atom mapping.
+**c)** Illustrating atomic representation for individual atoms. Structure-dependent but coordinate system-independent, which can be used for atom mapping. 
 
 Installation
 ============
@@ -197,10 +186,9 @@ http://github.com/charnley/rmsd, <git commit hash or version number>
        https://doi.org/10.1063/1.5126701
 
 References
-----------
+==========
 
 - https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linear_sum_assignment.html
-
 
 A note on PDB
 =============
@@ -210,3 +198,13 @@ We try to read them, but if you have trouble reading the file, check if the file
 For example, some hydrogens are noted as ``HG11``, which we assume is not mercury.
 
 - https://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM
+
+
+.. |fig1.a| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/docs/figures/fig_rmsd_nothing.png
+.. |fig1.b| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/docs/figures/fig_rmsd_recentered.png
+.. |fig1.c| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/docs/figures/fig_rmsd_rotated.png
+
+.. |fig2.a| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/docs/figures/fig_reorder_problem.png
+.. |fig2.b| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/docs/figures/fig_reorder_inertia.png
+.. |fig2.c| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/docs/figures/fig_reorder_qml.png
+
