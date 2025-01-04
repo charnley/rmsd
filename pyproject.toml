@@ -18,7 +18,11 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Chemistry",
 ]
 keywords = ["pdb", "atoms", "kabsch", "reordering", "rotation", "xyz", "rmsd"]
+
 dependencies=["numpy", "scipy"]
+
+[project.optional-dependencies]
+qml = ["qmllib"]
 
 [project.urls]
 Homepage = "https://github.com/charnley/rmsd"

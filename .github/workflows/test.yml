@@ -19,20 +19,19 @@ jobs:
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
     steps:
+      - run: sudo apt-get install libopenblas-dev gcc
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: rmsd-dev
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
-      - run: |
-          ls
-          pwd
-          which python
-          conda info
       - run: pip install .
       - run: which calculate_rmsd
-      - run: |
-          make test python=python
-      - run: |
-          make format python=python
+      - run: make test python=python
+      - run: make format python=python
+      - run: make build python=python
+      - run: make test-dist python=python
+      - run: for x in dist/*; do pip uninstall -y rmsd && pip install $x; done
+      - run: pip uninstall -y rmsd && pip install $(find dist -name "*.whl" | tail -n 1)[qml]
+      - run: which calculate_rmsd

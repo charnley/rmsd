@@ -5,13 +5,11 @@ matplotlib
 monkeytype
 mypy
 numpy
-numpy
 pre-commit
 pylint
 pytest
 pytest-cov
 qmllib
-scipy
 scipy
 twine
 ipympl

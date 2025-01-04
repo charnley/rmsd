@@ -1,6 +1,7 @@
 import copy
 
 import numpy as np
+from numpy import ndarray
 
 import rmsd as rmsdlib
 
@@ -9,9 +10,9 @@ def test_reorder_distance() -> None:
 
     N = 5
     atoms = np.array(["H"] * N)
-    p_coord = np.arange(N * 3)
+    p_coord: ndarray = np.arange(N * 3)
     p_coord = p_coord.reshape((5, 3))
-    q_coord = copy.deepcopy(p_coord)
+    q_coord = np.array(p_coord, copy=True)
 
     np.random.seed(6)
     np.random.shuffle(q_coord)
@@ -24,9 +25,9 @@ def test_reorder_distance() -> None:
 def test_reorder_brute() -> None:
     N = 5
     atoms = np.array(["H"] * N)
-    p_coord = np.arange(N * 3)
+    p_coord: ndarray = np.arange(N * 3)
     p_coord = p_coord.reshape((N, 3))
-    q_coord = copy.deepcopy(p_coord)
+    q_coord = np.array(p_coord, copy=True)
 
     np.random.seed(6)
     np.random.shuffle(q_coord)
@@ -41,7 +42,7 @@ def test_reorder_brute_ch() -> None:
     p_atoms_str = ["C"] * 3 + ["H"] * 3
     p_atoms_int = [rmsdlib.int_atom(atom) for atom in p_atoms_str]
     p_atoms = np.array(p_atoms_int)
-    p_coord = np.arange(N * 3)
+    p_coord: ndarray = np.arange(N * 3)
     p_coord = p_coord.reshape((N, 3))
 
     # random index
@@ -65,7 +66,7 @@ def test_reorder_hungarian() -> None:
 
     N = 5
     atoms = np.array(["H"] * N)
-    p_coord = np.arange(N * 3)
+    p_coord: ndarray = np.arange(N * 3)
     p_coord = p_coord.reshape((5, 3))
     q_coord = copy.deepcopy(p_coord)
 
