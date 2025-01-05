@@ -114,11 +114,12 @@ argument, which will align the atoms from structure B onto A.
 
 Use ``--reorder-method`` to select the reordering method.
 Choose between
-Inertia_ aligned Hungarian_ distance (default),
-Hungarian_ distance,
-distance (very approximate)
-QML atomic representation (coordinate independent),
-and brute force (don't).
+Inertia_ aligned Hungarian_ distance ``inertia-hungarian`` (default),
+Hungarian_ distance ``hungarian`` (if the structure is already aligned),
+sorted distance ``distance``,
+atomic representation ``qml``,
+and brute force ``brute`` (for reference, don't use this).
+More details on which to use in ```--help``.
 
 .. _Hungarian: https://en.wikipedia.org/wiki/Hungarian_algorithm
 
