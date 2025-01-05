@@ -119,7 +119,7 @@ Hungarian_ distance ``hungarian`` (if the structure is already aligned),
 sorted distance ``distance``,
 atomic representation ``qml``,
 and brute force ``brute`` (for reference, don't use this).
-More details on which to use in ```--help``.
+More details on which to use in ``--help``.
 
 .. _Hungarian: https://en.wikipedia.org/wiki/Hungarian_algorithm
 
