@@ -25,8 +25,8 @@ Motivation
 I want to know the minimal RMSD between two molecules
 -----------------------------------------------------
 
-To calculate the structural difference between two molecules, you might initially compute the RMSD directly (**Figure 2.a**). However, this straightforward approach could give you a misleadingly large value.
-To get the true minimal RMSD, you must adjust for translations (**Figure 2.b**) and rotations (**Figure 2.c**). This process aligns the two molecules in the best possible way, ensuring the RMSD accurately reflects their structural similarity after optimal alignment.
+To calculate the structural difference between two molecules, you might initially compute the RMSD directly (**Figure 1.a**). However, this straightforward approach could give you a misleadingly large value.
+To get the true minimal RMSD, you must adjust for translations (**Figure 1.b**) and rotations (**Figure 1.c**). This process aligns the two molecules in the best possible way, ensuring the RMSD accurately reflects their structural similarity after optimal alignment.
 
 .. list-table::
    :header-rows: 1
@@ -48,7 +48,7 @@ To get the true minimal RMSD, you must adjust for translations (**Figure 2.b**) 
 I do not know the order of the atoms
 ------------------------------------
 
-Atom reordering methods can be used in cases where the atoms in the two molecules are not in the same order (Figure 2.1). These algorithms find the optimal mapping of atoms between the two structures to minimize RMSD.
+Atom reordering methods can be used in cases where the atoms in the two molecules are not in the same order (**Figure 2.a**). These algorithms find the optimal mapping of atoms between the two structures to minimize RMSD.
 
 Each method has limitations because finding the best atom mapping depends on properly aligning structures. This is usually done by comparing atom-pair distances. Using the _Hungarian cost minimization for atom distance works well if the molecules are aligned. If not, you use the molecular inertia eigenvectors (**Figure 2.b**), to rotate such the eigenvectors are aligned.
 Or, use atomic descriptors (**Figure 2.c**), independent of the coordinate system, to reorder the atoms.
