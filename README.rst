@@ -50,7 +50,9 @@ I do not know the order of the atoms
 
 Atom reordering methods can be used in cases where the atoms in the two molecules are not in the same order (Figure 2.1). These algorithms find the optimal mapping of atoms between the two structures to minimize RMSD.
 
-Each method has its limitations because finding the best atom mapping depends on having the structures properly aligned. This is usually done by comparing atom-pair distances. If the molecules are already aligned, using the Hungarian linear sum assignment works well. If they’re not aligned, you can either align the molecules using their inertia eigenvectors (**Figure 2.a**) or use atomic descriptors (**Figure 2.b**), independent of the coordinate system, to reorder the atoms. Note that all reordering methods have limitations and drawbacks and might not actually find the true order.
+Each method has limitations because finding the best atom mapping depends on properly aligning structures. This is usually done by comparing atom-pair distances. Using the _Hungarian cost minimization for atom distance works well if the molecules are aligned. If not, you use the molecular inertia eigenvectors (**Figure 2.b**), to rotate such the eigenvectors are aligned.
+Or, use atomic descriptors (**Figure 2.c**), independent of the coordinate system, to reorder the atoms.
+Note that all reordering methods have limitations and drawbacks, and the actual order might not be found.
 
 .. _Hungarian: https://en.wikipedia.org/wiki/Hungarian_algorithm
 
