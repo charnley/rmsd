@@ -3,30 +3,39 @@ Calculate Root-mean-square deviation (RMSD) of Two Molecules Using Rotation
 
 The root mean Square Deviation (RMSD) is the most common metric for measuring structural similarity between two structures. It is typically used in molecular biology, chemistry, and computational chemistry.
 
-For more details, please see RMSD_ and `Kabsch algorithm`_.
+However, the result can become misleadingly large unless the input data has pre-optimized translation and rotation of the molecules in question.
+This solution will perform this optimization before calculating optimal (minimal) RMSD values.
 
-.. _RMSD: http://en.wikipedia.org/wiki/Root-mean-square_deviation
-.. _Kabsch algorithm: http://en.wikipedia.org/wiki/Kabsch_algorithm
+Additionally, if the atoms in the molecules are not correctly ordered, optimal rotation is impossible to achieve.
+This tool utilizes several ways to solve this problem.
+
+For more details, see below and read RMSD_ and `Kabsch algorithm`_.
 
 .. contents:: Overview
     :depth: 1
 
-Features
-========
+Installation
+============
 
-- Calculate the minimal RMSD between two molecules by applying translation and rotation.
-- Supports both XYZ and PDB file formats.
-- Offers atom reordering methods when input files have mismatched atom orders.
-- Includes checks for conformer reflection and additional filtering options (Hydrogen, Alpha-carbon).
+The easiest is to get the program via ``pip``.
 
-Motivation
-==========
+.. code-block:: bash
 
-I want to know the minimal RMSD between two molecules
------------------------------------------------------
+    pip install rmsd
 
-To calculate the structural difference between two molecules, you might initially compute the RMSD directly (**Figure 1.a**). However, this straightforward approach could give you a misleadingly large value.
-To get the true minimal RMSD, you must adjust for translations (**Figure 1.b**) and rotations (**Figure 1.c**). This process aligns the two molecules in the best possible way, ensuring the RMSD accurately reflects their structural similarity after optimal alignment.
+There is only one Python file, so you can also download `calculate_rmsd.py` and put it in your bin folder.
+
+.. code-block:: bash
+
+    wget -O calculate_rmsd https://raw.githubusercontent.com/charnley/rmsd/master/rmsd/calculate_rmsd.py
+    chmod +x calculate_rmsd
+
+Details
+=======
+
+To calculate the structural difference between two molecules, you might initially compute the RMSD directly (**Figure 1.a**).
+However, this straightforward approach could give you a misleadingly large value.
+To get the true minimal RMSD, you must adjust for translation (**Figure 1.b**) and rotation (**Figure 1.c**). This process aligns the two molecules best, ensuring the RMSD accurately reflects their structural similarity after optimal alignment.
 
 .. list-table::
    :header-rows: 1
@@ -43,18 +52,13 @@ To get the true minimal RMSD, you must adjust for translations (**Figure 1.b**) 
      - RMSD = 0.8
      - RMSD = 0.2
 
-**Figure 1**: **a)** shows two molecules in space, unchanged. **b)** shows the molecules re-centered (translated) on top of each other. **c)** shows the molecules rotated to fit each other, finding the true RMSD.
+Atom reordering methods can be used in cases where the atoms in the two molecules are not in the same order (**Figure 2.a**).
+These algorithms find the optimal mapping of atoms between the two structures to minimize RMSD.
 
-I do not know the order of the atoms
-------------------------------------
-
-Atom reordering methods can be used in cases where the atoms in the two molecules are not in the same order (**Figure 2.a**). These algorithms find the optimal mapping of atoms between the two structures to minimize RMSD.
-
-Each method has limitations because finding the best atom mapping depends on properly aligning structures. This is usually done by comparing atom-pair distances. Using the Hungarian_ cost minimization for atom distance works well if the molecules are aligned. If not, you use the molecular inertia eigenvectors (**Figure 2.b**), to rotate such the eigenvectors are aligned.
-Or, use atomic descriptors (**Figure 2.c**), independent of the coordinate system, to reorder the atoms.
-Note that all reordering methods have limitations and drawbacks, and the actual order might not be found.
-
-.. _Hungarian: https://en.wikipedia.org/wiki/Hungarian_algorithm
+Each method has limitations because finding the best atom mapping depends on properly aligning structures.
+This is usually done by comparing atom-pair distances. If the molecules are aligned, using the Hungarian_ cost minimization for atom distance works well.
+If not, you can align the Inertia_ eigenvectors (**Figure 2.b**) as an approximation to align the molecules.
+Or, use atomic descriptors (**Figure 2.c**), independent of the coordinate system, to reorder the atoms. Note that all reordering methods have limitations and drawbacks, and the actual order might not be found.
 
 .. list-table::
    :header-rows: 1
@@ -66,28 +70,6 @@ Note that all reordering methods have limitations and drawbacks, and the actual 
    * - |fig2.a|
      - |fig2.b|
      - |fig2.c|
-
-**Figure 2**:
-**a)** Two identical molecules, but not in the same atomic order, making it impossible to rotate correctly.
-**b)** Illustrating the molecular inertia vectors used to align molecules to find the atom mapping.
-**c)** Illustrating atomic representation for individual atoms. Structure-dependent but coordinate system-independent, which can be used for atom mapping.
-
-Installation
-============
-
-Easiest is to get the program via ``pip``.
-
-.. code-block:: bash
-
-    pip install rmsd
-
-There is only one Python file, so you can also download `calculate_rmsd.py` and
-put it in your bin folder.
-
-.. code-block:: bash
-
-    wget -O calculate_rmsd https://raw.githubusercontent.com/charnley/rmsd/master/rmsd/calculate_rmsd.py
-    chmod +x calculate_rmsd
 
 Usage examples
 ==============
@@ -121,29 +103,30 @@ atomic representation ``qml``,
 and brute force ``brute`` (for reference, don't use this).
 More details on which to use in ``--help``.
 
-.. _Hungarian: https://en.wikipedia.org/wiki/Hungarian_algorithm
-
-.. _Inertia: https://en.wikipedia.org/wiki/Moment_of_inertia
-
 .. code-block:: bash
 
     calculate_rmsd --reorder tests/water_16.xyz tests/water_16_idx.xyz
 
-If you want to run multiple calculations simultaneously, it's best not to rely solely on the script. Instead, you can use GNU Parallel to handle this efficiently. For example, use two cores and compare all ``ethane_*`` molecules. Printing one file and the RMSD per line. Bash is good for stuff like that.
+If you want to run multiple calculations simultaneously, it's best not to rely solely on the script.
+Instead, you can use GNU Parallel to handle this efficiently. For example, compare all ``ethane_*`` molecules using two cores and print one file and the RMSD per line.
+Bash is good for stuff like that.
 
 .. code-block:: bash
 
     find tests/resources -name "ethane_*xyz" | parallel -j2 "echo -n '{} ' && calculate_rmsd --reorder --no-hydrogen tests/resources/ethane.xyz {}"
 
-It is also possible to use RMSD as a library in other scripts; see
-``example.py`` and ``tests/*`` for example usage.
+It is also possible to use RMSD as a library in other scripts; see ``tests/*`` for example usage.
 
+Known problems
+==============
 
-Problems?
-=========
+Found a bug? Submit issues or pull requests on GitHub.
 
-Submit issues or pull requests on GitHub.
+**Note on PDB format.** Protein Data Bank format (PDB) is column-based; however, countless examples of non-standard ``.pdb`` files exist.
+We try to read them, but if you have trouble reading the file, check if the file format is compliant with PDB.
+For example, some hydrogens are noted as ``HG11``, which we assume is not mercury.
 
+- https://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM
 
 Citation
 ========
@@ -191,16 +174,15 @@ http://github.com/charnley/rmsd, <git commit hash or version number>
 References
 ==========
 
+- http://en.wikipedia.org/wiki/Root-mean-square_deviation
+- http://en.wikipedia.org/wiki/Kabsch_algorithm
+- https://en.wikipedia.org/wiki/Hungarian_algorithm
 - https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linear_sum_assignment.html
 
-A note on PDB
-=============
-
-Protein Data Bank format (PDB) is column-based; however, countless examples of non-standard ``.pdb`` files exist.
-We try to read them, but if you have trouble reading the file, check if the file format is compliant with PDB.
-For example, some hydrogens are noted as ``HG11``, which we assume is not mercury.
-
-- https://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM
+.. _RMSD: http://en.wikipedia.org/wiki/Root-mean-square_deviation
+.. _Kabsch algorithm: http://en.wikipedia.org/wiki/Kabsch_algorithm
+.. _Hungarian: https://en.wikipedia.org/wiki/Hungarian_algorithm
+.. _Inertia: https://en.wikipedia.org/wiki/Moment_of_inertia
 
 
 .. |fig1.a| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/docs/figures/fig_rmsd_nothing.png
