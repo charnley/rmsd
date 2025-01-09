@@ -1475,7 +1475,9 @@ def set_coordinates(
         atom = atoms[i]
         out += [fmt.format(atom, V[i, 0], V[i, 1], V[i, 2])]
 
-    return "\n".join(out)
+    newline = "\n"
+
+    return newline.join(out)
 
 
 def get_coordinates(
@@ -1878,6 +1880,8 @@ See https://github.com/charnley/rmsd for citation information
 
 """
 
+    sep = ", "
+
     parser = argparse.ArgumentParser(
         usage="calculate_rmsd [options] FILE_A FILE_B",
         description=__intro__,
@@ -1904,7 +1908,7 @@ See https://github.com/charnley/rmsd for citation information
         action="store",
         default="kabsch",
         help=(
-            f"Select rotation method. Valid methods are: {", ".join(ROTATION_METHODS)}. Default is `Kabsch`."
+            f"Select rotation method. Valid methods are: {sep.join(ROTATION_METHODS)}. Default is `Kabsch`."
         ),
         metavar="METHOD",
         choices=ROTATION_METHODS,
@@ -1925,7 +1929,7 @@ See https://github.com/charnley/rmsd for citation information
         metavar="METHOD",
         help=(
             "Select reorder method. Valid method are "
-            f"{', '.join(REORDER_METHODS)}. "
+            f"{sep.join(REORDER_METHODS)}. "
             "Default is Inertia-Hungarian."
         ),
         choices=REORDER_METHODS,
@@ -1986,7 +1990,7 @@ See https://github.com/charnley/rmsd for citation information
     parser.add_argument(
         "--format",
         action="store",
-        help=f"Format of input files. valid format are {', '.join(FORMATS)}.",
+        help=f"Format of input files. valid format are {sep.join(FORMATS)}.",
         metavar="FMT",
     )
     parser.add_argument(
