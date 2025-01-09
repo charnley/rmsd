@@ -186,10 +186,10 @@ References
 .. _Inertia: https://en.wikipedia.org/wiki/Moment_of_inertia
 
 
-.. |fig1.a| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/docs/figures/fig_rmsd_nothing.png
-.. |fig1.b| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/docs/figures/fig_rmsd_recentered.png
-.. |fig1.c| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/docs/figures/fig_rmsd_rotated.png
+.. |fig1.a| image:: https://raw.githubusercontent.com/charnley/rmsd/master/docs/figures/fig_rmsd_nothing.png
+.. |fig1.b| image:: https://raw.githubusercontent.com/charnley/rmsd/master/docs/figures/fig_rmsd_recentered.png
+.. |fig1.c| image:: https://raw.githubusercontent.com/charnley/rmsd/master/docs/figures/fig_rmsd_rotated.png
 
-.. |fig2.a| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/docs/figures/fig_reorder_problem.png
-.. |fig2.b| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/docs/figures/fig_reorder_inertia.png
-.. |fig2.c| image:: https://raw.githubusercontent.com/charnley/rmsd/refs/heads/charnley/doc/docs/figures/fig_reorder_qml.png
+.. |fig2.a| image:: https://raw.githubusercontent.com/charnley/rmsd/master/docs/figures/fig_reorder_problem.png
+.. |fig2.b| image:: https://raw.githubusercontent.com/charnley/rmsd/master/docs/figures/fig_reorder_inertia.png
+.. |fig2.c| image:: https://raw.githubusercontent.com/charnley/rmsd/master/docs/figures/fig_reorder_qml.png
