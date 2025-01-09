@@ -52,8 +52,9 @@ To get the true minimal RMSD, you must adjust for translation (**Figure 1.b**) a
      - RMSD = 0.8
      - RMSD = 0.2
 
-Atom reordering methods can be used in cases where the atoms in the two molecules are not in the same order (**Figure 2.a**).
-These algorithms find the optimal mapping of atoms between the two structures to minimize RMSD.
+Atom reordering methods are used when the atoms in two molecules are not in the same order (**Figure 2.a**).
+While brute-force through all possible atom combinations and calculating the optimal rotation for each is possible, this approach is computationally infeasible for large structures, as it scales $O(N!)$.
+Instead, the implemented algorithms efficiently find the optimal mapping of atoms between the two structures using smarter techniques.
 
 Each method has limitations because finding the best atom mapping depends on properly aligning structures.
 This is usually done by comparing atom-pair distances. If the molecules are aligned, using the Hungarian_ cost minimization for atom distance works well.
@@ -174,13 +175,13 @@ http://github.com/charnley/rmsd, <git commit hash or version number>
 References
 ==========
 
-- http://en.wikipedia.org/wiki/Root-mean-square_deviation
-- http://en.wikipedia.org/wiki/Kabsch_algorithm
+- https://en.wikipedia.org/wiki/Root-mean-square_deviation
+- https://en.wikipedia.org/wiki/Kabsch_algorithm
 - https://en.wikipedia.org/wiki/Hungarian_algorithm
 - https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linear_sum_assignment.html
 
-.. _RMSD: http://en.wikipedia.org/wiki/Root-mean-square_deviation
-.. _Kabsch algorithm: http://en.wikipedia.org/wiki/Kabsch_algorithm
+.. _RMSD: https://en.wikipedia.org/wiki/Root-mean-square_deviation
+.. _Kabsch algorithm: https://en.wikipedia.org/wiki/Kabsch_algorithm
 .. _Hungarian: https://en.wikipedia.org/wiki/Hungarian_algorithm
 .. _Inertia: https://en.wikipedia.org/wiki/Moment_of_inertia
 
