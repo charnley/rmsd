@@ -1,39 +1,4 @@
 #!/usr/bin/env python3
-
-__doc__ = """
-Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ
-or PDB format, using transformation and rotation.
-
-Rotation methods:
-
-    - Kabsch (Default)
-
-    - Quaternion
-
-Reorder methods:
-
-    - Brute
-
-        Brute-force enumeration of all atom-atom pair combinations
-
-    - Distance
-
-        Assign atom-atom pair based on the shortest distance
-
-    - Hungarian
-
-        Assign atom-atom pair based on linear-sum assignment of the distance combination
-
-    - Inertia + Hungarian (Default)
-
-        First, align the molecules with inertia moments. Secondly, use Hungarian from above.
-
-For more information, usage, example and citation read more at
-https://github.com/charnley/rmsd
-"""
-
-__version__ = "1.6.1"
-
 import argparse
 import copy
 import gzip
@@ -55,6 +20,42 @@ try:
     from qmllib.representations import generate_fchl19  # type: ignore
 except ImportError:
     qmllib = None
+
+
+__intro__ = """
+Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ
+or PDB format, using transformation and rotation.
+"""
+
+__details__ = """
+
+details:
+
+  --rotation <method>
+    Specifies the method for rotating molecules. Available options are:
+
+    kabsch (Default): This is the default rotation method, used for aligning molecular structures using the Kabsch algorithm.
+
+    quaternion: An alternative rotation method that uses quaternion mathematics for structure alignment.
+
+  --reorder-method <method>
+    Specifies the method for reordering atoms. Available options are:
+
+    inertia-hungarian (Default): Use this method when structures are not aligned. The process involves: 1. Aligning the molecules based on their inertia moments. 2. Applying the Hungarian distance assignment (see below) for atom pairing.
+
+    hungarian: Best used when the structures are already aligned. It assigns atom-atom pairs based on a linear-sum assignment of the distance combination.
+
+    qml: Use this method when structures are not aligned and the inertia-hungarian method fails. It employs atomic structure descriptors and Hungarian cost-assignment to determine the best atom order.
+
+    distance: This method assigns atom-atom pairs based on the sorted shortest distance between atoms.
+
+    brute: A brute-force enumeration of all possible atom-atom pair combinations. This method is provided for reference only and has no practical use due to its computational cost.
+
+For more information, usage, example and citation read more at
+https://github.com/charnley/rmsd
+"""
+
+__version__ = "1.6.1"
 
 
 METHOD_KABSCH = "kabsch"
@@ -1870,8 +1871,6 @@ def get_coordinates_xyz(
 
 def parse_arguments(arguments: Optional[Union[str, List[str]]] = None) -> argparse.Namespace:
 
-    description = __doc__
-
     version_msg = f"""
 rmsd {__version__}
 
@@ -1879,17 +1878,11 @@ See https://github.com/charnley/rmsd for citation information
 
 """
 
-    epilog = """
-"""
-
-    valid_reorder_methods = ", ".join(REORDER_METHODS)
-    valid_rotation_methods = ", ".join(ROTATION_METHODS)
-
     parser = argparse.ArgumentParser(
         usage="calculate_rmsd [options] FILE_A FILE_B",
-        description=description,
+        description=__intro__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=epilog,
+        epilog=__details__,
     )
 
     # Input structures
@@ -1897,7 +1890,7 @@ See https://github.com/charnley/rmsd for citation information
         "structure_a",
         metavar="FILE_A",
         type=str,
-        help="structures in .xyz or .pdb format",
+        help="Structures in .xyz or .pdb format",
     )
     parser.add_argument("structure_b", metavar="FILE_B", type=str)
 
@@ -1911,50 +1904,49 @@ See https://github.com/charnley/rmsd for citation information
         action="store",
         default="kabsch",
         help=(
-            "select rotation method. Valid methods are "
-            f"{valid_rotation_methods}. "
-            "Default is Kabsch."
+            f"Select rotation method. Valid methods are: {", ".join(ROTATION_METHODS)}. Default is `Kabsch`."
         ),
         metavar="METHOD",
         choices=ROTATION_METHODS,
     )
 
     # Reorder arguments
-    parser.add_argument(
+    reorder_group = parser.add_argument_group(description="Atom reordering arguments")
+    reorder_group.add_argument(
         "-e",
         "--reorder",
         action="store_true",
-        help="align the atoms of molecules",
+        help="Align the atoms of molecules",
     )
-    parser.add_argument(
+    reorder_group.add_argument(
         "--reorder-method",
         action="store",
         default="inertia-hungarian",
         metavar="METHOD",
         help=(
-            "select reorder method. Valid method are "
-            f"{valid_reorder_methods}. "
+            "Select reorder method. Valid method are "
+            f"{', '.join(REORDER_METHODS)}. "
             "Default is Inertia-Hungarian."
         ),
         choices=REORDER_METHODS,
     )
-    parser.add_argument(
-        "-ur",
+
+    reflection_group = parser.add_argument_group(description="Reflection arguments")
+    reflection_group.add_argument(
         "--use-reflections",
         action="store_true",
         help=(
-            "scan through reflections in planes "
+            "Scan through reflections in planes "
             "(eg Y transformed to -Y -> X, -Y, Z) "
             "and axis changes, (eg X and Z coords exchanged -> Z, Y, X). "
             "This will affect stereo-chemistry."
         ),
     )
-    parser.add_argument(
-        "-urks",
+    reflection_group.add_argument(
         "--use-reflections-keep-stereo",
         action="store_true",
         help=(
-            "scan through reflections in planes "
+            "Scan through reflections in planes "
             "(eg Y transformed to -Y -> X, -Y, Z) "
             "and axis changes, (eg X and Z coords exchanged -> Z, Y, X). "
             "Stereo-chemistry will be kept."
@@ -1962,38 +1954,39 @@ See https://github.com/charnley/rmsd for citation information
     )
 
     # Filter
-    index_group = parser.add_mutually_exclusive_group()
+    index_group_title = parser.add_argument_group(description="Atom filtering arguments")
+    index_group = index_group_title.add_mutually_exclusive_group()
     index_group.add_argument(
         "--only-alpha-carbons",
         action="store_true",
-        help="use only alpha carbons (only for pdb)",
+        help="Use only alpha carbons (only for PDB format)",
     )
     index_group.add_argument(
-        "-nh",
+        "-n",
         "--ignore-hydrogen",
         "--no-hydrogen",
         action="store_true",
-        help="ignore hydrogens when calculating RMSD",
+        help="Ignore Hydrogens when calculating RMSD",
     )
     index_group.add_argument(
         "--remove-idx",
         nargs="+",
         type=int,
-        help="index list of atoms NOT to consider",
+        help="Index list of atoms NOT to consider",
         metavar="IDX",
     )
     index_group.add_argument(
         "--add-idx",
         nargs="+",
         type=int,
-        help="index list of atoms to consider",
+        help="Index list of atoms to consider",
         metavar="IDX",
     )
 
     parser.add_argument(
         "--format",
         action="store",
-        help=f"format of input files. valid format are {', '.join(FORMATS)}.",
+        help=f"Format of input files. valid format are {', '.join(FORMATS)}.",
         metavar="FMT",
     )
     parser.add_argument(
@@ -2009,7 +2002,7 @@ See https://github.com/charnley/rmsd for citation information
         "--print",
         action="store_true",
         help=(
-            "print out structure B, centered and rotated unto structure A's coordinates in XYZ format"
+            "Print out structure B, centered and rotated unto structure A's coordinates in XYZ format"
         ),
     )
 
@@ -2045,8 +2038,7 @@ See https://github.com/charnley/rmsd for citation information
     args.rotation = args.rotation.lower()
     if args.rotation not in ROTATION_METHODS:
         print(
-            f"error: Unknown rotation method: '{args.rotation}'. "
-            f"Please use {valid_rotation_methods}"
+            f"error: Unknown rotation method: '{args.rotation}'. " f"Please use {ROTATION_METHODS}"
         )
         sys.exit(5)
 
@@ -2055,7 +2047,7 @@ See https://github.com/charnley/rmsd for citation information
     if args.reorder_method not in REORDER_METHODS:
         print(
             f'error: Unknown reorder method: "{args.reorder_method}". '
-            f"Please use {valid_reorder_methods}"
+            f"Please use {REORDER_METHODS}"
         )
         sys.exit(5)
 
