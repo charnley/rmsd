@@ -1366,7 +1366,7 @@ def get_cm(atoms: ndarray, V: ndarray) -> ndarray:
     return center_of_mass
 
 
-def get_inertia_tensor(atoms: ndarray, V: ndarray) -> ndarray:
+def get_inertia_tensor(atoms: ndarray, coord: ndarray) -> ndarray:
     """
     Get the tensor of intertia of V.
     ----------
@@ -1381,7 +1381,7 @@ def get_inertia_tensor(atoms: ndarray, V: ndarray) -> ndarray:
         The tensor of inertia
     """
 
-    CV = V - get_cm(atoms, V)
+    coord -= get_cm(atoms, coord)
 
     Ixx = 0.0
     Iyy = 0.0
@@ -1390,7 +1390,7 @@ def get_inertia_tensor(atoms: ndarray, V: ndarray) -> ndarray:
     Ixz = 0.0
     Iyz = 0.0
 
-    for sp, acoord in zip(atoms, CV):
+    for sp, acoord in zip(atoms, coord):
         amass = ELEMENT_WEIGHTS[sp]
         Ixx += amass * (acoord[1] * acoord[1] + acoord[2] * acoord[2])
         Iyy += amass * (acoord[0] * acoord[0] + acoord[2] * acoord[2])
@@ -1399,18 +1399,12 @@ def get_inertia_tensor(atoms: ndarray, V: ndarray) -> ndarray:
         Ixz += -amass * acoord[0] * acoord[2]
         Iyz += -amass * acoord[1] * acoord[2]
 
-    coordinates = V
-    com = get_cm(atoms, V)
-
     atomic_masses = np.asarray([ELEMENT_WEIGHTS[a] for a in atoms])
-    coordinates -= com
 
     mass_matrix = np.diag(atomic_masses)
-    helper = coordinates.T.dot(mass_matrix).dot(coordinates)
+    helper = coord.T.dot(mass_matrix).dot(coord)
     inertia_tensor: np.ndarray = np.diag(np.ones(3)) * helper.trace() - helper
     return inertia_tensor
-
-    return np.array([[Ixx, Ixy, Ixz], [Ixy, Iyy, Iyz], [Ixz, Iyz, Izz]])
 
 
 def get_principal_axis(atoms: ndarray, V: ndarray) -> ndarray:
