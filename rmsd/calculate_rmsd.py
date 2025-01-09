@@ -1431,7 +1431,11 @@ def get_principal_axis(atoms: ndarray, V: ndarray) -> ndarray:
 
 
 def set_coordinates(
-    atoms: ndarray, V: ndarray, title: str = "", decimals: int = 8, set_atoms_as_symbols=True
+    atoms: ndarray,
+    V: ndarray,
+    title: str = "",
+    decimals: int = 8,
+    set_atoms_as_symbols: bool = True,
 ) -> str:
     """
     Print coordinates V with corresponding atoms to stdout in XYZ format.
