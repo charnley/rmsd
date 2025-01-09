@@ -1,4 +1,6 @@
 build
+jupyterlab
+jupytext
 matplotlib
 monkeytype
 mypy
@@ -10,3 +12,4 @@ pytest-cov
 qmllib
 scipy
 twine
+ipympl

@@ -47,6 +47,9 @@ build:
 upload:
 	${python} -m twine upload ./dist/*
 
+start-jupyter:
+	${python} -m jupyterlab
+
 ## Version
 
 version:

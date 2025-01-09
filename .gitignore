@@ -2,6 +2,7 @@
 .vim
 env
 *.sqlite3
+*.ipynb_checkpoints
 
 *.py[cod]
 

@@ -1,57 +1,93 @@
 import numpy as np
 
 import rmsd as rmsdlib
+from tests.conftest import RESOURCE_PATH, rotate_coord  # type: ignore
 
 
-def test_reorder_inertia_hungarian() -> None:
+def test_reorder_inertia_hungarian_butane() -> None:
 
-    # coordinates of scrambled and rotated butane
-    atoms = np.array(["C", "C", "C", "C", "H", "H", "H", "H", "H", "H", "H", "H", "H", "H"])
-    atoms_ = [rmsdlib.int_atom(atom) for atom in atoms]
-    atoms = np.array(atoms_)
+    filename_a = RESOURCE_PATH / "butane.xyz"
+    filename_b = RESOURCE_PATH / "butane_prime.xyz"
 
-    p_coord = np.array(
-        [
-            [2.142e00, 1.395e00, -8.932e00],
-            [3.631e00, 1.416e00, -8.537e00],
-            [4.203e00, -1.200e-02, -8.612e00],
-            [5.691e00, 9.000e-03, -8.218e00],
-            [1.604e00, 7.600e-01, -8.260e00],
-            [1.745e00, 2.388e00, -8.880e00],
-            [2.043e00, 1.024e00, -9.930e00],
-            [4.169e00, 2.051e00, -9.210e00],
-            [3.731e00, 1.788e00, -7.539e00],
-            [3.665e00, -6.470e-01, -7.940e00],
-            [4.104e00, -3.840e-01, -9.610e00],
-            [6.088e00, -9.830e-01, -8.270e00],
-            [5.791e00, 3.810e-01, -7.220e00],
-            [6.230e00, 6.440e-01, -8.890e00],
-        ]
-    )
+    atoms_a, coord_a = rmsdlib.get_coordinates_xyz(filename_a, return_atoms_as_int=True)
+    atoms_b, coord_b = rmsdlib.get_coordinates_xyz(filename_b, return_atoms_as_int=True)
 
-    q_coord = np.array(
-        [
-            [6.71454, -5.53848, -3.50851],
-            [6.95865, -6.22697, -2.15264],
-            [8.16747, -5.57632, -1.45606],
-            [5.50518, -6.19016, -4.20589],
-            [5.33617, -5.71137, -5.14853],
-            [7.58263, -5.64795, -4.12498],
-            [6.51851, -4.49883, -3.35011],
-            [6.09092, -6.11832, -1.53660],
-            [5.70232, -7.22908, -4.36475],
-            [7.15558, -7.26640, -2.31068],
-            [8.33668, -6.05459, -0.51425],
-            [7.97144, -4.53667, -1.29765],
-            [4.63745, -6.08152, -3.58986],
-            [9.03610, -5.68475, -2.07173],
-        ]
-    )
+    coord_a -= rmsdlib.centroid(coord_a)
+    coord_b -= rmsdlib.centroid(coord_b)
 
-    p_coord -= rmsdlib.centroid(p_coord)
-    q_coord -= rmsdlib.centroid(q_coord)
+    review = rmsdlib.reorder_inertia_hungarian(atoms_a, atoms_b, coord_a, coord_b)
+    print(review)
 
-    review = rmsdlib.reorder_inertia_hungarian(atoms, atoms, p_coord, q_coord)
-    result_rmsd = rmsdlib.kabsch_rmsd(p_coord, q_coord[review])
+    result_rmsd = rmsdlib.kabsch_rmsd(coord_a, coord_b[review])
 
     np.testing.assert_almost_equal(0, result_rmsd, decimal=2)
+
+
+def test_reorder_inertia_hungarian_complicated() -> None:
+
+    filename_a = RESOURCE_PATH / "CHEMBL3039407.xyz"
+
+    atoms_a, coord_a = rmsdlib.get_coordinates_xyz(filename_a, return_atoms_as_int=True)
+    atoms_b, coord_b = rmsdlib.get_coordinates_xyz(filename_a, return_atoms_as_int=True)
+
+    coord_a -= rmsdlib.centroid(coord_a)
+    coord_b -= rmsdlib.centroid(coord_b)
+
+    # Setup the problem
+    # Rotate a 30 degrees in xy and 30 degrees in yz planes
+    coord_a = rotate_coord(30, coord_a)
+    coord_a = rotate_coord(30, coord_a, axis=[1, 2])
+
+    # Randomize the atom order
+    ind = np.array(list(range(len(atoms_b))))
+    rng = np.random.default_rng(seed=56)
+    rng.shuffle(ind)
+    atoms_b = atoms_b[ind]
+    coord_b = coord_b[ind]
+
+    # Solve the problem
+    review = rmsdlib.reorder_inertia_hungarian(atoms_a, atoms_b, coord_a, coord_b)
+    print(review)
+
+    result_rmsd = rmsdlib.kabsch_rmsd(coord_a, coord_b[review])
+    print(result_rmsd)
+
+    np.testing.assert_almost_equal(0.0, result_rmsd)
+
+
+def test_reorder_and_distance() -> None:
+
+    filename_a = RESOURCE_PATH / "CHEMBL3039407.xyz"
+
+    atoms_a, coord_a = rmsdlib.get_coordinates_xyz(filename_a, return_atoms_as_int=True)
+    atoms_b, coord_b = rmsdlib.get_coordinates_xyz(filename_a, return_atoms_as_int=True)
+
+    coord_a -= rmsdlib.centroid(coord_a)
+    coord_b -= rmsdlib.centroid(coord_b)
+
+    # Setup the problem
+    # Rotate a 30 degrees in xy and 30 degrees in yz planes
+    coord_a = rotate_coord(30, coord_a)
+    coord_a = rotate_coord(30, coord_a, axis=[1, 2])
+
+    # Make coord_b have bigger bonds
+    coord_b = coord_b * 1.2
+    answer = 0.8035106793656143
+
+    print(coord_b)
+
+    # Randomize the atom order
+    ind = np.array(list(range(len(atoms_b))))
+    rng = np.random.default_rng(seed=56)
+    rng.shuffle(ind)
+    atoms_b = atoms_b[ind]
+    coord_b = coord_b[ind]
+
+    # Solve the problem
+    review = rmsdlib.reorder_inertia_hungarian(atoms_a, atoms_b, coord_a, coord_b)
+    print(review)
+
+    result_rmsd = rmsdlib.kabsch_rmsd(coord_a, coord_b[review], translate=True)
+    print(result_rmsd)
+
+    np.testing.assert_almost_equal(answer, result_rmsd, decimal=3)

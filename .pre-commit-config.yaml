@@ -70,7 +70,7 @@ repos:
     hooks:
       - id: mypy
         name: checking types
-        entry: mypy
+        entry: mypy --explicit-package-bases
         language: system
         types: [ python ]
 

@@ -1,5 +1,5 @@
 import pytest
-from context import RESOURCE_PATH
+from conftest import RESOURCE_PATH  # type: ignore
 
 import rmsd as rmsdlib
 

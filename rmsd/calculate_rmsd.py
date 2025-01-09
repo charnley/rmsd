@@ -1,15 +1,4 @@
 #!/usr/bin/env python3
-
-__doc__ = """
-Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ
-or PDB format, using transformation and rotation.
-
-For more information, usage, example and citation read more at
-https://github.com/charnley/rmsd
-"""
-
-__version__ = "1.6.1"
-
 import argparse
 import copy
 import gzip
@@ -31,6 +20,42 @@ try:
     from qmllib.representations import generate_fchl19  # type: ignore
 except ImportError:
     qmllib = None
+
+
+__intro__ = """
+Calculate Root-mean-square deviation (RMSD) between structure A and B, in XYZ
+or PDB format, using transformation and rotation.
+"""
+
+__details__ = """
+
+details:
+
+  --rotation <method>
+    Specifies the method for rotating molecules. Available options are:
+
+    kabsch (Default): This is the default rotation method, used for aligning molecular structures using the Kabsch algorithm.
+
+    quaternion: An alternative rotation method that uses quaternion mathematics for structure alignment.
+
+  --reorder-method <method>
+    Specifies the method for reordering atoms. Available options are:
+
+    inertia-hungarian (Default): Use this method when structures are not aligned. The process involves: 1. Aligning the molecules based on their inertia moments. 2. Applying the Hungarian distance assignment (see below) for atom pairing.
+
+    hungarian: Best used when the structures are already aligned. It assigns atom-atom pairs based on a linear-sum assignment of the distance combination.
+
+    qml: Use this method when structures are not aligned and the inertia-hungarian method fails. It employs atomic structure descriptors and Hungarian cost-assignment to determine the best atom order.
+
+    distance: This method assigns atom-atom pairs based on the sorted shortest distance between atoms.
+
+    brute: A brute-force enumeration of all possible atom-atom pair combinations. This method is provided for reference only and has no practical use due to its computational cost.
+
+For more information, usage, example and citation read more at
+https://github.com/charnley/rmsd
+"""
+
+__version__ = "1.6.1"
 
 
 METHOD_KABSCH = "kabsch"
@@ -654,8 +679,8 @@ def kabsch_weighted_fit(
     PNEW: ndarray = np.dot(P, R.T) + T
     if return_rmsd:
         return (PNEW, rmsd_)
-    else:
-        return (PNEW, None)
+
+    return (PNEW, None)
 
 
 def kabsch_weighted_rmsd(P: ndarray, Q: ndarray, W: Optional[ndarray] = None) -> float:
@@ -818,20 +843,16 @@ def hungarian_vectors(
 
     if use_kernel:
         # Calculate cost matrix from similarity kernel
-        K = laplacian_kernel(p_vecs, q_vecs, sigma)
-        K *= -1.0
-        K += 1.0
+        kernel = laplacian_kernel(p_vecs, q_vecs, sigma)
+        kernel *= -1.0
+        kernel += 1.0
 
     else:
-        K = distance_matrix(p_vecs, q_vecs)
+        kernel = distance_matrix(p_vecs, q_vecs)
 
-    # Perform Hungarian analysis on distance matrix between atoms of 1st
-    # structure and trial structure
-    indices_b: ndarray
-    indices_a: ndarray
-    indices_a, indices_b = linear_sum_assignment(K)
+    _, indices_q = linear_sum_assignment(kernel)
 
-    return indices_b
+    return indices_q
 
 
 def reorder_similarity(
@@ -876,7 +897,6 @@ def reorder_similarity(
     }
 
     p_vecs = generate_fchl19(p_atoms, p_coord, **parameters)
-
     q_vecs = generate_fchl19(q_atoms, q_coord, **parameters)
 
     # generate full view from q shape to fill in atom view on the fly
@@ -951,23 +971,20 @@ def reorder_distance(
     return view_reorder
 
 
-def hungarian(A: ndarray, B: ndarray) -> ndarray:
+def _hungarian(A: ndarray, B: ndarray) -> ndarray:
     """
-    Hungarian reordering.
+    Hungarian reordering, minimizing the cost distances[winner_rows, winner_cols].sum())
 
-    Assume A and B are coordinates for atoms of SAME type only
+    Assume A and B are coordinates for atoms of SAME type only.
     """
 
-    # should be kabasch here i think
     distances = cdist(A, B, "euclidean")
 
     # Perform Hungarian analysis on distance matrix between atoms of 1st
     # structure and trial structure
-    indices_b: ndarray
-    indices_a: ndarray
-    indices_a, indices_b = linear_sum_assignment(distances)
+    winner_rows, winner_cols = linear_sum_assignment(distances)
 
-    return indices_b
+    return winner_cols
 
 
 def reorder_hungarian(
@@ -978,15 +995,15 @@ def reorder_hungarian(
     **kwargs: Any,
 ) -> ndarray:
     """
-    Re-orders the input atom list and xyz coordinates using the Hungarian
-    method (using optimized column results)
+    Re-orders the input atom array and coordinates using the Hungarian-Distance
+    sum assignment method. Returns view of q-atoms.
 
     Parameters
     ----------
     p_atoms : array
-        (N,1) matrix, where N is points holding the atoms' names
+        (N,1) matrix, where N is points holding the atom types
     p_atoms : array
-        (N,1) matrix, where N is points holding the atoms' names
+        (N,1) matrix, where N is points holding the atom types
     p_coord : array
         (N,D) matrix, where N is points and D is dimension
     q_coord : array
@@ -1011,10 +1028,10 @@ def reorder_hungarian(
         (p_atom_idx,) = np.where(p_atoms == atom)
         (q_atom_idx,) = np.where(q_atoms == atom)
 
-        A_coord = p_coord[p_atom_idx]
-        B_coord = q_coord[q_atom_idx]
+        _p_coord = p_coord[p_atom_idx]
+        _q_coord = q_coord[q_atom_idx]
 
-        view = hungarian(A_coord, B_coord)
+        view = _hungarian(_p_coord, _q_coord)
         view_reorder[p_atom_idx] = q_atom_idx[view]
 
     return view_reorder
@@ -1028,9 +1045,10 @@ def reorder_inertia_hungarian(
     **kwargs: Any,
 ) -> ndarray:
     """
-    Align the principal intertia axis and then re-orders the input atom list
-    and xyz coordinates using the Hungarian method (using optimized column
-    results)
+    First, align structures with the intertia moment eignvectors, then using
+    distance hungarian, assign the best possible atom pair combinations. While
+    also checking all possible reflections of intertia moments, selecting the
+    one with minimal RMSD.
 
     Parameters
     ----------
@@ -1046,32 +1064,51 @@ def reorder_inertia_hungarian(
     Returns
     -------
     view_reorder : array
-             (N,1) matrix, reordered indexes of atom alignment based on the
+             (N,1) matrix, reordered indexes of `Q` atom alignment based on the
              coordinates of the atoms
 
     """
-    # get the principal axis of P and Q
-    p_axis = get_principal_axis(p_atoms, p_coord)
-    q_axis = get_principal_axis(q_atoms, q_coord)
 
-    # rotate Q onto P considering that the axis are parallel and antiparallel
-    U1 = rotation_matrix_vectors(p_axis, q_axis)
-    U2 = rotation_matrix_vectors(p_axis, -q_axis)
-    q_coord1 = np.dot(q_coord, U1)
-    q_coord2 = np.dot(q_coord, U2)
+    p_coord = np.array(p_coord, copy=True)
+    q_coord = np.array(q_coord, copy=True)
 
-    q_review1 = reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord1)
-    q_review2 = reorder_hungarian(p_atoms, q_atoms, p_coord, q_coord2)
-    q_coord1 = q_coord1[q_review1]
-    q_coord2 = q_coord2[q_review2]
+    p_coord -= get_cm(p_atoms, p_coord)
+    q_coord -= get_cm(q_atoms, p_coord)
 
-    rmsd1 = kabsch_rmsd(p_coord, q_coord1)
-    rmsd2 = kabsch_rmsd(p_coord, q_coord2)
+    # Calculate inertia vectors for both structures
+    inertia_p = get_inertia_tensor(p_atoms, p_coord)
+    eigval_p, eigvec_p = np.linalg.eig(inertia_p)
 
-    if rmsd1 < rmsd2:
-        return q_review1
-    else:
-        return q_review2
+    eigvec_p = eigvec_p.T
+    eigvec_p = eigvec_p[np.argsort(eigval_p)]
+    eigvec_p = eigvec_p.T
+
+    inertia_q = get_inertia_tensor(q_atoms, q_coord)
+    eigval_q, eigvec_q = np.linalg.eig(inertia_q)
+
+    eigvec_q = eigvec_q.T
+    eigvec_q = eigvec_q[np.argsort(eigval_q)]
+    eigvec_q = eigvec_q.T
+
+    # Reset the p coords, so the inertia vectors align with axis
+    p_coord = np.dot(p_coord, eigvec_p)
+
+    best_rmsd = np.inf
+    best_review = np.arange(len(p_atoms))
+
+    for mirror in AXIS_REFLECTIONS:
+
+        tmp_eigvec = eigvec_q * mirror.T
+        tmp_coord = np.dot(q_coord, tmp_eigvec)
+
+        test_review = reorder_hungarian(p_atoms, q_atoms, p_coord, tmp_coord)
+        test_rmsd = kabsch_rmsd(tmp_coord[test_review], p_coord)
+
+        if test_rmsd < best_rmsd:
+            best_rmsd = test_rmsd
+            best_review = test_review
+
+    return best_review
 
 
 def generate_permutations(elements: List[int], n: int) -> Iterator[List[int]]:
@@ -1330,7 +1367,7 @@ def get_cm(atoms: ndarray, V: ndarray) -> ndarray:
     return center_of_mass
 
 
-def get_inertia_tensor(atoms: ndarray, V: ndarray) -> ndarray:
+def get_inertia_tensor(atoms: ndarray, coord: ndarray) -> ndarray:
     """
     Get the tensor of intertia of V.
     ----------
@@ -1345,7 +1382,7 @@ def get_inertia_tensor(atoms: ndarray, V: ndarray) -> ndarray:
         The tensor of inertia
     """
 
-    CV = V - get_cm(atoms, V)
+    coord -= get_cm(atoms, coord)
 
     Ixx = 0.0
     Iyy = 0.0
@@ -1354,7 +1391,7 @@ def get_inertia_tensor(atoms: ndarray, V: ndarray) -> ndarray:
     Ixz = 0.0
     Iyz = 0.0
 
-    for sp, acoord in zip(atoms, CV):
+    for sp, acoord in zip(atoms, coord):
         amass = ELEMENT_WEIGHTS[sp]
         Ixx += amass * (acoord[1] * acoord[1] + acoord[2] * acoord[2])
         Iyy += amass * (acoord[0] * acoord[0] + acoord[2] * acoord[2])
@@ -1363,7 +1400,12 @@ def get_inertia_tensor(atoms: ndarray, V: ndarray) -> ndarray:
         Ixz += -amass * acoord[0] * acoord[2]
         Iyz += -amass * acoord[1] * acoord[2]
 
-    return np.array([[Ixx, Ixy, Ixz], [Ixy, Iyy, Iyz], [Ixz, Iyz, Izz]])
+    atomic_masses = np.asarray([ELEMENT_WEIGHTS[a] for a in atoms])
+
+    mass_matrix = np.diag(atomic_masses)
+    helper = coord.T.dot(mass_matrix).dot(coord)
+    inertia_tensor: np.ndarray = np.diag(np.ones(3)) * helper.trace() - helper
+    return inertia_tensor
 
 
 def get_principal_axis(atoms: ndarray, V: ndarray) -> ndarray:
@@ -1389,7 +1431,13 @@ def get_principal_axis(atoms: ndarray, V: ndarray) -> ndarray:
     return principal_axis
 
 
-def set_coordinates(atoms: ndarray, V: ndarray, title: str = "", decimals: int = 8) -> str:
+def set_coordinates(
+    atoms: ndarray,
+    V: ndarray,
+    title: str = "",
+    decimals: int = 8,
+    set_atoms_as_symbols: bool = True,
+) -> str:
     """
     Print coordinates V with corresponding atoms to stdout in XYZ format.
     Parameters
@@ -1414,6 +1462,9 @@ def set_coordinates(atoms: ndarray, V: ndarray, title: str = "", decimals: int =
     if N != len(atoms):
         raise ValueError("Mismatch between expected atoms and coordinate size")
 
+    if not isinstance(atoms[0], str) and set_atoms_as_symbols:
+        atoms = np.array([str_atom(atom) for atom in atoms])
+
     fmt = "{:<2}" + (" {:15." + str(decimals) + "f}") * 3
 
     out = list()
@@ -1424,7 +1475,9 @@ def set_coordinates(atoms: ndarray, V: ndarray, title: str = "", decimals: int =
         atom = atoms[i]
         out += [fmt.format(atom, V[i, 0], V[i, 1], V[i, 2])]
 
-    return "\n".join(out)
+    newline = "\n"
+
+    return newline.join(out)
 
 
 def get_coordinates(
@@ -1820,8 +1873,6 @@ def get_coordinates_xyz(
 
 def parse_arguments(arguments: Optional[Union[str, List[str]]] = None) -> argparse.Namespace:
 
-    description = __doc__
-
     version_msg = f"""
 rmsd {__version__}
 
@@ -1829,17 +1880,13 @@ See https://github.com/charnley/rmsd for citation information
 
 """
 
-    epilog = """
-"""
-
-    valid_reorder_methods = ", ".join(REORDER_METHODS)
-    valid_rotation_methods = ", ".join(ROTATION_METHODS)
+    sep = ", "
 
     parser = argparse.ArgumentParser(
         usage="calculate_rmsd [options] FILE_A FILE_B",
-        description=description,
+        description=__intro__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=epilog,
+        epilog=__details__,
     )
 
     # Input structures
@@ -1847,7 +1894,7 @@ See https://github.com/charnley/rmsd for citation information
         "structure_a",
         metavar="FILE_A",
         type=str,
-        help="structures in .xyz or .pdb format",
+        help="Structures in .xyz or .pdb format",
     )
     parser.add_argument("structure_b", metavar="FILE_B", type=str)
 
@@ -1861,50 +1908,49 @@ See https://github.com/charnley/rmsd for citation information
         action="store",
         default="kabsch",
         help=(
-            "select rotation method. Valid methods are "
-            f"{valid_rotation_methods}. "
-            "Default is Kabsch."
+            f"Select rotation method. Valid methods are: {sep.join(ROTATION_METHODS)}. Default is `Kabsch`."
         ),
         metavar="METHOD",
         choices=ROTATION_METHODS,
     )
 
     # Reorder arguments
-    parser.add_argument(
+    reorder_group = parser.add_argument_group(description="Atom reordering arguments")
+    reorder_group.add_argument(
         "-e",
         "--reorder",
         action="store_true",
-        help="align the atoms of molecules",
+        help="Align the atoms of molecules",
     )
-    parser.add_argument(
+    reorder_group.add_argument(
         "--reorder-method",
         action="store",
-        default="hungarian",
+        default="inertia-hungarian",
         metavar="METHOD",
         help=(
-            "select reorder method. Valid method are "
-            f"{valid_reorder_methods}. "
-            "Default is Hungarian."
+            "Select reorder method. Valid method are "
+            f"{sep.join(REORDER_METHODS)}. "
+            "Default is Inertia-Hungarian."
         ),
         choices=REORDER_METHODS,
     )
-    parser.add_argument(
-        "-ur",
+
+    reflection_group = parser.add_argument_group(description="Reflection arguments")
+    reflection_group.add_argument(
         "--use-reflections",
         action="store_true",
         help=(
-            "scan through reflections in planes "
+            "Scan through reflections in planes "
             "(eg Y transformed to -Y -> X, -Y, Z) "
             "and axis changes, (eg X and Z coords exchanged -> Z, Y, X). "
             "This will affect stereo-chemistry."
         ),
     )
-    parser.add_argument(
-        "-urks",
+    reflection_group.add_argument(
         "--use-reflections-keep-stereo",
         action="store_true",
         help=(
-            "scan through reflections in planes "
+            "Scan through reflections in planes "
             "(eg Y transformed to -Y -> X, -Y, Z) "
             "and axis changes, (eg X and Z coords exchanged -> Z, Y, X). "
             "Stereo-chemistry will be kept."
@@ -1912,38 +1958,39 @@ See https://github.com/charnley/rmsd for citation information
     )
 
     # Filter
-    index_group = parser.add_mutually_exclusive_group()
+    index_group_title = parser.add_argument_group(description="Atom filtering arguments")
+    index_group = index_group_title.add_mutually_exclusive_group()
     index_group.add_argument(
         "--only-alpha-carbons",
         action="store_true",
-        help="use only alpha carbons (only for pdb)",
+        help="Use only alpha carbons (only for PDB format)",
     )
     index_group.add_argument(
-        "-nh",
+        "-n",
         "--ignore-hydrogen",
         "--no-hydrogen",
         action="store_true",
-        help="ignore hydrogens when calculating RMSD",
+        help="Ignore Hydrogens when calculating RMSD",
     )
     index_group.add_argument(
         "--remove-idx",
         nargs="+",
         type=int,
-        help="index list of atoms NOT to consider",
+        help="Index list of atoms NOT to consider",
         metavar="IDX",
     )
     index_group.add_argument(
         "--add-idx",
         nargs="+",
         type=int,
-        help="index list of atoms to consider",
+        help="Index list of atoms to consider",
         metavar="IDX",
     )
 
     parser.add_argument(
         "--format",
         action="store",
-        help=f"format of input files. valid format are {', '.join(FORMATS)}.",
+        help=f"Format of input files. valid format are {sep.join(FORMATS)}.",
         metavar="FMT",
     )
     parser.add_argument(
@@ -1959,7 +2006,7 @@ See https://github.com/charnley/rmsd for citation information
         "--print",
         action="store_true",
         help=(
-            "print out structure B, centered and rotated unto structure A's coordinates in XYZ format"
+            "Print out structure B, centered and rotated unto structure A's coordinates in XYZ format"
         ),
     )
 
@@ -1995,8 +2042,7 @@ See https://github.com/charnley/rmsd for citation information
     args.rotation = args.rotation.lower()
     if args.rotation not in ROTATION_METHODS:
         print(
-            f"error: Unknown rotation method: '{args.rotation}'. "
-            f"Please use {valid_rotation_methods}"
+            f"error: Unknown rotation method: '{args.rotation}'. " f"Please use {ROTATION_METHODS}"
         )
         sys.exit(5)
 
@@ -2005,7 +2051,7 @@ See https://github.com/charnley/rmsd for citation information
     if args.reorder_method not in REORDER_METHODS:
         print(
             f'error: Unknown reorder method: "{args.reorder_method}". '
-            f"Please use {valid_reorder_methods}"
+            f"Please use {REORDER_METHODS}"
         )
         sys.exit(5)
 
@@ -2228,9 +2274,8 @@ https://github.com/charnley/rmsd for further examples.
         if settings.print_only_rmsd_atoms or not use_view:
             q_coord_sub = np.dot(q_coord_sub, U)
             q_coord_sub += p_cent_sub
-            _atoms = np.asarray([str_atom(atom) for atom in q_atoms_sub])
             return set_coordinates(
-                _atoms,
+                q_atoms_sub,
                 q_coord_sub,
                 title=f"Rotated '{settings.structure_b}' to match '{settings.structure_a}', with a RMSD of {result_rmsd:.8f}",
             )
@@ -2246,9 +2291,8 @@ https://github.com/charnley/rmsd for further examples.
 
         q_coord = np.dot(q_coord, U)
         q_coord += p_cent_sub
-        _atoms = np.asarray([str_atom(atom) for atom in q_atoms])
         return set_coordinates(
-            _atoms,
+            q_atoms,
             q_coord,
             title=f"Rotated {settings.structure_b} to match {settings.structure_a}, with RMSD of {result_rmsd:.8f}",
         )
