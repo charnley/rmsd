@@ -55,7 +55,7 @@ For more information, usage, example and citation read more at
 https://github.com/charnley/rmsd
 """
 
-__version__ = "1.6.1"
+__version__ = "1.6.2"
 
 
 METHOD_KABSCH = "kabsch"
