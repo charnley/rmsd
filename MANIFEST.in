@@ -1,0 +1,4 @@
+include *.py
+include tests/conftest.py
+recursive-include tests/resources *.xyz
+recursive-include tests/resources *.pdb
