@@ -21,11 +21,10 @@ jobs:
     steps:
       - run: sudo apt-get install libopenblas-dev gcc
       - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: astral-sh/setup-uv@v6
         with:
-          activate-environment: rmsd-dev
-          environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
+      - run: pip install -r ./requirements.txt
       - run: pip install .
       - run: which calculate_rmsd
       - run: make test python=python
