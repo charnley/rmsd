@@ -41,6 +41,7 @@ cov:
 	${python} -m pytest --cov=${package} --cov-config .coveragerc --cov-report html tests
 
 build:
+	rm -rf ./dist/
 	${python} -m build --skip-dependency-check  .
 
 upload:
