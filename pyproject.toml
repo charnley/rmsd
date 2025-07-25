@@ -13,6 +13,7 @@ description="Calculate Root-mean-square deviation (RMSD) of two molecules, using
 classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python",
     "Topic :: Scientific/Engineering :: Chemistry",
