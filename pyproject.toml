@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "rmsd"
 dynamic = ["version"]
 authors = []
+license = "MIT"
 requires-python = ">=3.9"
 readme="README.rst"
 description="Calculate Root-mean-square deviation (RMSD) of two molecules, using rotation, in xyz or pdb format "
@@ -31,9 +32,6 @@ include = ["rmsd"]
 
 [project.scripts]
 calculate_rmsd = "rmsd.calculate_rmsd:main"
-
-[tool.setuptools]
-include-package-data = true
 
 [tool.setuptools.package-data]
 rmsd = ["py.typed"]
