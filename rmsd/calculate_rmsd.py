@@ -823,7 +823,7 @@ def hungarian_vectors(
 ) -> ndarray:
     """
 
-    Hungarian cost assignment of a similiarty molecule kernel.
+    Hungarian cost assignment of a similarity molecule kernel.
 
     Note: Assumes p and q are atoms of same type
 
@@ -1045,7 +1045,7 @@ def reorder_inertia_hungarian(
     **kwargs: Any,
 ) -> ndarray:
     """
-    First, align structures with the intertia moment eignvectors, then using
+    First, align structures with the inertia moment eigenvectors, then using
     distance hungarian, assign the best possible atom pair combinations. While
     also checking all possible reflections of intertia moments, selecting the
     one with minimal RMSD.
@@ -1369,7 +1369,7 @@ def get_cm(atoms: ndarray, V: ndarray) -> ndarray:
 
 def get_inertia_tensor(atoms: ndarray, coord: ndarray) -> ndarray:
     """
-    Get the tensor of intertia of V.
+    Get the tensor of inertia of V.
     ----------
     atoms : list
         List of atomic types
