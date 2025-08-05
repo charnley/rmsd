@@ -1073,7 +1073,7 @@ def reorder_inertia_hungarian(
     q_coord = np.array(q_coord, copy=True)
 
     p_coord -= get_cm(p_atoms, p_coord)
-    q_coord -= get_cm(q_atoms, p_coord)
+    q_coord -= get_cm(q_atoms, q_coord)
 
     # Calculate inertia vectors for both structures
     inertia_p = get_inertia_tensor(p_atoms, p_coord)
