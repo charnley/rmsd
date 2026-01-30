@@ -21,13 +21,12 @@ jobs:
     steps:
       - run: sudo apt-get install libopenblas-dev gcc
       - uses: actions/checkout@v2
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ matrix.python-version }}
-      - run: which python
-      - run: python --version
-      - run: uv pip install -r ./requirements.txt --system
-      - run: pip install .
+      - run: make env python-version=${{ matrix.python-version }}
+      # - run: uv pip install -r ./requirements.txt --system
+      # - run: pip install .
       - run: twine --version
       - run: which calculate_rmsd
       - run: make test python=python
