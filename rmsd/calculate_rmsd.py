@@ -372,11 +372,13 @@ def str_atom(atom: int) -> str:
 
     Parameters
     ----------
-    atoms : string
+    atom : int
+        Atomic number
 
     Returns
     -------
-    atoms : integer
+    str
+        Element symbol
 
     """
     return ELEMENT_NAMES[atom]
@@ -388,11 +390,13 @@ def int_atom(atom: str) -> int:
 
     Parameters
     ----------
-    atoms : string
+    atom : str
+        Element symbol
 
     Returns
     -------
-    atoms : integer
+    int
+        Atomic number
     """
 
     atom = atom.capitalize().strip()
@@ -401,13 +405,13 @@ def int_atom(atom: str) -> int:
 
 def rmsd(P: ndarray, Q: ndarray, **kwargs) -> float:
     """
-    Calculate Root-mean-square deviation from two sets of vectors V and W.
+    Calculate Root-mean-square deviation from two sets of vectors P and Q.
 
     Parameters
     ----------
-    V : array
+    P : array
         (N,D) matrix, where N is points and D is dimension.
-    W : array
+    Q : array
         (N,D) matrix, where N is points and D is dimension.
 
     Returns
