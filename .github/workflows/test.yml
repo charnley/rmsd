@@ -26,10 +26,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: make env python-version=${{ matrix.python-version }}
       - run: source ./env/bin/activate && which calculate_rmsd
-      - run: make test
-      - run: source ./env/bin/activate && make format
+      - run: source ./env/bin/activate && make test python=python
+      - run: source ./env/bin/activate && make format python=python
       - run: make build
       - run: make test-dist
       - run: for x in dist/*; do pip uninstall -y rmsd && pip install $x; done
-      # - run: pip uninstall -y rmsd && pip install $(find dist -name "*.whl" | tail -n 1)[qml]
-      # - run: which calculate_rmsd
+      - run: source ./env/bin/activate && pip uninstall -y rmsd && pip install $(find dist -name "*.whl" | tail -n 1)[qml]
+      - run: source ./env/bin/activate && which calculate_rmsd
