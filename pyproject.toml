@@ -27,14 +27,17 @@ qml = ["qmllib"]
 [project.urls]
 Homepage = "https://github.com/charnley/rmsd"
 
-[options.packages.find]
-where="."
+[tool.setuptools.packages.find]
+include = ["rmsd"]
 
 [project.scripts]
 calculate_rmsd = "rmsd.calculate_rmsd:main"
 
 [tool.setuptools]
 include-package-data = true
+
+[tool.setuptools.package-data]
+rmsd = ["py.typed"]
 
 [tool.setuptools.dynamic]
 version = {attr = "rmsd.version.__version__"}
