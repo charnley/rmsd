@@ -1779,7 +1779,7 @@ def get_coordinates_xyz_lines(
     try:
         n_atoms = int(lines[0])
     except ValueError:
-        exit("error: Could not obtain the number of atoms in the .xyz file.")
+        raise ValueError("Could not obtain the number of atoms in the .xyz file.")
 
     # Skip the title line
     # Use the number of atoms to not read beyond the end of a file
@@ -1807,10 +1807,10 @@ def get_coordinates_xyz_lines(
             atoms.append(atom)
         else:
             msg = (
-                f"Reading the .xyz file failed in line {lines_read + 2}."
+                f"Reading the .xyz file failed in line {lines_read + 2}. "
                 "Please check the format."
             )
-            exit(msg)
+            raise ValueError(msg)
 
     try:
         # I've seen examples where XYZ are written with integer atoms types
@@ -2116,13 +2116,17 @@ def main(args: Optional[List[str]] = None) -> str:
 
     # As default, load the extension as format
     # Parse pdb.gz and xyz.gz as pdb and xyz formats
-    p_atoms, p_coord = get_coordinates(
-        settings.structure_a,
-    )
+    try:
+        p_atoms, p_coord = get_coordinates(
+            settings.structure_a,
+        )
 
-    q_atoms, q_coord = get_coordinates(
-        settings.structure_b,
-    )
+        q_atoms, q_coord = get_coordinates(
+            settings.structure_b,
+        )
+    except ValueError as e:
+        print(f"error: {e}")
+        sys.exit(1)
 
     p_size = p_coord.shape[0]
     q_size = q_coord.shape[0]
