@@ -7,7 +7,7 @@ name = "rmsd"
 dynamic = ["version"]
 authors = []
 requires-python = ">=3.10"
-license = "MIT"
+license = { text = "MIT" }
 readme="README.rst"
 description="Calculate Root-mean-square deviation (RMSD) of two molecules, using rotation, in xyz or pdb format "
 classifiers = [
