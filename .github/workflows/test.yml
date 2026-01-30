@@ -27,7 +27,7 @@ jobs:
       - run: make env python-version=${{ matrix.python-version }}
       - run: source ./env/bin/activate && which calculate_rmsd
       - run: make test
-      - run: make format python=./env/bin/python
+      - run: source ./env/bin/activate && make format
       - run: make build
       - run: make test-dist
       - run: for x in dist/*; do pip uninstall -y rmsd && pip install $x; done
