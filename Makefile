@@ -3,8 +3,8 @@
 python-version=3.12
 
 env=./env
-python=./${env}/bin/python
-pytest=./${env}/bin/pytest
+python=${env}/bin/python
+pytest=${env}/bin/pytest
 package=rmsd
 
 version_file1=./rmsd/version.py
