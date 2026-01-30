@@ -4,7 +4,7 @@ import os
 
 import setuptools  # type: ignore
 
-__version__ = "1.5.1"
+from rmsd.version import __version__
 
 # Find the absolute path
 here = os.path.abspath(os.path.dirname(__file__))
