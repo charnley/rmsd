@@ -6,6 +6,7 @@ matplotlib
 monkeytype
 mypy
 numpy
+packaging
 pip
 pre-commit
 pylint
