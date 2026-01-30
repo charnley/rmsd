@@ -7,6 +7,7 @@ name = "rmsd"
 dynamic = ["version"]
 authors = []
 requires-python = ">=3.10"
+license-files = ["LICENSE"]
 readme="README.rst"
 description="Calculate Root-mean-square deviation (RMSD) of two molecules, using rotation, in xyz or pdb format "
 classifiers = [
@@ -25,9 +26,6 @@ qml = ["qmllib"]
 
 [project.urls]
 Homepage = "https://github.com/charnley/rmsd"
-
-[tool.setuptools]
-license-files = ["LICENSE"]
 
 [tool.setuptools.packages.find]
 include = ["rmsd"]
