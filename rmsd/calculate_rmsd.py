@@ -608,8 +608,6 @@ def kabsch_weighted(
     if W is None:
         W = np.ones(len(P)) / len(P)
     W = np.array([W, W, W]).T
-    # NOTE UNUSED psq = 0.0
-    # NOTE UNUSED qsq = 0.0
     iw = 3.0 / W.sum()
     n = len(P)
     for i in range(3):
@@ -791,7 +789,6 @@ def quaternion_rotate(X: ndarray, Y: ndarray) -> ndarray:
     W = np.asarray([makeW(*Y[k]) for k in range(N)])
     Q = np.asarray([makeQ(*X[k]) for k in range(N)])
     Qt_dot_W = np.asarray([np.dot(Q[k].T, W[k]) for k in range(N)])
-    # NOTE UNUSED W_minus_Q = np.asarray([W[k] - Q[k] for k in range(N)])
     A = np.sum(Qt_dot_W, axis=0)
     eigen = np.linalg.eigh(A)
     r = eigen[1][:, eigen[0].argmax()]
