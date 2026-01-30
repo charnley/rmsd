@@ -6,7 +6,7 @@ import re
 import sys
 from functools import partial
 from pathlib import Path
-from typing import Any, Iterator, List, Optional, Protocol, Set, Tuple, Union
+from typing import Any, Iterator, Protocol
 
 import numpy as np
 from numpy import ndarray
@@ -55,8 +55,7 @@ For more information, usage, example and citation read more at
 https://github.com/charnley/rmsd
 """
 
-__version__ = "1.6.4"
-
+from .version import __version__
 
 METHOD_KABSCH = "kabsch"
 METHOD_QUATERNION = "quaternion"
@@ -372,11 +371,13 @@ def str_atom(atom: int) -> str:
 
     Parameters
     ----------
-    atoms : string
+    atom : int
+        Atomic number
 
     Returns
     -------
-    atoms : integer
+    str
+        Element symbol
 
     """
     return ELEMENT_NAMES[atom]
@@ -388,11 +389,13 @@ def int_atom(atom: str) -> int:
 
     Parameters
     ----------
-    atoms : string
+    atom : str
+        Element symbol
 
     Returns
     -------
-    atoms : integer
+    int
+        Atomic number
     """
 
     atom = atom.capitalize().strip()
@@ -401,13 +404,13 @@ def int_atom(atom: str) -> int:
 
 def rmsd(P: ndarray, Q: ndarray, **kwargs) -> float:
     """
-    Calculate Root-mean-square deviation from two sets of vectors V and W.
+    Calculate Root-mean-square deviation from two sets of vectors P and Q.
 
     Parameters
     ----------
-    V : array
+    P : array
         (N,D) matrix, where N is points and D is dimension.
-    W : array
+    Q : array
         (N,D) matrix, where N is points and D is dimension.
 
     Returns
@@ -422,7 +425,7 @@ def rmsd(P: ndarray, Q: ndarray, **kwargs) -> float:
 def kabsch_rmsd(
     P: ndarray,
     Q: ndarray,
-    W: Optional[ndarray] = None,
+    W: ndarray | None = None,
     translate: bool = False,
     **kwargs: Any,
 ) -> float:
@@ -483,7 +486,7 @@ def kabsch_rotate(P: ndarray, Q: ndarray) -> ndarray:
     return P
 
 
-def kabsch_fit(P: ndarray, Q: ndarray, W: Optional[ndarray] = None) -> ndarray:
+def kabsch_fit(P: ndarray, Q: ndarray, W: ndarray | None = None) -> ndarray:
     """
     Rotate and translate matrix P unto matrix Q using Kabsch algorithm.
     An optional vector of weights W may be provided.
@@ -561,8 +564,8 @@ def kabsch(P: ndarray, Q: ndarray) -> ndarray:
 
 
 def kabsch_weighted(
-    P: ndarray, Q: ndarray, W: Optional[ndarray] = None
-) -> Tuple[ndarray, ndarray, float]:
+    P: ndarray, Q: ndarray, W: ndarray | None = None
+) -> tuple[ndarray, ndarray, float]:
     """
     Using the Kabsch algorithm with two sets of paired point P and Q.
     Each vector set is represented as an NxD matrix, where D is the
@@ -604,8 +607,6 @@ def kabsch_weighted(
     if W is None:
         W = np.ones(len(P)) / len(P)
     W = np.array([W, W, W]).T
-    # NOTE UNUSED psq = 0.0
-    # NOTE UNUSED qsq = 0.0
     iw = 3.0 / W.sum()
     n = len(P)
     for i in range(3):
@@ -649,9 +650,9 @@ def kabsch_weighted(
 def kabsch_weighted_fit(
     P: ndarray,
     Q: ndarray,
-    W: Optional[ndarray] = None,
+    W: ndarray | None = None,
     return_rmsd: bool = False,
-) -> Tuple[ndarray, Optional[float]]:
+) -> tuple[ndarray, float | None]:
     """
     Fit P to Q with optional weights W.
     Also returns the RMSD of the fit if return_rmsd=True.
@@ -683,7 +684,7 @@ def kabsch_weighted_fit(
     return (PNEW, None)
 
 
-def kabsch_weighted_rmsd(P: ndarray, Q: ndarray, W: Optional[ndarray] = None) -> float:
+def kabsch_weighted_rmsd(P: ndarray, Q: ndarray, W: ndarray | None = None) -> float:
     """
     Calculate the RMSD between P and Q with optional weights W
 
@@ -787,7 +788,6 @@ def quaternion_rotate(X: ndarray, Y: ndarray) -> ndarray:
     W = np.asarray([makeW(*Y[k]) for k in range(N)])
     Q = np.asarray([makeQ(*X[k]) for k in range(N)])
     Qt_dot_W = np.asarray([np.dot(Q[k].T, W[k]) for k in range(N)])
-    # NOTE UNUSED W_minus_Q = np.asarray([W[k] - Q[k] for k in range(N)])
     A = np.sum(Qt_dot_W, axis=0)
     eigen = np.linalg.eigh(A)
     r = eigen[1][:, eigen[0].argmax()]
@@ -1073,7 +1073,7 @@ def reorder_inertia_hungarian(
     q_coord = np.array(q_coord, copy=True)
 
     p_coord -= get_cm(p_atoms, p_coord)
-    q_coord -= get_cm(q_atoms, p_coord)
+    q_coord -= get_cm(q_atoms, q_coord)
 
     # Calculate inertia vectors for both structures
     inertia_p = get_inertia_tensor(p_atoms, p_coord)
@@ -1111,7 +1111,7 @@ def reorder_inertia_hungarian(
     return best_review
 
 
-def generate_permutations(elements: List[int], n: int) -> Iterator[List[int]]:
+def generate_permutations(elements: list[int], n: int) -> Iterator[list[int]]:
     """
     Heap's algorithm for generating all n! permutations in a list
     https://en.wikipedia.org/wiki/Heap%27s_algorithm
@@ -1153,7 +1153,7 @@ def brute_permutation(A: ndarray, B: ndarray) -> ndarray:
     """
 
     rmsd_min = np.inf
-    view_min: ndarray
+    view_min: ndarray = np.array([], dtype=int)
 
     # Sets initial ordering for row indices to [0, 1, 2, ..., len(A)], used in
     # brute-force method
@@ -1234,10 +1234,10 @@ def check_reflections(
     q_atoms: ndarray,
     p_coord: ndarray,
     q_coord: ndarray,
-    reorder_method: Optional[ReorderCallable] = None,
+    reorder_method: ReorderCallable | None = None,
     rmsd_method: RmsdCallable = kabsch_rmsd,
     keep_stereo: bool = False,
-) -> Tuple[float, ndarray, ndarray, ndarray]:
+) -> tuple[float, ndarray, ndarray, ndarray]:
     """
     Minimize RMSD using reflection planes for molecule P and Q
 
@@ -1360,7 +1360,7 @@ def get_cm(atoms: ndarray, V: ndarray) -> ndarray:
         The CM vector
     """
 
-    weights: Union[List[float], ndarray] = [ELEMENT_WEIGHTS[x] for x in atoms]
+    weights: list[float] | ndarray = [ELEMENT_WEIGHTS[x] for x in atoms]
     weights = np.asarray(weights)
     center_of_mass: ndarray = np.average(V, axis=0, weights=weights)
 
@@ -1382,7 +1382,7 @@ def get_inertia_tensor(atoms: ndarray, coord: ndarray) -> ndarray:
         The tensor of inertia
     """
 
-    coord -= get_cm(atoms, coord)
+    coord = coord - get_cm(atoms, coord)
 
     Ixx = 0.0
     Iyy = 0.0
@@ -1457,7 +1457,7 @@ def set_coordinates(
         Molecule in XYZ format
 
     """
-    N, D = V.shape
+    N, _ = V.shape
 
     if N != len(atoms):
         raise ValueError("Mismatch between expected atoms and coordinate size")
@@ -1482,7 +1482,7 @@ def set_coordinates(
 
 def get_coordinates(
     filename: Path, fmt: str, is_gzip: bool = False, return_atoms_as_int: bool = False
-) -> Tuple[ndarray, ndarray]:
+) -> tuple[ndarray, ndarray]:
     """
     Get coordinates from filename in format fmt. Supports XYZ and PDB.
     Parameters
@@ -1505,7 +1505,7 @@ def get_coordinates(
         get_func = get_coordinates_pdb
 
     else:
-        raise ValueError("Could not recognize file format: {:s}".format(fmt))
+        raise ValueError(f"Could not recognize file format: {fmt}")
 
     val = get_func(filename, is_gzip=is_gzip, return_atoms_as_int=return_atoms_as_int)
 
@@ -1528,7 +1528,7 @@ def _parse_pdb_alphacarbon_line(line: str) -> bool:
     return False
 
 
-def _parse_pdb_atom_line(line: str) -> Optional[str]:
+def _parse_pdb_atom_line(line: str) -> str | None:
     """
     Will try it best to find atom from an atom-line. The standard of PDB
     *should* be column based, however, there are many examples of non-standard
@@ -1621,7 +1621,7 @@ def _parse_pdb_atom_line(line: str) -> Optional[str]:
     return None
 
 
-def _parse_pdb_coord_line(line: str) -> Optional[ndarray]:
+def _parse_pdb_coord_line(line: str) -> ndarray | None:
     """
     Try my best to coordinates from a PDB ATOM or HETATOM line
 
@@ -1646,7 +1646,7 @@ def _parse_pdb_coord_line(line: str) -> Optional[ndarray]:
 
     tokens = line.split()
 
-    x_column: Optional[int] = None
+    x_column: int | None = None
 
     # look for x column
     for i, x in enumerate(tokens):
@@ -1672,7 +1672,7 @@ def get_coordinates_pdb(
     is_gzip: bool = False,
     return_atoms_as_int: bool = False,
     only_alpha_carbon: bool = False,
-) -> Tuple[ndarray, ndarray]:
+) -> tuple[ndarray, ndarray]:
     """
     Get coordinates from the first chain in a pdb file
     and return a vectorset with all the coordinates.
@@ -1697,15 +1697,15 @@ def get_coordinates_pdb(
     # Since the format doesn't require a space between columns, we use the
     # above column indices as a fallback.
 
-    V: Union[List[ndarray], ndarray] = list()
+    V: list[ndarray] | ndarray = list()
     assert isinstance(V, list)
 
     # Same with atoms and atom naming.
     # The most robust way to do this is probably
     # to assume that the atomtype is given in column 3.
 
-    atoms: List[str] = list()
-    alpha_carbons: List[bool] = list()
+    atoms: list[str] = list()
+    alpha_carbons: list[bool] = list()
     assert isinstance(atoms, list)
     openfunc: Any
 
@@ -1765,11 +1765,11 @@ def get_coordinates_pdb(
 
 
 def get_coordinates_xyz_lines(
-    lines: List[str], return_atoms_as_int: bool = False
-) -> Tuple[ndarray, ndarray]:
+    lines: list[str], return_atoms_as_int: bool = False
+) -> tuple[ndarray, ndarray]:
 
-    V: Union[List[ndarray], ndarray] = list()
-    atoms: Union[List[str], ndarray] = list()
+    V: list[ndarray] | ndarray = list()
+    atoms: list[str] | ndarray = list()
     n_atoms = 0
 
     assert isinstance(V, list)
@@ -1779,7 +1779,7 @@ def get_coordinates_xyz_lines(
     try:
         n_atoms = int(lines[0])
     except ValueError:
-        exit("error: Could not obtain the number of atoms in the .xyz file.")
+        raise ValueError("Could not obtain the number of atoms in the .xyz file.")
 
     # Skip the title line
     # Use the number of atoms to not read beyond the end of a file
@@ -1807,10 +1807,10 @@ def get_coordinates_xyz_lines(
             atoms.append(atom)
         else:
             msg = (
-                f"Reading the .xyz file failed in line {lines_read + 2}."
+                f"Reading the .xyz file failed in line {lines_read + 2}. "
                 "Please check the format."
             )
-            exit(msg)
+            raise ValueError(msg)
 
     try:
         # I've seen examples where XYZ are written with integer atoms types
@@ -1836,7 +1836,7 @@ def get_coordinates_xyz(
     filename: Path,
     is_gzip: bool = False,
     return_atoms_as_int: bool = False,
-) -> Tuple[ndarray, ndarray]:
+) -> tuple[ndarray, ndarray]:
     """
     Get coordinates from filename and return a vectorset with all the
     coordinates, in XYZ format.
@@ -1871,7 +1871,7 @@ def get_coordinates_xyz(
     return atoms, V
 
 
-def parse_arguments(arguments: Optional[Union[str, List[str]]] = None) -> argparse.Namespace:
+def parse_arguments(arguments: str | list[str] | None = None) -> argparse.Namespace:
 
     version_msg = f"""
 rmsd {__version__}
@@ -2092,7 +2092,7 @@ See https://github.com/charnley/rmsd for citation information
     return args
 
 
-def main(args: Optional[List[str]] = None) -> str:
+def main(args: list[str] | None = None) -> str:
 
     # Parse arguments
     settings = parse_arguments(args)
@@ -2116,13 +2116,17 @@ def main(args: Optional[List[str]] = None) -> str:
 
     # As default, load the extension as format
     # Parse pdb.gz and xyz.gz as pdb and xyz formats
-    p_atoms, p_coord = get_coordinates(
-        settings.structure_a,
-    )
+    try:
+        p_atoms, p_coord = get_coordinates(
+            settings.structure_a,
+        )
 
-    q_atoms, q_coord = get_coordinates(
-        settings.structure_b,
-    )
+        q_atoms, q_coord = get_coordinates(
+            settings.structure_b,
+        )
+    except ValueError as e:
+        print(f"error: {e}")
+        sys.exit(1)
 
     p_size = p_coord.shape[0]
     q_size = q_coord.shape[0]
@@ -2144,11 +2148,11 @@ https://github.com/charnley/rmsd for further examples.
         sys.exit()
 
     # Typing
-    index: Union[Set[int], List[int], ndarray]
+    index: set[int] | list[int] | ndarray
 
     # Set local view
-    p_view: Optional[ndarray] = None
-    q_view: Optional[ndarray] = None
+    p_view: ndarray | None = None
+    q_view: ndarray | None = None
     use_view: bool = True
 
     if settings.ignore_hydrogen:
@@ -2187,7 +2191,7 @@ https://github.com/charnley/rmsd for further examples.
     q_coord_sub -= q_cent_sub
 
     rmsd_method: RmsdCallable
-    reorder_method: Optional[ReorderCallable]
+    reorder_method: ReorderCallable | None
 
     # set rotation method
     if settings.rotation == METHOD_KABSCH:
@@ -2211,7 +2215,7 @@ https://github.com/charnley/rmsd for further examples.
         reorder_method = reorder_distance
 
     # Save the resulting RMSD
-    result_rmsd: Optional[float] = None
+    result_rmsd: float | None = None
 
     # Collect changes to be done on q coords
     q_swap = None

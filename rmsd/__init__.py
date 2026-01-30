@@ -1,6 +1,43 @@
 # flake8: noqa
-from .calculate_rmsd import *
-from .calculate_rmsd import __doc__, __version__
+from .calculate_rmsd import (
+    __doc__,
+    brute_permutation,
+    centroid,
+    check_reflections,
+    generate_permutations,
+    get_cm,
+    get_coordinates,
+    get_coordinates_pdb,
+    get_coordinates_xyz,
+    get_coordinates_xyz_lines,
+    get_inertia_tensor,
+    get_principal_axis,
+    hungarian_vectors,
+    int_atom,
+    kabsch,
+    kabsch_fit,
+    kabsch_rmsd,
+    kabsch_rotate,
+    kabsch_weighted,
+    kabsch_weighted_fit,
+    kabsch_weighted_rmsd,
+    main,
+    makeQ,
+    makeW,
+    quaternion_rmsd,
+    quaternion_rotate,
+    quaternion_transform,
+    reorder_brute,
+    reorder_distance,
+    reorder_hungarian,
+    reorder_inertia_hungarian,
+    reorder_similarity,
+    rmsd,
+    rotation_matrix_vectors,
+    set_coordinates,
+    str_atom,
+)
+from .version import __version__
 
 __all__ = [
     "str_atom",
@@ -22,7 +59,6 @@ __all__ = [
     "hungarian_vectors",
     "reorder_similarity",
     "reorder_distance",
-    "hungarian",
     "reorder_hungarian",
     "reorder_inertia_hungarian",
     "generate_permutations",
