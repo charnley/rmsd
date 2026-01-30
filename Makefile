@@ -1,7 +1,8 @@
 .PHONY: update-format format test test-dist build types upload cov
 
-python=./env/bin/python
-pytest=./env/bin/pytest
+env=./env
+python=./${env}/bin/python
+pytest=./${env}/bin/pytest
 package=rmsd
 
 version_file1=./rmsd/version.py
@@ -15,7 +16,8 @@ GIT_COMMIT=$(shell git rev-parse --short HEAD)
 ## Setup
 
 env:
-	conda env create -f ./environment.yml -p ./env --quiet
+	uv venv ${env}
+	uv pip install -r requirements.txt --python ${python}
 	${python} -m pre_commit install
 	${python} -m pip install -e .
 

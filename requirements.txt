@@ -1,10 +1,12 @@
 build
+ipympl
 jupyterlab
 jupytext
 matplotlib
 monkeytype
 mypy
 numpy
+pip
 pre-commit
 pylint
 pytest
@@ -12,4 +14,3 @@ pytest-cov
 qmllib
 scipy
 twine
-ipympl
