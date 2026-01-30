@@ -24,7 +24,9 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python-version }}
-      - run: uv pip install -r ./requirements.txt
+      - run: which python
+      - run: python --version
+      - run: uv pip install -r ./requirements.txt --system
       - run: pip install .
       - run: twine --version
       - run: which calculate_rmsd
