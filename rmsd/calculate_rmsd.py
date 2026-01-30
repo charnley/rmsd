@@ -57,7 +57,6 @@ https://github.com/charnley/rmsd
 
 from .version import __version__
 
-
 METHOD_KABSCH = "kabsch"
 METHOD_QUATERNION = "quaternion"
 METHOD_NOROTATION = "none"
