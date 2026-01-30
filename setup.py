@@ -26,7 +26,7 @@ setuptools.setup(
     name="rmsd",
     version=__version__,
     url="https://github.com/charnley/rmsd",
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     install_requires=[],
     packages=["rmsd"],
     entry_points={"console_scripts": ["calculate_rmsd=rmsd.calculate_rmsd:main"]},

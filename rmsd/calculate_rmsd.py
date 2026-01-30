@@ -6,7 +6,7 @@ import re
 import sys
 from functools import partial
 from pathlib import Path
-from typing import Any, Iterator, List, Optional, Protocol, Set, Tuple, Union
+from typing import Any, Iterator, Protocol
 
 import numpy as np
 from numpy import ndarray
@@ -426,7 +426,7 @@ def rmsd(P: ndarray, Q: ndarray, **kwargs) -> float:
 def kabsch_rmsd(
     P: ndarray,
     Q: ndarray,
-    W: Optional[ndarray] = None,
+    W: ndarray | None = None,
     translate: bool = False,
     **kwargs: Any,
 ) -> float:
@@ -487,7 +487,7 @@ def kabsch_rotate(P: ndarray, Q: ndarray) -> ndarray:
     return P
 
 
-def kabsch_fit(P: ndarray, Q: ndarray, W: Optional[ndarray] = None) -> ndarray:
+def kabsch_fit(P: ndarray, Q: ndarray, W: ndarray | None = None) -> ndarray:
     """
     Rotate and translate matrix P unto matrix Q using Kabsch algorithm.
     An optional vector of weights W may be provided.
@@ -565,8 +565,8 @@ def kabsch(P: ndarray, Q: ndarray) -> ndarray:
 
 
 def kabsch_weighted(
-    P: ndarray, Q: ndarray, W: Optional[ndarray] = None
-) -> Tuple[ndarray, ndarray, float]:
+    P: ndarray, Q: ndarray, W: ndarray | None = None
+) -> tuple[ndarray, ndarray, float]:
     """
     Using the Kabsch algorithm with two sets of paired point P and Q.
     Each vector set is represented as an NxD matrix, where D is the
@@ -651,9 +651,9 @@ def kabsch_weighted(
 def kabsch_weighted_fit(
     P: ndarray,
     Q: ndarray,
-    W: Optional[ndarray] = None,
+    W: ndarray | None = None,
     return_rmsd: bool = False,
-) -> Tuple[ndarray, Optional[float]]:
+) -> tuple[ndarray, float | None]:
     """
     Fit P to Q with optional weights W.
     Also returns the RMSD of the fit if return_rmsd=True.
@@ -685,7 +685,7 @@ def kabsch_weighted_fit(
     return (PNEW, None)
 
 
-def kabsch_weighted_rmsd(P: ndarray, Q: ndarray, W: Optional[ndarray] = None) -> float:
+def kabsch_weighted_rmsd(P: ndarray, Q: ndarray, W: ndarray | None = None) -> float:
     """
     Calculate the RMSD between P and Q with optional weights W
 
@@ -1112,7 +1112,7 @@ def reorder_inertia_hungarian(
     return best_review
 
 
-def generate_permutations(elements: List[int], n: int) -> Iterator[List[int]]:
+def generate_permutations(elements: list[int], n: int) -> Iterator[list[int]]:
     """
     Heap's algorithm for generating all n! permutations in a list
     https://en.wikipedia.org/wiki/Heap%27s_algorithm
@@ -1235,10 +1235,10 @@ def check_reflections(
     q_atoms: ndarray,
     p_coord: ndarray,
     q_coord: ndarray,
-    reorder_method: Optional[ReorderCallable] = None,
+    reorder_method: ReorderCallable | None = None,
     rmsd_method: RmsdCallable = kabsch_rmsd,
     keep_stereo: bool = False,
-) -> Tuple[float, ndarray, ndarray, ndarray]:
+) -> tuple[float, ndarray, ndarray, ndarray]:
     """
     Minimize RMSD using reflection planes for molecule P and Q
 
@@ -1361,7 +1361,7 @@ def get_cm(atoms: ndarray, V: ndarray) -> ndarray:
         The CM vector
     """
 
-    weights: Union[List[float], ndarray] = [ELEMENT_WEIGHTS[x] for x in atoms]
+    weights: list[float] | ndarray = [ELEMENT_WEIGHTS[x] for x in atoms]
     weights = np.asarray(weights)
     center_of_mass: ndarray = np.average(V, axis=0, weights=weights)
 
@@ -1483,7 +1483,7 @@ def set_coordinates(
 
 def get_coordinates(
     filename: Path, fmt: str, is_gzip: bool = False, return_atoms_as_int: bool = False
-) -> Tuple[ndarray, ndarray]:
+) -> tuple[ndarray, ndarray]:
     """
     Get coordinates from filename in format fmt. Supports XYZ and PDB.
     Parameters
@@ -1529,7 +1529,7 @@ def _parse_pdb_alphacarbon_line(line: str) -> bool:
     return False
 
 
-def _parse_pdb_atom_line(line: str) -> Optional[str]:
+def _parse_pdb_atom_line(line: str) -> str | None:
     """
     Will try it best to find atom from an atom-line. The standard of PDB
     *should* be column based, however, there are many examples of non-standard
@@ -1622,7 +1622,7 @@ def _parse_pdb_atom_line(line: str) -> Optional[str]:
     return None
 
 
-def _parse_pdb_coord_line(line: str) -> Optional[ndarray]:
+def _parse_pdb_coord_line(line: str) -> ndarray | None:
     """
     Try my best to coordinates from a PDB ATOM or HETATOM line
 
@@ -1647,7 +1647,7 @@ def _parse_pdb_coord_line(line: str) -> Optional[ndarray]:
 
     tokens = line.split()
 
-    x_column: Optional[int] = None
+    x_column: int | None = None
 
     # look for x column
     for i, x in enumerate(tokens):
@@ -1673,7 +1673,7 @@ def get_coordinates_pdb(
     is_gzip: bool = False,
     return_atoms_as_int: bool = False,
     only_alpha_carbon: bool = False,
-) -> Tuple[ndarray, ndarray]:
+) -> tuple[ndarray, ndarray]:
     """
     Get coordinates from the first chain in a pdb file
     and return a vectorset with all the coordinates.
@@ -1698,15 +1698,15 @@ def get_coordinates_pdb(
     # Since the format doesn't require a space between columns, we use the
     # above column indices as a fallback.
 
-    V: Union[List[ndarray], ndarray] = list()
+    V: list[ndarray] | ndarray = list()
     assert isinstance(V, list)
 
     # Same with atoms and atom naming.
     # The most robust way to do this is probably
     # to assume that the atomtype is given in column 3.
 
-    atoms: List[str] = list()
-    alpha_carbons: List[bool] = list()
+    atoms: list[str] = list()
+    alpha_carbons: list[bool] = list()
     assert isinstance(atoms, list)
     openfunc: Any
 
@@ -1766,11 +1766,11 @@ def get_coordinates_pdb(
 
 
 def get_coordinates_xyz_lines(
-    lines: List[str], return_atoms_as_int: bool = False
-) -> Tuple[ndarray, ndarray]:
+    lines: list[str], return_atoms_as_int: bool = False
+) -> tuple[ndarray, ndarray]:
 
-    V: Union[List[ndarray], ndarray] = list()
-    atoms: Union[List[str], ndarray] = list()
+    V: list[ndarray] | ndarray = list()
+    atoms: list[str] | ndarray = list()
     n_atoms = 0
 
     assert isinstance(V, list)
@@ -1837,7 +1837,7 @@ def get_coordinates_xyz(
     filename: Path,
     is_gzip: bool = False,
     return_atoms_as_int: bool = False,
-) -> Tuple[ndarray, ndarray]:
+) -> tuple[ndarray, ndarray]:
     """
     Get coordinates from filename and return a vectorset with all the
     coordinates, in XYZ format.
@@ -1872,7 +1872,7 @@ def get_coordinates_xyz(
     return atoms, V
 
 
-def parse_arguments(arguments: Optional[Union[str, List[str]]] = None) -> argparse.Namespace:
+def parse_arguments(arguments: str | list[str] | None = None) -> argparse.Namespace:
 
     version_msg = f"""
 rmsd {__version__}
@@ -2093,7 +2093,7 @@ See https://github.com/charnley/rmsd for citation information
     return args
 
 
-def main(args: Optional[List[str]] = None) -> str:
+def main(args: list[str] | None = None) -> str:
 
     # Parse arguments
     settings = parse_arguments(args)
@@ -2149,11 +2149,11 @@ https://github.com/charnley/rmsd for further examples.
         sys.exit()
 
     # Typing
-    index: Union[Set[int], List[int], ndarray]
+    index: set[int] | list[int] | ndarray
 
     # Set local view
-    p_view: Optional[ndarray] = None
-    q_view: Optional[ndarray] = None
+    p_view: ndarray | None = None
+    q_view: ndarray | None = None
     use_view: bool = True
 
     if settings.ignore_hydrogen:
@@ -2192,7 +2192,7 @@ https://github.com/charnley/rmsd for further examples.
     q_coord_sub -= q_cent_sub
 
     rmsd_method: RmsdCallable
-    reorder_method: Optional[ReorderCallable]
+    reorder_method: ReorderCallable | None
 
     # set rotation method
     if settings.rotation == METHOD_KABSCH:
@@ -2216,7 +2216,7 @@ https://github.com/charnley/rmsd for further examples.
         reorder_method = reorder_distance
 
     # Save the resulting RMSD
-    result_rmsd: Optional[float] = None
+    result_rmsd: float | None = None
 
     # Collect changes to be done on q coords
     q_swap = None
