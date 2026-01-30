@@ -1386,7 +1386,7 @@ def get_inertia_tensor(atoms: ndarray, coord: ndarray) -> ndarray:
         The tensor of inertia
     """
 
-    coord -= get_cm(atoms, coord)
+    coord = coord - get_cm(atoms, coord)
 
     Ixx = 0.0
     Iyy = 0.0
