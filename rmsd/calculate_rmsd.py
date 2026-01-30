@@ -1153,7 +1153,7 @@ def brute_permutation(A: ndarray, B: ndarray) -> ndarray:
     """
 
     rmsd_min = np.inf
-    view_min: ndarray
+    view_min: ndarray = np.array([], dtype=int)
 
     # Sets initial ordering for row indices to [0, 1, 2, ..., len(A)], used in
     # brute-force method
