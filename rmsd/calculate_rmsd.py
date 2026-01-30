@@ -1457,7 +1457,7 @@ def set_coordinates(
         Molecule in XYZ format
 
     """
-    N, D = V.shape
+    N, _ = V.shape
 
     if N != len(atoms):
         raise ValueError("Mismatch between expected atoms and coordinate size")
@@ -1505,7 +1505,7 @@ def get_coordinates(
         get_func = get_coordinates_pdb
 
     else:
-        raise ValueError("Could not recognize file format: {:s}".format(fmt))
+        raise ValueError(f"Could not recognize file format: {fmt}")
 
     val = get_func(filename, is_gzip=is_gzip, return_atoms_as_int=return_atoms_as_int)
 
