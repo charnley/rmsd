@@ -1,5 +1,4 @@
 build
-ipympl
 jupyterlab
 jupytext
 matplotlib
