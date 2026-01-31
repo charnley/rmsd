@@ -4,7 +4,7 @@ from conftest import RESOURCE_PATH  # type: ignore
 import rmsd as rmsdlib
 
 
-def test_kabash_algorith_rmsd() -> None:
+def test_kabsch_algorithm_rmsd() -> None:
 
     filename_1 = RESOURCE_PATH / "ci2_1.pdb"
     filename_2 = RESOURCE_PATH / "ci2_2.pdb"
@@ -17,7 +17,7 @@ def test_kabash_algorith_rmsd() -> None:
     np.testing.assert_almost_equal(value, 11.7768, decimal=4)
 
 
-def test_kabash_algorith_pdb() -> None:
+def test_kabsch_algorithm_pdb() -> None:
 
     filename_1 = RESOURCE_PATH / "ci2_1.pdb"
     filename_2 = RESOURCE_PATH / "ci2_2.pdb"
@@ -30,7 +30,7 @@ def test_kabash_algorith_pdb() -> None:
     np.testing.assert_array_almost_equal([-0.5124, 0.8565, 0.0608], rotation_matrix[0], decimal=3)
 
 
-def test_kabash_rotate_pdb() -> None:
+def test_kabsch_rotate_pdb() -> None:
 
     filename_1 = RESOURCE_PATH / "ci2_1.pdb"
     filename_2 = RESOURCE_PATH / "ci2_2.pdb"

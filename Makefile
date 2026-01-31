@@ -1,11 +1,13 @@
 .PHONY: update-format format test test-dist build types upload cov
 
-python=./env/bin/python
-pytest=./env/bin/pytest
+python-version=3.12
+
+env=./env
+python=${env}/bin/python
+pytest=${env}/bin/pytest
 package=rmsd
 
 version_file1=./rmsd/version.py
-version_file2=./rmsd/calculate_rmsd.py
 
 VERSION=$(shell cat ${version_file1} | egrep -o "([0-9]{1,}\.)+[0-9]{1,}")
 VERSION_PATCH=$(shell echo ${VERSION} | cut -d'.' -f3)
@@ -16,7 +18,8 @@ GIT_COMMIT=$(shell git rev-parse --short HEAD)
 ## Setup
 
 env:
-	conda env create -f ./environment.yml -p ./env --quiet
+	uv venv ${env} --python ${python-version}
+	uv pip install -r requirements.txt --python ${python}
 	${python} -m pre_commit install
 	${python} -m pip install -e .
 
@@ -42,6 +45,7 @@ cov:
 	${python} -m pytest --cov=${package} --cov-config .coveragerc --cov-report html tests
 
 build:
+	rm -rf ./dist/
 	${python} -m build --skip-dependency-check  .
 
 upload:
@@ -75,11 +79,10 @@ bump-version-major:
 set-version:
 	test ! -z "${VERSION}"
 	sed -i 's/\(^\|.*:\)__version__ = .*/__version__ = "${VERSION}"/' ${version_file1}
-	sed -i 's/\(^\|.*:\)__version__ = .*/__version__ = "${VERSION}"/' ${version_file2}
 
 commit-tag-version:
 	# git tag --list | grep -qix "${VERSION}"
-	git commit -m "Version ${VERSION}" --no-verify ${version_file1} ${version_file2}
+	git commit -m "Version ${VERSION}" --no-verify ${version_file1}
 	git tag '${package}-${VERSION}'
 
 ## Github

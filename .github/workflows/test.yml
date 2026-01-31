@@ -17,21 +17,19 @@ jobs:
         shell: bash -l {0}
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
     steps:
       - run: sudo apt-get install libopenblas-dev gcc
       - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: astral-sh/setup-uv@v7
         with:
-          activate-environment: rmsd-dev
-          environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
-      - run: pip install .
-      - run: which calculate_rmsd
-      - run: make test python=python
-      - run: make format python=python
-      - run: make build python=python
-      - run: make test-dist python=python
+      - run: make env python-version=${{ matrix.python-version }}
+      - run: source ./env/bin/activate && which calculate_rmsd
+      - run: source ./env/bin/activate && make test python=python
+      - run: source ./env/bin/activate && make format python=python
+      - run: make build
+      - run: make test-dist
       - run: for x in dist/*; do pip uninstall -y rmsd && pip install $x; done
-      - run: pip uninstall -y rmsd && pip install $(find dist -name "*.whl" | tail -n 1)[qml]
-      - run: which calculate_rmsd
+      - run: source ./env/bin/activate && pip uninstall -y rmsd && pip install $(find dist -name "*.whl" | tail -n 1)[qml]
+      - run: source ./env/bin/activate && which calculate_rmsd
