@@ -19,7 +19,7 @@ try:
     from qmllib.kernels import laplacian_kernel  # type: ignore
     from qmllib.representations import generate_fchl19  # type: ignore
 except ImportError:
-    qmllib = None
+    qmllib = None  # type: ignore
 
 
 __intro__ = """
