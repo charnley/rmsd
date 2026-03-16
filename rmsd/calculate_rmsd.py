@@ -19,7 +19,7 @@ try:
     from qmllib.kernels import laplacian_kernel  # type: ignore
     from qmllib.representations import generate_fchl19  # type: ignore
 except ImportError:
-    qmllib = None
+    qmllib = None  # type: ignore
 
 
 __intro__ = """
@@ -55,7 +55,10 @@ For more information, usage, example and citation read more at
 https://github.com/charnley/rmsd
 """
 
-from .version import __version__
+try:
+    from .version import __version__
+except ImportError:
+    __version__ = "version unknown"
 
 METHOD_KABSCH = "kabsch"
 METHOD_QUATERNION = "quaternion"
