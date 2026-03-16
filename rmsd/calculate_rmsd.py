@@ -55,7 +55,10 @@ For more information, usage, example and citation read more at
 https://github.com/charnley/rmsd
 """
 
-from .version import __version__
+try:
+    from .version import __version__
+except ImportError:
+    __version__ = None
 
 METHOD_KABSCH = "kabsch"
 METHOD_QUATERNION = "quaternion"
