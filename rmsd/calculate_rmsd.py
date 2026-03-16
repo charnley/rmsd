@@ -56,7 +56,7 @@ https://github.com/charnley/rmsd
 """
 
 try:
-    from .versionx import __version__
+    from .version import __version__
 except ImportError:
     __version__ = "version unknown"
 
