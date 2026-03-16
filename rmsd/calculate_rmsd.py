@@ -56,9 +56,9 @@ https://github.com/charnley/rmsd
 """
 
 try:
-    from .version import __version__
+    from .versionx import __version__
 except ImportError:
-    __version__ = None
+    __version__ = "version unknown"
 
 METHOD_KABSCH = "kabsch"
 METHOD_QUATERNION = "quaternion"
