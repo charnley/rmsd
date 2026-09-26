@@ -608,8 +608,7 @@ def kabsch_weighted(
     CMP = np.zeros(3)
     CMQ = np.zeros(3)
     C = np.zeros((3, 3))
-    if W is None:
-        W = np.ones(len(P)) / len(P)
+    W = np.ones(len(P)) / len(P) if W is None else W
     W = np.array([W, W, W]).T
     iw = 3.0 / W.sum()
     n = len(P)

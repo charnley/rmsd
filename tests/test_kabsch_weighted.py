@@ -32,3 +32,22 @@ def test_kabsch_weighted_fit_pdb() -> None:
     new_p_coord = rmsdlib.kabsch_fit(p_coord, q_coord, weights)
 
     np.testing.assert_array_almost_equal(q_coord[300], new_p_coord[300], decimal=2)
+
+
+def test_kabsch_weighted_defaults_to_uniform_weights() -> None:
+    filename_1 = RESOURCE_PATH / "ci2_12.pdb"
+    filename_2 = RESOURCE_PATH / "ci2_2.pdb"
+
+    _, p_coord = rmsdlib.get_coordinates_pdb(filename_1)
+    _, q_coord = rmsdlib.get_coordinates_pdb(filename_2)
+
+    uniform_weights = np.ones(len(p_coord)) / len(p_coord)
+
+    actual_rotation, actual_translation, actual_rmsd = rmsdlib.kabsch_weighted(p_coord, q_coord)
+    expected_rotation, expected_translation, expected_rmsd = rmsdlib.kabsch_weighted(
+        p_coord, q_coord, uniform_weights
+    )
+
+    np.testing.assert_allclose(actual_rotation, expected_rotation)
+    np.testing.assert_allclose(actual_translation, expected_translation)
+    np.testing.assert_allclose(actual_rmsd, expected_rmsd)
