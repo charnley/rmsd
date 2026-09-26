@@ -1274,8 +1274,8 @@ def check_reflections(
     swap_mask = [1, -1, -1, 1, -1, 1]
     reflection_mask = [1, -1, -1, -1, 1, 1, 1, -1]
 
-    for swap, i in zip(AXIS_SWAPS, swap_mask, strict=False):
-        for reflection, j in zip(AXIS_REFLECTIONS, reflection_mask, strict=False):
+    for swap, i in zip(AXIS_SWAPS, swap_mask, strict=True):
+        for reflection, j in zip(AXIS_REFLECTIONS, reflection_mask, strict=True):
             # skip enantiomers
             if keep_stereo and i * j == -1:
                 continue

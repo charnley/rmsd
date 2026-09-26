@@ -55,13 +55,13 @@ exclude = [
 
 [tool.ruff.lint]
 select = [
-    "E",      # pycodestyle errors
-    "F",      # pyflakes
-    "I",      # isort (import sorting)
-    "UP",     # pyupgrade (modern Python syntax)
-    "B",      # flake8-bugbear
-    "C4",     # flake8-comprehensions
-    "SIM",    # flake8-simplify
+    "E", # pycodestyle errors
+    "F", # pyflakes
+    "I", # isort (import sorting)
+    "UP", # pyupgrade (modern Python syntax)
+    "B", # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "SIM", # flake8-simplify
 ]
 # E501: line length handled by ruff-format
 # E203: false positives with formatter (parity with old flake8 config)
