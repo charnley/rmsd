@@ -12,7 +12,6 @@ from typing import Any, Protocol
 import numpy as np
 from numpy import ndarray
 from scipy.optimize import linear_sum_assignment
-from scipy.spatial import distance_matrix
 from scipy.spatial.distance import cdist
 
 try:
@@ -852,7 +851,7 @@ def hungarian_vectors(
         kernel += 1.0
 
     else:
-        kernel = distance_matrix(p_vecs, q_vecs)
+        kernel = cdist(p_vecs, q_vecs)
 
     _, indices_q = linear_sum_assignment(kernel)
 
