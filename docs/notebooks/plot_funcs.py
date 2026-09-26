@@ -15,7 +15,6 @@ REP_HEIGHT = 0.15
 
 
 def plot_molecule(ax, atoms, coords, hatch="/////", zorder=0):
-
     X = coords[:, 0]
     Y = coords[:, 1]
 
@@ -32,8 +31,7 @@ def plot_molecule(ax, atoms, coords, hatch="/////", zorder=0):
         path_effects=[outline],
     )
 
-    for atom, coord in zip(atoms, coords):
-
+    for atom, coord in zip(atoms, coords, strict=False):
         if isinstance(atom, int):
             atom = rmsdlib.str_atom(atom)
 
@@ -53,7 +51,6 @@ def plot_molecule(ax, atoms, coords, hatch="/////", zorder=0):
 
 
 def plot_representation(ax, atoms, coord, zorder=100):
-
     parameters = {
         "elements": np.unique(atoms),
         "pad": len(atoms),
@@ -97,7 +94,6 @@ def plot_representation(ax, atoms, coord, zorder=100):
 
 
 def plot_inertia(ax, pos, atoms, coord, zorder=100):
-
     center = rmsdlib.get_cm(atoms, coord)
     coord = coord - center
 
@@ -110,12 +106,12 @@ def plot_inertia(ax, pos, atoms, coord, zorder=100):
     eigvec = eigvec[np.argsort(eigval)]
     eigvec *= -1
 
-    arrow_options = dict(
-        zorder=zorder,
-        head_width=0.1,
-        head_length=0.1,
-        fc="k",
-    )
+    arrow_options = {
+        "zorder": zorder,
+        "head_width": 0.1,
+        "head_length": 0.1,
+        "fc": "k",
+    }
 
     arrow1 = ax.arrow(*pos, *eigvec[0, :2] * 0.8, **arrow_options)
     arrow2 = ax.arrow(*pos, *eigvec[1, :2] * 0.8, **arrow_options)
@@ -154,7 +150,6 @@ def plot_inertia(ax, pos, atoms, coord, zorder=100):
 
 
 def set_axis_default(ax, lim=2.0, use_grid=True):
-
     ax.set_box_aspect(1)
     ax.set_xlim(-lim, lim)
     ax.set_ylim(-lim, lim)
@@ -163,7 +158,6 @@ def set_axis_default(ax, lim=2.0, use_grid=True):
     ax.tick_params(axis="both", which="major", labelsize=0)
 
     for tick in ax.xaxis.get_major_ticks():
-
         tick.tick1line.set_visible(False)
         tick.tick2line.set_visible(False)
 
@@ -171,7 +165,6 @@ def set_axis_default(ax, lim=2.0, use_grid=True):
         tick.label2.set_visible(False)
 
     for tick in ax.yaxis.get_major_ticks():
-
         tick.tick1line.set_visible(False)
         tick.tick2line.set_visible(False)
 

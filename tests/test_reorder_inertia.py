@@ -5,7 +5,6 @@ from tests.conftest import RESOURCE_PATH, rotate_coord  # type: ignore
 
 
 def test_reorder_inertia_hungarian_butane() -> None:
-
     filename_a = RESOURCE_PATH / "butane.xyz"
     filename_b = RESOURCE_PATH / "butane_prime.xyz"
 
@@ -24,7 +23,6 @@ def test_reorder_inertia_hungarian_butane() -> None:
 
 
 def test_reorder_inertia_hungarian_complicated() -> None:
-
     filename_a = RESOURCE_PATH / "CHEMBL3039407.xyz"
 
     atoms_a, coord_a = rmsdlib.get_coordinates_xyz(filename_a, return_atoms_as_int=True)
@@ -56,7 +54,6 @@ def test_reorder_inertia_hungarian_complicated() -> None:
 
 
 def test_reorder_and_distance() -> None:
-
     filename_a = RESOURCE_PATH / "CHEMBL3039407.xyz"
 
     atoms_a, coord_a = rmsdlib.get_coordinates_xyz(filename_a, return_atoms_as_int=True)

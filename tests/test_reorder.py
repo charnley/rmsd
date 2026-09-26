@@ -7,7 +7,6 @@ import rmsd as rmsdlib
 
 
 def test_reorder_distance() -> None:
-
     N = 5
     atoms = np.array(["H"] * N)
     p_coord: ndarray = np.arange(N * 3)
@@ -37,7 +36,6 @@ def test_reorder_brute() -> None:
 
 
 def test_reorder_brute_ch() -> None:
-
     N = 6
     p_atoms_str = ["C"] * 3 + ["H"] * 3
     p_atoms_int = [rmsdlib.int_atom(atom) for atom in p_atoms_str]
@@ -63,7 +61,6 @@ def test_reorder_brute_ch() -> None:
 
 
 def test_reorder_hungarian() -> None:
-
     N = 5
     atoms = np.array(["H"] * N)
     p_coord: ndarray = np.arange(N * 3)
@@ -78,7 +75,6 @@ def test_reorder_hungarian() -> None:
 
 
 def test_reorder_inertia_hungarian() -> None:
-
     # coordinates of scrambled and rotated butane
     atoms = np.array(["C", "C", "C", "C", "H", "H", "H", "H", "H", "H", "H", "H", "H", "H"])
     atoms_ = [rmsdlib.int_atom(atom) for atom in atoms]

@@ -25,7 +25,9 @@ def degree2radiant(degrees: float) -> float:
     return degrees * np.pi / 180.0
 
 
-def rotate_coord(angle: float, coord: ndarray, axis: list[int] = [0, 1]):
+def rotate_coord(angle: float, coord: ndarray, axis: list[int] | None = None):
+    if axis is None:
+        axis = [0, 1]
     U = get_rotation_matrix(angle)
     _xy = np.dot(coord[:, axis], U)
     _coord = np.array(coord, copy=True)

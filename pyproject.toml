@@ -19,10 +19,71 @@ classifiers = [
 ]
 keywords = ["pdb", "atoms", "kabsch", "reordering", "rotation", "xyz", "rmsd"]
 
-dependencies=["numpy", "scipy"]
+# TODO: unpin versions when eig -> eigh fix lands (complex coords break scipy >= 1.18 cdist)
+dependencies = ["numpy==1.26.4", "scipy==1.11.4"]
 
 [project.optional-dependencies]
 qml = ["qmllib"]
+dev = [
+    "build",
+    "jupyterlab",
+    "jupytext",
+    "matplotlib",
+    "monkeytype",
+    "packaging",
+    "pip",
+    "pre-commit",
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "twine",
+    "ty",
+]
+
+[tool.ruff]
+line-length = 99
+target-version = "py310"
+exclude = [
+    ".git",
+    ".github",
+    "__pycache__",
+    "build",
+    "dist",
+    "*.egg-info",
+    "env",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "F",      # pyflakes
+    "I",      # isort (import sorting)
+    "UP",     # pyupgrade (modern Python syntax)
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "SIM",    # flake8-simplify
+]
+# E501: line length handled by ruff-format
+# E203: false positives with formatter (parity with old flake8 config)
+ignore = ["E501", "E203"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["rmsd"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]
+"*/__init__.py" = ["F401"]
+"*.ipynb" = ["F841"]
+
+[tool.ty.environment]
+python-version = "3.10"
+
+[tool.ty.src]
+exclude = ["tests/"]
+
+[tool.ty.rules]
+# Ignore unresolved imports since pre-commit env doesn't have all packages
+unresolved-import = "ignore"
 
 [project.urls]
 Homepage = "https://github.com/charnley/rmsd"

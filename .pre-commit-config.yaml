@@ -21,58 +21,21 @@ repos:
         args: ['--maxkb=3000']
 
 
-  - repo: https://github.com/myint/autoflake
-    rev: v2.3.1
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.6
     hooks:
-      - id: autoflake
-        name: removes unused variables
-        args:
-          - --in-place
-          - --remove-all-unused-imports
-          - --expand-star-imports
-          - --ignore-init-module-imports
-
-
-  - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.10.1
-    hooks:
-      - id: isort
-        name: sorts imports
-        args: ["--profile", "black", "--filter-files", "--line-width=99"]
-
-
-  - repo: https://github.com/psf/black
-    rev: 24.10.0
-    hooks:
-      - id: black
-        name: fixes formatting
-        language_version: python3
-        args: ["--line-length=99"]
-
-
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.1.1
-    hooks:
-      - id: flake8
-        name: checks pep8 style
-        args: [
-          "--max-line-length=99",
-          # Ignore imports in init files
-          "--per-file-ignores=*/__init__.py:F401,setup.py:E121",
-          # ignore long comments (E501), as long lines are formatted by black
-          # ignore Whitespace before ':' (E203)
-          # ignore Line break occurred before a binary operator (W503)
-          "--ignore=E501,E203,W503",
-        ]
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
 
 
   - repo: local
     hooks:
-      - id: mypy
-        name: checking types
-        entry: mypy --explicit-package-bases
+      - id: ty
+        name: Static type checking
+        entry: ty check
+        files: ^rmsd/.*\.py$
         language: system
-        types: [ python ]
 
 
   - repo: local
@@ -80,13 +43,13 @@ repos:
 
       - id: jupyisort
         name: Sorts ipynb imports
-        entry: jupytext --pipe-fmt ".py" --pipe "isort - --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --line-width=99" --sync
+        entry: jupytext --pipe-fmt ".py" --pipe "ruff check --select I --fix -" --sync
         files: \.ipynb$
         language: python
 
-      - id: jupyblack
+      - id: jupyformat
         name: Fixes ipynb format
-        entry: jupytext --pipe-fmt ".py" --pipe "black - --line-length=99" --sync
+        entry: jupytext --pipe-fmt ".py" --pipe "ruff format -" --sync
         files: \.ipynb$
         language: python
 

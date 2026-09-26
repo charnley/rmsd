@@ -78,7 +78,6 @@ def test_print_reflection_reorder() -> None:
 
 
 def test_bad_different_molcules() -> None:
-
     filename_a = RESOURCE_PATH / "ethane.xyz"
     filename_b = RESOURCE_PATH / "water.xyz"
 
@@ -89,7 +88,6 @@ def test_bad_different_molcules() -> None:
 
 
 def test_bad_different_order() -> None:
-
     filename_a = RESOURCE_PATH / "CHEMBL3039407.xyz"
     filename_b = RESOURCE_PATH / "CHEMBL3039407_order.xyz"
 
@@ -100,7 +98,6 @@ def test_bad_different_order() -> None:
 
 
 def test_rotation_methods() -> None:
-
     filename_a = RESOURCE_PATH / "ethane_translate.xyz"
     filename_b = RESOURCE_PATH / "ethane.xyz"
 
@@ -110,7 +107,6 @@ def test_rotation_methods() -> None:
 
 
 def test_reorder_methods() -> None:
-
     filename_a = RESOURCE_PATH / "CHEMBL3039407.xyz"
     filename_b = RESOURCE_PATH / "CHEMBL3039407_order.xyz"
 
@@ -125,7 +121,6 @@ def test_reorder_methods() -> None:
 
 
 def test_reflections() -> None:
-
     filename_a = RESOURCE_PATH / "CHEMBL3039407.xyz"
     filename_b = RESOURCE_PATH / "CHEMBL3039407.xyz"
 
@@ -135,7 +130,6 @@ def test_reflections() -> None:
 
 
 def test_ignore() -> None:
-
     filename_a = RESOURCE_PATH / "CHEMBL3039407.xyz"
     filename_b = RESOURCE_PATH / "CHEMBL3039407.xyz"
 
@@ -147,7 +141,6 @@ def test_ignore() -> None:
 
 
 def test_print_match_no_hydrogen() -> None:
-
     filename_a = RESOURCE_PATH / "CHEMBL3039407_order.xyz"
     filename_b = RESOURCE_PATH / "CHEMBL3039407_order.xyz"
 
@@ -188,7 +181,6 @@ def test_print_match_no_hydrogen() -> None:
 
 
 def test_only_alpha_carbons() -> None:
-
     filename_a = RESOURCE_PATH / "ci2_1.pdb"
     filename_b = RESOURCE_PATH / "ci2_2.pdb"
 
@@ -202,7 +194,7 @@ def test_only_alpha_carbons() -> None:
 
     assert len(atoms1) == 64
     assert len(np.unique(atoms1)) == 1
-    assert set(atoms1) == set(["C"])
+    assert set(atoms1) == {"C"}
 
     cmd2 = f"{filename_a} {filename_b}"
     print(cmd)

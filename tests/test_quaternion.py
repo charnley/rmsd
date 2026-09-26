@@ -5,7 +5,6 @@ import rmsd as rmsdlib
 
 
 def test_quaternion_rmsd_pdb() -> None:
-
     filename_p = RESOURCE_PATH / "ci2_1.pdb"
     filename_q = RESOURCE_PATH / "ci2_2.pdb"
 
@@ -23,7 +22,6 @@ def test_quaternion_rmsd_pdb() -> None:
 
 
 def test_quaternion_rotate_pdb() -> None:
-
     filename_p = RESOURCE_PATH / "ci2_1.pdb"
     filename_q = RESOURCE_PATH / "ci2_2.pdb"
 
@@ -36,7 +34,6 @@ def test_quaternion_rotate_pdb() -> None:
 
 
 def test_quaternion_transform() -> None:
-
     r = np.array([-0.31019, -0.59291, 0.63612, -0.38415])
     U = rmsdlib.quaternion_transform(r)
 
@@ -44,7 +41,6 @@ def test_quaternion_transform() -> None:
 
 
 def test_makeQ() -> None:
-
     r = [-0.31019, -0.59291, 0.63612, -0.38415]
     Q_r = rmsdlib.makeQ(*r)
 

@@ -10,7 +10,6 @@ qmllib = pytest.importorskip("qmllib")
 
 
 def test_reorder_qml() -> None:
-
     filename_1 = RESOURCE_PATH / "CHEMBL3039407.xyz"
 
     p_atoms, p_coord = rmsdlib.get_coordinates_xyz(filename_1, return_atoms_as_int=True)
@@ -59,11 +58,10 @@ def test_reorder_qml() -> None:
     assert q_atoms.tolist() == p_atoms.tolist()
 
     # Assert this is the same molecule
-    pytest.approx(0.0) == _rmsd
+    assert _rmsd == pytest.approx(0.0)
 
 
 def test_reorder_qml_distmat() -> None:
-
     filename_1 = RESOURCE_PATH / "CHEMBL3039407.xyz"
 
     p_atoms, p_coord = rmsdlib.get_coordinates_xyz(filename_1, return_atoms_as_int=True)
@@ -103,11 +101,10 @@ def test_reorder_qml_distmat() -> None:
     assert q_atoms.tolist() == p_atoms.tolist()
 
     # Assert this is the same molecule
-    pytest.approx(0.0) == _rmsd
+    assert _rmsd == pytest.approx(0.0)
 
 
 def test_pdb_only_carbon_possible() -> None:
-
     filename_a = RESOURCE_PATH / "issue98" / "test1.pdb"
     filename_b = RESOURCE_PATH / "issue98" / "test2.pdb"
 

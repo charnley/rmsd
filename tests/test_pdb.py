@@ -5,7 +5,6 @@ import rmsd as rmsdlib
 
 
 def test_pdb_only_carbon_possible() -> None:
-
     filename_a = RESOURCE_PATH / "issue98" / "test1.pdb"
     filename_b = RESOURCE_PATH / "issue98" / "test2.pdb"
 

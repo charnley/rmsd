@@ -5,7 +5,6 @@ import rmsd as rmsdlib
 
 
 def test_kabsch_algorithm_rmsd() -> None:
-
     filename_1 = RESOURCE_PATH / "ci2_1.pdb"
     filename_2 = RESOURCE_PATH / "ci2_2.pdb"
 
@@ -18,7 +17,6 @@ def test_kabsch_algorithm_rmsd() -> None:
 
 
 def test_kabsch_algorithm_pdb() -> None:
-
     filename_1 = RESOURCE_PATH / "ci2_1.pdb"
     filename_2 = RESOURCE_PATH / "ci2_2.pdb"
 
@@ -31,7 +29,6 @@ def test_kabsch_algorithm_pdb() -> None:
 
 
 def test_kabsch_rotate_pdb() -> None:
-
     filename_1 = RESOURCE_PATH / "ci2_1.pdb"
     filename_2 = RESOURCE_PATH / "ci2_2.pdb"
 

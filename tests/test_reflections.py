@@ -7,7 +7,6 @@ import rmsd as rmsdlib
 
 
 def test_reflections() -> None:
-
     atoms = np.array(["C", "H", "H", "H", "F"])
 
     p_coord = np.array(
@@ -34,7 +33,6 @@ def test_reflections() -> None:
 
 
 def test_reflections_norotation() -> None:
-
     atoms = np.array(["C", "H", "H", "H", "F"])
 
     p_coord = np.array(
@@ -64,7 +62,6 @@ def test_reflections_norotation() -> None:
 
 
 def test_reflections_reorder() -> None:
-
     p_atoms = np.array(["C", "H", "H", "H", "F"])
 
     p_coord = np.array(
@@ -95,7 +92,6 @@ def test_reflections_reorder() -> None:
 
 
 def test_reflections_keep_stereo() -> None:
-
     atoms = np.array(["C", "H", "H", "H", "F"])
 
     p_coord = np.array(

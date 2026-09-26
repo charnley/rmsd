@@ -5,7 +5,6 @@ import rmsd as rmsdlib
 
 
 def test_kabsch_fit_pdb() -> None:
-
     filename_p = RESOURCE_PATH / "ci2_1r+t.pdb"
     filename_q = RESOURCE_PATH / "ci2_1.pdb"
 
@@ -18,7 +17,6 @@ def test_kabsch_fit_pdb() -> None:
 
 
 def test_kabsch_weighted_fit_pdb() -> None:
-
     filename_1 = RESOURCE_PATH / "ci2_12.pdb"
     filename_2 = RESOURCE_PATH / "ci2_2.pdb"
 

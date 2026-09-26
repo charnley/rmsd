@@ -4,22 +4,23 @@ import copy
 import gzip
 import re
 import sys
+from collections.abc import Callable, Iterator
 from functools import partial
 from pathlib import Path
-from typing import Any, Iterator, Protocol
+from typing import Any, Protocol
 
 import numpy as np
 from numpy import ndarray
-from scipy.optimize import linear_sum_assignment  # type: ignore
-from scipy.spatial import distance_matrix  # type: ignore
-from scipy.spatial.distance import cdist  # type: ignore
+from scipy.optimize import linear_sum_assignment
+from scipy.spatial import distance_matrix
+from scipy.spatial.distance import cdist
 
 try:
-    import qmllib  # type: ignore
-    from qmllib.kernels import laplacian_kernel  # type: ignore
-    from qmllib.representations import generate_fchl19  # type: ignore
+    import qmllib
+    from qmllib.kernels import laplacian_kernel
+    from qmllib.representations import generate_fchl19
 except ImportError:
-    qmllib = None  # type: ignore
+    qmllib = None
 
 
 __intro__ = """
@@ -793,7 +794,7 @@ def quaternion_rotate(X: ndarray, Y: ndarray) -> ndarray:
     Qt_dot_W = np.asarray([np.dot(Q[k].T, W[k]) for k in range(N)])
     A = np.sum(Qt_dot_W, axis=0)
     eigen = np.linalg.eigh(A)
-    r = eigen[1][:, eigen[0].argmax()]
+    r = eigen[1][:, np.argmax(eigen[0])]
     rot = quaternion_transform(r)
     return rot
 
@@ -892,7 +893,7 @@ def reorder_similarity(
     n_atoms = p_atoms.shape[0]
     distance_cut = 20.0
 
-    parameters = {
+    parameters: dict[str, Any] = {
         "elements": elements,
         "pad": n_atoms,
         "rcut": distance_cut,
@@ -906,7 +907,6 @@ def reorder_similarity(
     view_reorder = np.zeros(q_atoms.shape, dtype=int)
 
     for atom in elements:
-
         (p_atom_idx,) = np.where(p_atoms == atom)
         (q_atom_idx,) = np.where(q_atoms == atom)
 
@@ -952,7 +952,6 @@ def reorder_distance(
     view_reorder = np.zeros(q_atoms.shape, dtype=int)
 
     for atom in unique_atoms:
-
         (p_atom_idx,) = np.where(p_atoms == atom)
         (q_atom_idx,) = np.where(q_atoms == atom)
 
@@ -1100,7 +1099,6 @@ def reorder_inertia_hungarian(
     best_review = np.arange(len(p_atoms))
 
     for mirror in AXIS_REFLECTIONS:
-
         tmp_eigvec = eigvec_q * mirror.T
         tmp_coord = np.dot(q_coord, tmp_eigvec)
 
@@ -1165,7 +1163,6 @@ def brute_permutation(A: ndarray, B: ndarray) -> ndarray:
     initial_order = list(range(num_atoms))
 
     for reorder_indices in generate_permutations(initial_order, num_atoms):
-
         # Re-order the atom array and coordinate matrix
         coords_ordered = B[reorder_indices]
 
@@ -1277,9 +1274,8 @@ def check_reflections(
     swap_mask = [1, -1, -1, 1, -1, 1]
     reflection_mask = [1, -1, -1, -1, 1, 1, 1, -1]
 
-    for swap, i in zip(AXIS_SWAPS, swap_mask):
-        for reflection, j in zip(AXIS_REFLECTIONS, reflection_mask):
-
+    for swap, i in zip(AXIS_SWAPS, swap_mask, strict=False):
+        for reflection, j in zip(AXIS_REFLECTIONS, reflection_mask, strict=False):
             # skip enantiomers
             if keep_stereo and i * j == -1:
                 continue
@@ -1394,7 +1390,7 @@ def get_inertia_tensor(atoms: ndarray, coord: ndarray) -> ndarray:
     Ixz = 0.0
     Iyz = 0.0
 
-    for sp, acoord in zip(atoms, coord):
+    for sp, acoord in zip(atoms, coord, strict=True):
         amass = ELEMENT_WEIGHTS[sp]
         Ixx += amass * (acoord[1] * acoord[1] + acoord[2] * acoord[2])
         Iyy += amass * (acoord[0] * acoord[0] + acoord[2] * acoord[2])
@@ -1462,7 +1458,7 @@ def set_coordinates(
     """
     N, _ = V.shape
 
-    if N != len(atoms):
+    if len(atoms) != N:
         raise ValueError("Mismatch between expected atoms and coordinate size")
 
     if not isinstance(atoms[0], str) and set_atoms_as_symbols:
@@ -1470,7 +1466,7 @@ def set_coordinates(
 
     fmt = "{:<2}" + (" {:15." + str(decimals) + "f}") * 3
 
-    out = list()
+    out = []
     out += [str(N)]
     out += [title]
 
@@ -1525,10 +1521,7 @@ def _parse_pdb_alphacarbon_line(line: str) -> bool:
     atom = atom.capitalize()
     location = atom_col[2]
 
-    if atom == "C" and location == "A":
-        return True
-
-    return False
+    return bool(atom == "C" and location == "A")
 
 
 def _parse_pdb_atom_line(line: str) -> str | None:
@@ -1608,12 +1601,12 @@ def _parse_pdb_atom_line(line: str) -> str | None:
     if len(atom) == 2 and atom[0] == "H":
         atom = "H"
 
-    if atom in NAMES_ELEMENT.keys():
+    if atom in NAMES_ELEMENT:
         return atom
 
     tokens = line.split()
     atom = tokens[2][0]
-    if atom in NAMES_ELEMENT.keys():
+    if atom in NAMES_ELEMENT:
         return atom
 
     # e.g. 1HD1
@@ -1700,17 +1693,17 @@ def get_coordinates_pdb(
     # Since the format doesn't require a space between columns, we use the
     # above column indices as a fallback.
 
-    V: list[ndarray] | ndarray = list()
+    V: list[ndarray] | ndarray = []
     assert isinstance(V, list)
 
     # Same with atoms and atom naming.
     # The most robust way to do this is probably
     # to assume that the atomtype is given in column 3.
 
-    atoms: list[str] = list()
-    alpha_carbons: list[bool] = list()
+    atoms: list[str] = []
+    alpha_carbons: list[bool] = []
     assert isinstance(atoms, list)
-    openfunc: Any
+    openfunc: Callable
 
     if is_gzip:
         openfunc = gzip.open
@@ -1720,9 +1713,8 @@ def get_coordinates_pdb(
         openarg = "r"
 
     with openfunc(filename, openarg) as f:
-        lines = f.readlines()
+        lines: list[str] = f.readlines()  # type: ignore
         for line in lines:
-
             if line.startswith("TER") or line.startswith("END"):
                 break
 
@@ -1770,9 +1762,8 @@ def get_coordinates_pdb(
 def get_coordinates_xyz_lines(
     lines: list[str], return_atoms_as_int: bool = False
 ) -> tuple[ndarray, ndarray]:
-
-    V: list[ndarray] | ndarray = list()
-    atoms: list[str] | ndarray = list()
+    V: list[ndarray] | ndarray = []
+    atoms: list[str] | ndarray = []
     n_atoms = 0
 
     assert isinstance(V, list)
@@ -1781,13 +1772,12 @@ def get_coordinates_xyz_lines(
     # Read the first line to obtain the number of atoms to read
     try:
         n_atoms = int(lines[0])
-    except ValueError:
-        raise ValueError("Could not obtain the number of atoms in the .xyz file.")
+    except ValueError as e:
+        raise ValueError("Could not obtain the number of atoms in the .xyz file.") from e
 
     # Skip the title line
     # Use the number of atoms to not read beyond the end of a file
     for lines_read, line in enumerate(lines[2:]):
-
         line = line.strip()
 
         if lines_read == n_atoms:
@@ -1810,8 +1800,7 @@ def get_coordinates_xyz_lines(
             atoms.append(atom)
         else:
             msg = (
-                f"Reading the .xyz file failed in line {lines_read + 2}. "
-                "Please check the format."
+                f"Reading the .xyz file failed in line {lines_read + 2}. Please check the format."
             )
             raise ValueError(msg)
 
@@ -1867,7 +1856,7 @@ def get_coordinates_xyz(
         openarg = "r"
 
     with openfunc(filename, openarg) as f:
-        lines = f.readlines()
+        lines: list[str] = f.readlines()  # type: ignore
 
     atoms, V = get_coordinates_xyz_lines(lines, return_atoms_as_int=return_atoms_as_int)
 
@@ -1875,7 +1864,6 @@ def get_coordinates_xyz(
 
 
 def parse_arguments(arguments: str | list[str] | None = None) -> argparse.Namespace:
-
     version_msg = f"""
 rmsd {__version__}
 
@@ -2044,17 +2032,14 @@ See https://github.com/charnley/rmsd for citation information
     # Check methods
     args.rotation = args.rotation.lower()
     if args.rotation not in ROTATION_METHODS:
-        print(
-            f"error: Unknown rotation method: '{args.rotation}'. " f"Please use {ROTATION_METHODS}"
-        )
+        print(f"error: Unknown rotation method: '{args.rotation}'. Please use {ROTATION_METHODS}")
         sys.exit(5)
 
     # Check reorder methods
     args.reorder_method = args.reorder_method.lower()
     if args.reorder_method not in REORDER_METHODS:
         print(
-            f'error: Unknown reorder method: "{args.reorder_method}". '
-            f"Please use {REORDER_METHODS}"
+            f'error: Unknown reorder method: "{args.reorder_method}". Please use {REORDER_METHODS}'
         )
         sys.exit(5)
 
@@ -2096,7 +2081,6 @@ See https://github.com/charnley/rmsd for citation information
 
 
 def main(args: list[str] | None = None) -> str:
-
     # Parse arguments
     settings = parse_arguments(args)
 
@@ -2134,7 +2118,7 @@ def main(args: list[str] | None = None) -> str:
     p_size = p_coord.shape[0]
     q_size = q_coord.shape[0]
 
-    if not p_size == q_size:
+    if p_size != q_size:
         print("error: Structures not same size")
         sys.exit()
 
@@ -2226,7 +2210,6 @@ https://github.com/charnley/rmsd for further examples.
     q_review = None
 
     if settings.use_reflections:
-
         result_rmsd, q_swap, q_reflection, q_review = check_reflections(
             p_atoms_sub,
             q_atoms_sub,
@@ -2237,7 +2220,6 @@ https://github.com/charnley/rmsd for further examples.
         )
 
     elif settings.use_reflections_keep_stereo:
-
         result_rmsd, q_swap, q_reflection, q_review = check_reflections(
             p_atoms_sub,
             q_atoms_sub,
@@ -2249,19 +2231,17 @@ https://github.com/charnley/rmsd for further examples.
         )
 
     elif settings.reorder:
-
         assert reorder_method is not None, "Cannot reorder without selecting --reorder method"
         q_review = reorder_method(p_atoms_sub, q_atoms_sub, p_coord_sub, q_coord_sub)
 
     # If there is a reorder, then apply before print
     if q_review is not None:
-
         q_atoms_sub = q_atoms_sub[q_review]
         q_coord_sub = q_coord_sub[q_review]
 
-        assert all(
-            p_atoms_sub == q_atoms_sub
-        ), "error: Structure not aligned. Please submit bug report at http://github.com/charnley/rmsd"
+        assert all(p_atoms_sub == q_atoms_sub), (
+            "error: Structure not aligned. Please submit bug report at http://github.com/charnley/rmsd"
+        )
 
     # Calculate the RMSD value
     if result_rmsd is None:
@@ -2269,7 +2249,6 @@ https://github.com/charnley/rmsd for further examples.
 
     # print result
     if settings.output:
-
         if q_swap is not None:
             q_coord_sub = q_coord_sub[:, q_swap]
 

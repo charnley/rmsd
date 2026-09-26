@@ -11,6 +11,6 @@ def test_centroid() -> None:
     atms = np.asarray([a1, a2, a3])
     centroid = rmsdlib.centroid(atms)
 
-    assert 3 == len(centroid)
+    assert len(centroid) == 3
 
     np.testing.assert_array_almost_equal([-20.7496, 17.5966, 25.6810], centroid, decimal=3)

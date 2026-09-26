@@ -6,7 +6,6 @@ from rmsd import get_coordinates_xyz, get_coordinates_xyz_lines
 
 
 def test_reorder_print_and_rmsd() -> None:
-
     # Issue 93, problem with printed structure after reorder.
     # - Calculate rmsd with --reorder (structure a and b)
     # - Calculate --print and --reorder to structure c.xyz

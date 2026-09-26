@@ -19,7 +19,7 @@ GIT_COMMIT=$(shell git rev-parse --short HEAD)
 
 env:
 	uv venv ${env} --python ${python-version}
-	uv pip install -r requirements.txt --python ${python}
+	uv pip install -e ".[dev]" --python ${python}
 	${python} -m pre_commit install
 	${python} -m pip install -e .
 
