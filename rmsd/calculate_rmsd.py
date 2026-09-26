@@ -1451,10 +1451,12 @@ def get_principal_axis(atoms: ndarray, V: ndarray) -> ndarray:
     """
     inertia = get_inertia_tensor(atoms, V)
 
-    # Symmetric tensor: eigh is correct (real) and faster; indexing kept
+    # Symmetric tensor: eigh is correct (real) and faster
     eigval, eigvec = np.linalg.eigh(inertia)
 
-    principal_axis: ndarray = eigvec[np.argmax(eigval)]
+    # Eigenvectors are the *columns* of eigvec; take the one with the
+    # largest eigenvalue
+    principal_axis: ndarray = eigvec[:, np.argmax(eigval)]
 
     return principal_axis
 
