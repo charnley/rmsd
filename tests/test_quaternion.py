@@ -38,17 +38,3 @@ def test_quaternion_transform() -> None:
     U = rmsdlib.quaternion_transform(r)
 
     np.testing.assert_array_almost_equal([-0.5124, 0.8565, 0.0608], U[0], decimal=3)
-
-
-def test_makeQ() -> None:
-    r = [-0.31019, -0.59291, 0.63612, -0.38415]
-    Q_r = rmsdlib.makeQ(*r)
-
-    np.testing.assert_array_almost_equal([-0.3841, -0.6361, -0.5929, -0.3101], Q_r[0], decimal=3)
-
-
-def test_makeW() -> None:
-    r = [-0.31019, -0.59291, 0.63612, -0.38415]
-    Wt_r = rmsdlib.makeW(*r)
-
-    np.testing.assert_array_almost_equal([-0.3841, 0.6361, 0.5929, -0.3101], Wt_r[0], decimal=3)

@@ -37,6 +37,9 @@ test:
 test-dist:
 	${python} -m twine check dist/*
 
+benchmark:
+	${python} -m pytest ./benchmarks
+
 types:
 	${python} -m monkeytype run $$(which ${pytest}) ./tests
 	${python} -m monkeytype list-modules | grep ${package} | parallel -j1 "${python} -m monkeytype apply {} > /dev/null && echo {}"
