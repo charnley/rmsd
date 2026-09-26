@@ -19,12 +19,12 @@ classifiers = [
 ]
 keywords = ["pdb", "atoms", "kabsch", "reordering", "rotation", "xyz", "rmsd"]
 
-# TODO: unpin versions when eig -> eigh fix lands (complex coords break scipy >= 1.18 cdist)
-dependencies = ["numpy==1.26.4", "scipy==1.11.4"]
+dependencies = ["numpy", "scipy"]
 
 [project.optional-dependencies]
 qml = ["qmllib"]
 dev = [
+    "pytest-benchmark",
     "build",
     "jupyterlab",
     "jupytext",

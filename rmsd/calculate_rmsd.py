@@ -333,6 +333,12 @@ ELEMENT_NAMES = {
 
 NAMES_ELEMENT = {value: key for key, value in ELEMENT_NAMES.items()}
 
+# Fast vectorized weight lookup: index by atomic number (atoms are int arrays).
+# Same values as ELEMENT_WEIGHTS, O(N) in C instead of a Python list comp.
+_ELEMENT_WEIGHTS_ARRAY = np.zeros(max(ELEMENT_WEIGHTS) + 1, dtype=float)
+for _z, _w in ELEMENT_WEIGHTS.items():
+    _ELEMENT_WEIGHTS_ARRAY[_z] = _w
+
 
 class ReorderCallable(Protocol):
     def __call__(
@@ -603,23 +609,18 @@ def kabsch_weighted(
     RMSD : float
            Root mean squared deviation between P and Q
     """
-    # Computation of the weighted covariance matrix
-    CMP = np.zeros(3)
-    CMQ = np.zeros(3)
-    C = np.zeros((3, 3))
-    if W is None:
-        W = np.ones(len(P)) / len(P)
-    W = np.array([W, W, W]).T
-    iw = 3.0 / W.sum()
-    n = len(P)
-    for i in range(3):
-        for j in range(n):
-            for k in range(3):
-                C[i, k] += P[j, i] * Q[j, k] * W[j, i]
-    CMP = (P * W).sum(axis=0)
-    CMQ = (Q * W).sum(axis=0)
-    PSQ = (P * P * W).sum() - (CMP * CMP).sum() * iw
-    QSQ = (Q * Q * W).sum() - (CMQ * CMQ).sum() * iw
+    # Computation of the weighted covariance matrix (vectorized; exact same
+    # math as the former triple loop over i, j, k)
+    w = np.ones(len(P)) / len(P) if W is None else W
+
+    wsum = w.sum()
+    iw = 1.0 / wsum
+    w_col = w[:, None]
+    CMP = (P * w_col).sum(axis=0)
+    CMQ = (Q * w_col).sum(axis=0)
+    C = (P * w_col).T.dot(Q)
+    PSQ = (P * P * w_col).sum() - (CMP * CMP).sum() * iw
+    QSQ = (Q * Q * w_col).sum() - (CMQ * CMQ).sum() * iw
     C = (C - np.outer(CMP, CMQ) * iw) * iw
 
     # Computation of the optimal rotation matrix
@@ -642,11 +643,7 @@ def kabsch_weighted(
     if msd < 0.0:
         msd = 0.0
     rmsd_ = np.sqrt(msd)
-    V = np.zeros(3)
-    for i in range(3):
-        t = (U[i, :] * CMQ).sum()
-        V[i] = CMP[i] - t
-    V = V * iw
+    V = (CMP - U.dot(CMQ)) * iw
     return U, V, rmsd_
 
 
@@ -787,11 +784,51 @@ def quaternion_rotate(X: ndarray, Y: ndarray) -> ndarray:
     rot : matrix
         Rotation matrix (D,D)
     """
+    # Vectorized equivalent of the former per-atom makeW/makeQ + dot loop.
+    # makeW/makeQ themselves are kept unchanged as public API; here we fill
+    # the (N,4,4) stacks with slicing (C-speed) and reduce with einsum.
+    x1 = X[:, 0]
+    x2 = X[:, 1]
+    x3 = X[:, 2]
+    y1 = Y[:, 0]
+    y2 = Y[:, 1]
+    y3 = Y[:, 2]
     N = X.shape[0]
-    W = np.asarray([makeW(*Y[k]) for k in range(N)])
-    Q = np.asarray([makeQ(*X[k]) for k in range(N)])
-    Qt_dot_W = np.asarray([np.dot(Q[k].T, W[k]) for k in range(N)])
-    A = np.sum(Qt_dot_W, axis=0)
+    Q = np.empty((N, 4, 4))
+    Q[:, 0, 0] = 0.0
+    Q[:, 0, 1] = -x3
+    Q[:, 0, 2] = x2
+    Q[:, 0, 3] = x1
+    Q[:, 1, 0] = x3
+    Q[:, 1, 1] = 0.0
+    Q[:, 1, 2] = -x1
+    Q[:, 1, 3] = x2
+    Q[:, 2, 0] = -x2
+    Q[:, 2, 1] = x1
+    Q[:, 2, 2] = 0.0
+    Q[:, 2, 3] = x3
+    Q[:, 3, 0] = -x1
+    Q[:, 3, 1] = -x2
+    Q[:, 3, 2] = -x3
+    Q[:, 3, 3] = 0.0
+    W = np.empty((N, 4, 4))
+    W[:, 0, 0] = 0.0
+    W[:, 0, 1] = y3
+    W[:, 0, 2] = -y2
+    W[:, 0, 3] = y1
+    W[:, 1, 0] = -y3
+    W[:, 1, 1] = 0.0
+    W[:, 1, 2] = y1
+    W[:, 1, 3] = y2
+    W[:, 2, 0] = y2
+    W[:, 2, 1] = -y1
+    W[:, 2, 2] = 0.0
+    W[:, 2, 3] = y3
+    W[:, 3, 0] = -y1
+    W[:, 3, 1] = -y2
+    W[:, 3, 2] = -y3
+    W[:, 3, 3] = 0.0
+    A = np.einsum("nji,njk->ik", Q, W)
     eigen = np.linalg.eigh(A)
     r = eigen[1][:, np.argmax(eigen[0])]
     rot = quaternion_transform(r)
@@ -1077,15 +1114,18 @@ def reorder_inertia_hungarian(
     q_coord -= get_cm(q_atoms, q_coord)
 
     # Calculate inertia vectors for both structures
+    # Note: inertia tensors are real symmetric, so eigh is correct (real
+    # output) and faster than eig. eig returns complex128 on NumPy>=2 which
+    # breaks cdist downstream.
     inertia_p = get_inertia_tensor(p_atoms, p_coord)
-    eigval_p, eigvec_p = np.linalg.eig(inertia_p)
+    eigval_p, eigvec_p = np.linalg.eigh(inertia_p)
 
     eigvec_p = eigvec_p.T
     eigvec_p = eigvec_p[np.argsort(eigval_p)]
     eigvec_p = eigvec_p.T
 
     inertia_q = get_inertia_tensor(q_atoms, q_coord)
-    eigval_q, eigvec_q = np.linalg.eig(inertia_q)
+    eigval_q, eigvec_q = np.linalg.eigh(inertia_q)
 
     eigvec_q = eigvec_q.T
     eigvec_q = eigvec_q[np.argsort(eigval_q)]
@@ -1268,7 +1308,7 @@ def check_reflections(
     min_rmsd = np.inf
     min_swap: ndarray
     min_reflection: ndarray
-    min_review: ndarray = np.array(range(len(p_atoms)))
+    min_review: ndarray = np.arange(len(p_atoms))
     tmp_review: ndarray = min_review
     swap_mask = [1, -1, -1, 1, -1, 1]
     reflection_mask = [1, -1, -1, -1, 1, 1, 1, -1]
@@ -1279,10 +1319,13 @@ def check_reflections(
             if keep_stereo and i * j == -1:
                 continue
 
-            tmp_atoms = copy.copy(q_atoms)
-            tmp_coord = copy.deepcopy(q_coord)
-            tmp_coord = tmp_coord[:, swap]
-            tmp_coord = np.dot(tmp_coord, np.diag(reflection))
+            # Note: [:, swap] already copies the coordinates, so the old
+            # deepcopy is skipped; scale columns directly instead of
+            # dot(diag(reflection)) (identical result, no 3x3 alloc).
+            # q_atoms gets a cheap copy to keep isolation from custom
+            # reorder callables that might mutate their input.
+            tmp_atoms = q_atoms.copy()
+            tmp_coord = q_coord[:, swap] * reflection
             tmp_coord -= centroid(tmp_coord)
 
             # Reorder
@@ -1358,8 +1401,7 @@ def get_cm(atoms: ndarray, V: ndarray) -> ndarray:
         The CM vector
     """
 
-    weights: list[float] | ndarray = [ELEMENT_WEIGHTS[x] for x in atoms]
-    weights = np.asarray(weights)
+    weights = _ELEMENT_WEIGHTS_ARRAY[np.asarray(atoms)]
     center_of_mass: ndarray = np.average(V, axis=0, weights=weights)
 
     return center_of_mass
@@ -1382,26 +1424,13 @@ def get_inertia_tensor(atoms: ndarray, coord: ndarray) -> ndarray:
 
     coord = coord - get_cm(atoms, coord)
 
-    Ixx = 0.0
-    Iyy = 0.0
-    Izz = 0.0
-    Ixy = 0.0
-    Ixz = 0.0
-    Iyz = 0.0
+    # Note: the former per-atom Python loop computing Ixx..Iyz was dead code
+    # (never returned); the vectorized path below is the actual result.
+    # Also avoid building the full NxN diag(masses): broadcast instead.
+    atomic_masses = _ELEMENT_WEIGHTS_ARRAY[np.asarray(atoms)]
 
-    for sp, acoord in zip(atoms, coord, strict=True):
-        amass = ELEMENT_WEIGHTS[sp]
-        Ixx += amass * (acoord[1] * acoord[1] + acoord[2] * acoord[2])
-        Iyy += amass * (acoord[0] * acoord[0] + acoord[2] * acoord[2])
-        Izz += amass * (acoord[0] * acoord[0] + acoord[1] * acoord[1])
-        Ixy += -amass * acoord[0] * acoord[1]
-        Ixz += -amass * acoord[0] * acoord[2]
-        Iyz += -amass * acoord[1] * acoord[2]
+    helper = (coord * atomic_masses[:, None]).T.dot(coord)
 
-    atomic_masses = np.asarray([ELEMENT_WEIGHTS[a] for a in atoms])
-
-    mass_matrix = np.diag(atomic_masses)
-    helper = coord.T.dot(mass_matrix).dot(coord)
     inertia_tensor: np.ndarray = np.diag(np.ones(3)) * helper.trace() - helper
     return inertia_tensor
 
@@ -1422,7 +1451,8 @@ def get_principal_axis(atoms: ndarray, V: ndarray) -> ndarray:
     """
     inertia = get_inertia_tensor(atoms, V)
 
-    eigval, eigvec = np.linalg.eig(inertia)
+    # Symmetric tensor: eigh is correct (real) and faster; indexing kept
+    eigval, eigvec = np.linalg.eigh(inertia)
 
     principal_axis: ndarray = eigvec[np.argmax(eigval)]
 
