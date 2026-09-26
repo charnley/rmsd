@@ -17,7 +17,9 @@ jobs:
         shell: bash -l {0}
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        # TODO: re-add 3.13/3.14 when eig -> eigh fix lands and numpy/scipy are unpinned
+        # (pinned numpy==1.26.4/scipy==1.11.4 have no cp313/cp314 wheels)
+        python-version: ['3.10', '3.11', '3.12']
     steps:
       - run: sudo apt-get install libopenblas-dev gcc
       - uses: actions/checkout@v2
