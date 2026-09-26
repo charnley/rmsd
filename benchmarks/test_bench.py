@@ -2,7 +2,7 @@
 
 Run with::
 
-    pip install -e ".[bench]"
+    pip install -e ".[dev]"
     pytest benchmarks --benchmark-only --benchmark-sort=mean
 
 Each test benchmarks one hot operation in isolation. Datasets:
@@ -17,14 +17,16 @@ Nothing here affects the library or the test suite; it is only
 collected when ``pytest benchmarks`` is invoked explicitly.
 """
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 
-pytest.importorskip("pytest_benchmark", reason="benchmarks need the rmsd[bench] extra")
+pytest.importorskip("pytest_benchmark", reason="benchmarks need the rmsd[dev] extra")
 
-from rmsd import calculate_rmsd as R
+import rmsd as rmsdlib
 
-RESOURCE = "tests/resources"
+RESOURCE = Path("tests/resources")
 
 # ---------------------------------------------------------------------------
 # Dataset helpers (module-scoped so file I/O is not part of the timing)
@@ -48,45 +50,46 @@ def _synthetic(n_atoms: int, seed: int = 7):
     )
     q_coord = p_coord @ rot + np.array([2.0, -1.0, 0.5])
     q_coord += rng.normal(0.0, 0.01, size=q_coord.shape)
-    perm = rng.permutation(n_atoms)
     # Shuffle only within same element so reorder can recover it
     q_atoms = atoms.copy()
     q_shuffled = q_coord.copy()
     for el in np.unique(atoms):
-        src = np.where(atoms == el)[0]
-        dst = np.where(atoms == el)[0]
-        q_shuffled[src] = q_coord[dst[rng.permutation(len(dst))]]
-    _ = perm  # keep permutation intent explicit; per-element shuffle above
+        idx = np.where(atoms == el)[0]
+        q_shuffled[idx] = q_coord[idx[rng.permutation(len(idx))]]
     return atoms, p_coord, q_atoms, q_shuffled
-
-
-def _load_xyz(name):
-    return R.get_coordinates_xyz(f"{RESOURCE}/{name}", return_atoms_as_int=True)
-
-
-def _load_pdb(name):
-    return R.get_coordinates_pdb(f"{RESOURCE}/{name}", return_atoms_as_int=True)
 
 
 @pytest.fixture(scope="module")
 def ds_ethane():
-    p_atoms, p_coord = _load_xyz("ethane.xyz")
-    q_atoms, q_coord = _load_xyz("ethane_translate.xyz")
+    p_atoms, p_coord = rmsdlib.get_coordinates_xyz(
+        RESOURCE / "ethane.xyz", return_atoms_as_int=True
+    )
+    q_atoms, q_coord = rmsdlib.get_coordinates_xyz(
+        RESOURCE / "ethane_translate.xyz", return_atoms_as_int=True
+    )
     return p_atoms, p_coord, q_atoms, q_coord
 
 
 @pytest.fixture(scope="module")
 def ds_chembl():
-    p_atoms, p_coord = _load_xyz("CHEMBL3039407.xyz")
-    q_atoms, q_coord = _load_xyz("CHEMBL3039407_order.xyz")
+    p_atoms, p_coord = rmsdlib.get_coordinates_xyz(
+        RESOURCE / "CHEMBL3039407.xyz", return_atoms_as_int=True
+    )
+    q_atoms, q_coord = rmsdlib.get_coordinates_xyz(
+        RESOURCE / "CHEMBL3039407_order.xyz", return_atoms_as_int=True
+    )
     return p_atoms, p_coord, q_atoms, q_coord
 
 
 @pytest.fixture(scope="module")
 def ds_ci2():
     # 1064 atoms -- top of the 100-1k window
-    p_atoms, p_coord = _load_pdb("ci2_1.pdb")
-    q_atoms, q_coord = _load_pdb("ci2_2.pdb")
+    p_atoms, p_coord = rmsdlib.get_coordinates_pdb(
+        RESOURCE / "ci2_1.pdb", return_atoms_as_int=True
+    )
+    q_atoms, q_coord = rmsdlib.get_coordinates_pdb(
+        RESOURCE / "ci2_2.pdb", return_atoms_as_int=True
+    )
     return p_atoms, p_coord, q_atoms, q_coord
 
 
@@ -102,8 +105,8 @@ def ds_syn1000():
 
 def _centered(ds):
     p_atoms, p_coord, q_atoms, q_coord = ds
-    pc = p_coord - R.centroid(p_coord)
-    qc = q_coord - R.centroid(q_coord)
+    pc = p_coord - rmsdlib.centroid(p_coord)
+    qc = q_coord - rmsdlib.centroid(q_coord)
     return p_atoms, pc, q_atoms, qc
 
 
@@ -115,32 +118,32 @@ def _centered(ds):
 @pytest.mark.parametrize("ds", ["ds_ethane", "ds_chembl", "ds_syn200", "ds_syn1000", "ds_ci2"])
 def test_rmsd(benchmark, ds, request):
     p_atoms, p_coord, q_atoms, q_coord = _centered(request.getfixturevalue(ds))
-    benchmark(R.rmsd, p_coord, q_coord)
+    benchmark(rmsdlib.rmsd, p_coord, q_coord)
 
 
 @pytest.mark.parametrize("ds", ["ds_ethane", "ds_chembl", "ds_syn200", "ds_syn1000", "ds_ci2"])
 def test_kabsch(benchmark, ds, request):
     p_atoms, p_coord, q_atoms, q_coord = _centered(request.getfixturevalue(ds))
-    benchmark(R.kabsch, p_coord, q_coord)
+    benchmark(rmsdlib.kabsch, p_coord, q_coord)
 
 
 @pytest.mark.parametrize("ds", ["ds_ethane", "ds_chembl", "ds_syn200", "ds_syn1000", "ds_ci2"])
 def test_kabsch_rmsd(benchmark, ds, request):
     p_atoms, p_coord, q_atoms, q_coord = _centered(request.getfixturevalue(ds))
-    benchmark(R.kabsch_rmsd, p_coord, q_coord)
+    benchmark(rmsdlib.kabsch_rmsd, p_coord, q_coord)
 
 
 @pytest.mark.parametrize("ds", ["ds_ethane", "ds_chembl", "ds_syn200", "ds_syn1000", "ds_ci2"])
 def test_kabsch_weighted(benchmark, ds, request):
     p_atoms, p_coord, q_atoms, q_coord = _centered(request.getfixturevalue(ds))
     w = np.ones(len(p_atoms))
-    benchmark(R.kabsch_weighted, p_coord, q_coord, w)
+    benchmark(rmsdlib.kabsch_weighted, p_coord, q_coord, w)
 
 
 @pytest.mark.parametrize("ds", ["ds_ethane", "ds_chembl", "ds_syn200", "ds_syn1000", "ds_ci2"])
 def test_quaternion_rmsd(benchmark, ds, request):
     p_atoms, p_coord, q_atoms, q_coord = _centered(request.getfixturevalue(ds))
-    benchmark(R.quaternion_rmsd, p_coord, q_coord)
+    benchmark(rmsdlib.quaternion_rmsd, p_coord, q_coord)
 
 
 # ---------------------------------------------------------------------------
@@ -151,13 +154,13 @@ def test_quaternion_rmsd(benchmark, ds, request):
 @pytest.mark.parametrize("ds", ["ds_ethane", "ds_chembl", "ds_syn200", "ds_syn1000", "ds_ci2"])
 def test_get_cm(benchmark, ds, request):
     p_atoms, p_coord, _, _ = request.getfixturevalue(ds)
-    benchmark(R.get_cm, p_atoms, p_coord)
+    benchmark(rmsdlib.get_cm, p_atoms, p_coord)
 
 
 @pytest.mark.parametrize("ds", ["ds_ethane", "ds_chembl", "ds_syn200", "ds_syn1000", "ds_ci2"])
 def test_get_inertia_tensor(benchmark, ds, request):
     p_atoms, p_coord, _, _ = request.getfixturevalue(ds)
-    benchmark(R.get_inertia_tensor, p_atoms, p_coord)
+    benchmark(rmsdlib.get_inertia_tensor, p_atoms, p_coord)
 
 
 # ---------------------------------------------------------------------------
@@ -168,7 +171,7 @@ def test_get_inertia_tensor(benchmark, ds, request):
 @pytest.mark.parametrize("ds", ["ds_ethane", "ds_chembl", "ds_syn200", "ds_syn1000", "ds_ci2"])
 def test_reorder_hungarian(benchmark, ds, request):
     p_atoms, p_coord, q_atoms, q_coord = _centered(request.getfixturevalue(ds))
-    benchmark(R.reorder_hungarian, p_atoms, q_atoms, p_coord, q_coord)
+    benchmark(rmsdlib.reorder_hungarian, p_atoms, q_atoms, p_coord, q_coord)
 
 
 @pytest.mark.parametrize("ds", ["ds_ethane", "ds_chembl", "ds_syn200"])
@@ -176,19 +179,19 @@ def test_reorder_inertia_hungarian(benchmark, ds, request):
     # 8x Hungarian + SVD; skip syn1000/ci2 here (covered separately below
     # with fewer rounds to keep suite runtime sane)
     p_atoms, p_coord, q_atoms, q_coord = request.getfixturevalue(ds)
-    benchmark(R.reorder_inertia_hungarian, p_atoms, q_atoms, p_coord, q_coord)
+    benchmark(rmsdlib.reorder_inertia_hungarian, p_atoms, q_atoms, p_coord, q_coord)
 
 
 @pytest.mark.benchmark(min_rounds=3)
 def test_reorder_inertia_hungarian_ci2(benchmark, ds_ci2):
     p_atoms, p_coord, q_atoms, q_coord = ds_ci2
-    benchmark(R.reorder_inertia_hungarian, p_atoms, q_atoms, p_coord, q_coord)
+    benchmark(rmsdlib.reorder_inertia_hungarian, p_atoms, q_atoms, p_coord, q_coord)
 
 
 @pytest.mark.parametrize("ds", ["ds_ethane", "ds_chembl", "ds_syn200", "ds_syn1000"])
 def test_reorder_distance(benchmark, ds, request):
     p_atoms, p_coord, q_atoms, q_coord = request.getfixturevalue(ds)
-    benchmark(R.reorder_distance, p_atoms, q_atoms, p_coord, q_coord)
+    benchmark(rmsdlib.reorder_distance, p_atoms, q_atoms, p_coord, q_coord)
 
 
 @pytest.mark.parametrize("ds", ["ds_ethane", "ds_chembl"])
@@ -196,11 +199,11 @@ def test_check_reflections_hungarian(benchmark, ds, request):
     # 48x (reorder+rmsd); only small N by default
     p_atoms, p_coord, q_atoms, q_coord = _centered(request.getfixturevalue(ds))
     benchmark(
-        R.check_reflections,
+        rmsdlib.check_reflections,
         p_atoms,
         q_atoms,
         p_coord,
         q_coord,
-        reorder_method=R.reorder_hungarian,
-        rmsd_method=R.kabsch_rmsd,
+        reorder_method=rmsdlib.reorder_hungarian,
+        rmsd_method=rmsdlib.kabsch_rmsd,
     )

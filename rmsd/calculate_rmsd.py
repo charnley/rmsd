@@ -609,7 +609,7 @@ def kabsch_weighted(
     """
     # Computation of the weighted covariance matrix (vectorized; exact same
     # math as the former triple loop over i, j, k)
-    w = np.ones(len(P)) / len(P) if W is None else W
+    w = np.ones(len(P)) / len(P) if W is None else np.asarray(W, dtype=float)
 
     wsum = w.sum()
     iw = 1.0 / wsum
