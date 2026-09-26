@@ -333,8 +333,6 @@ ELEMENT_NAMES = {
 
 NAMES_ELEMENT = {value: key for key, value in ELEMENT_NAMES.items()}
 
-# Fast vectorized weight lookup: index by atomic number (atoms are int arrays).
-# Same values as ELEMENT_WEIGHTS, O(N) in C instead of a Python list comp.
 _ELEMENT_WEIGHTS_ARRAY = np.zeros(max(ELEMENT_WEIGHTS) + 1, dtype=float)
 for _z, _w in ELEMENT_WEIGHTS.items():
     _ELEMENT_WEIGHTS_ARRAY[_z] = _w
@@ -732,39 +730,75 @@ def quaternion_transform(r: ndarray) -> ndarray:
     note: translation will be zero when the centroids of each molecule are the
     same
     """
-    Wt_r = makeW(*r).T
-    Q_r = makeQ(*r)
+    Wt_r = _makeW(*r).T
+    Q_r = _makeQ(*r)
     rot: ndarray = Wt_r.dot(Q_r)[:3, :3]
     return rot
 
 
-def makeW(r1: float, r2: float, r3: float, r4: float = 0) -> ndarray:
+def _makeW(
+    r1: float | ndarray,
+    r2: float | ndarray,
+    r3: float | ndarray,
+    r4: float | ndarray = 0.0,
+) -> ndarray:
     """
     matrix involved in quaternion rotation
+
+    Components may be scalars (returns (4,4)) or length-N arrays
+    (returns (N,4,4) stack).
     """
-    W = np.asarray(
-        [
-            [r4, r3, -r2, r1],
-            [-r3, r4, r1, r2],
-            [r2, -r1, r4, r3],
-            [-r1, -r2, -r3, r4],
-        ]
-    )
+    shape = np.broadcast_shapes(np.shape(r1), np.shape(r2), np.shape(r3), np.shape(r4))
+    W = np.empty(shape + (4, 4))
+    W[..., 0, 0] = r4
+    W[..., 0, 1] = r3
+    W[..., 0, 2] = -r2
+    W[..., 0, 3] = r1
+    W[..., 1, 0] = -r3
+    W[..., 1, 1] = r4
+    W[..., 1, 2] = r1
+    W[..., 1, 3] = r2
+    W[..., 2, 0] = r2
+    W[..., 2, 1] = -r1
+    W[..., 2, 2] = r4
+    W[..., 2, 3] = r3
+    W[..., 3, 0] = -r1
+    W[..., 3, 1] = -r2
+    W[..., 3, 2] = -r3
+    W[..., 3, 3] = r4
     return W
 
 
-def makeQ(r1: float, r2: float, r3: float, r4: float = 0) -> ndarray:
+def _makeQ(
+    r1: float | ndarray,
+    r2: float | ndarray,
+    r3: float | ndarray,
+    r4: float | ndarray = 0.0,
+) -> ndarray:
     """
     matrix involved in quaternion rotation
+
+    Components may be scalars (returns (4,4)) or length-N arrays
+    (returns (N,4,4) stack).
     """
-    Q = np.asarray(
-        [
-            [r4, -r3, r2, r1],
-            [r3, r4, -r1, r2],
-            [-r2, r1, r4, r3],
-            [-r1, -r2, -r3, r4],
-        ]
-    )
+    shape = np.broadcast_shapes(np.shape(r1), np.shape(r2), np.shape(r3), np.shape(r4))
+    Q = np.empty(shape + (4, 4))
+    Q[..., 0, 0] = r4
+    Q[..., 0, 1] = -r3
+    Q[..., 0, 2] = r2
+    Q[..., 0, 3] = r1
+    Q[..., 1, 0] = r3
+    Q[..., 1, 1] = r4
+    Q[..., 1, 2] = -r1
+    Q[..., 1, 3] = r2
+    Q[..., 2, 0] = -r2
+    Q[..., 2, 1] = r1
+    Q[..., 2, 2] = r4
+    Q[..., 2, 3] = r3
+    Q[..., 3, 0] = -r1
+    Q[..., 3, 1] = -r2
+    Q[..., 3, 2] = -r3
+    Q[..., 3, 3] = r4
     return Q
 
 
@@ -784,50 +818,10 @@ def quaternion_rotate(X: ndarray, Y: ndarray) -> ndarray:
     rot : matrix
         Rotation matrix (D,D)
     """
-    # Vectorized equivalent of the former per-atom makeW/makeQ + dot loop.
-    # makeW/makeQ themselves are kept unchanged as public API; here we fill
-    # the (N,4,4) stacks with slicing (C-speed) and reduce with einsum.
-    x1 = X[:, 0]
-    x2 = X[:, 1]
-    x3 = X[:, 2]
-    y1 = Y[:, 0]
-    y2 = Y[:, 1]
-    y3 = Y[:, 2]
-    N = X.shape[0]
-    Q = np.empty((N, 4, 4))
-    Q[:, 0, 0] = 0.0
-    Q[:, 0, 1] = -x3
-    Q[:, 0, 2] = x2
-    Q[:, 0, 3] = x1
-    Q[:, 1, 0] = x3
-    Q[:, 1, 1] = 0.0
-    Q[:, 1, 2] = -x1
-    Q[:, 1, 3] = x2
-    Q[:, 2, 0] = -x2
-    Q[:, 2, 1] = x1
-    Q[:, 2, 2] = 0.0
-    Q[:, 2, 3] = x3
-    Q[:, 3, 0] = -x1
-    Q[:, 3, 1] = -x2
-    Q[:, 3, 2] = -x3
-    Q[:, 3, 3] = 0.0
-    W = np.empty((N, 4, 4))
-    W[:, 0, 0] = 0.0
-    W[:, 0, 1] = y3
-    W[:, 0, 2] = -y2
-    W[:, 0, 3] = y1
-    W[:, 1, 0] = -y3
-    W[:, 1, 1] = 0.0
-    W[:, 1, 2] = y1
-    W[:, 1, 3] = y2
-    W[:, 2, 0] = y2
-    W[:, 2, 1] = -y1
-    W[:, 2, 2] = 0.0
-    W[:, 2, 3] = y3
-    W[:, 3, 0] = -y1
-    W[:, 3, 1] = -y2
-    W[:, 3, 2] = -y3
-    W[:, 3, 3] = 0.0
+    # Vectorized per-atom makeW/makeQ + dot loop: broadcastable helpers fill
+    # the (N,4,4) stacks with slicing; reduce with einsum.
+    Q = _makeQ(X[:, 0], X[:, 1], X[:, 2])
+    W = _makeW(Y[:, 0], Y[:, 1], Y[:, 2])
     A = np.einsum("nji,njk->ik", Q, W)
     eigen = np.linalg.eigh(A)
     r = eigen[1][:, np.argmax(eigen[0])]
@@ -1114,9 +1108,6 @@ def reorder_inertia_hungarian(
     q_coord -= get_cm(q_atoms, q_coord)
 
     # Calculate inertia vectors for both structures
-    # Note: inertia tensors are real symmetric, so eigh is correct (real
-    # output) and faster than eig. eig returns complex128 on NumPy>=2 which
-    # breaks cdist downstream.
     inertia_p = get_inertia_tensor(p_atoms, p_coord)
     eigval_p, eigvec_p = np.linalg.eigh(inertia_p)
 
@@ -1424,9 +1415,6 @@ def get_inertia_tensor(atoms: ndarray, coord: ndarray) -> ndarray:
 
     coord = coord - get_cm(atoms, coord)
 
-    # Note: the former per-atom Python loop computing Ixx..Iyz was dead code
-    # (never returned); the vectorized path below is the actual result.
-    # Also avoid building the full NxN diag(masses): broadcast instead.
     atomic_masses = _ELEMENT_WEIGHTS_ARRAY[np.asarray(atoms)]
 
     helper = (coord * atomic_masses[:, None]).T.dot(coord)
@@ -1450,8 +1438,6 @@ def get_principal_axis(atoms: ndarray, V: ndarray) -> ndarray:
         Array of dim 3 containing the principal axis
     """
     inertia = get_inertia_tensor(atoms, V)
-
-    # Symmetric tensor: eigh is correct (real) and faster
     eigval, eigvec = np.linalg.eigh(inertia)
 
     # Eigenvectors are the *columns* of eigvec; take the one with the
